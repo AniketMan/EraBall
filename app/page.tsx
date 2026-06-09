@@ -6,7 +6,7 @@ import type { Player, Coach, CourtSlot, SlotPosition, Era, GamePhase, PlayerSeas
 import ResultCard from './ResultCard'
 import {
   ALL_ERAS, SLOT_POSITIONS, SLOT_MPG, calcFitPenalty, calcEraModifier, calcTeamRating,
-  simulateSeason, simulatePlayoffs, calcTS, coachBonus, playerMatchesEra, withEraStats, applyFlexTag, applyRings, applyAnchors,
+  simulateSeason, simulatePlayoffs, calcTS, coachBonus, effectiveCoachBonus, coachChampBonus, playerMatchesEra, withEraStats, applyFlexTag, applyRings, applyAnchors,
   firstRoundLabel, playerBaseRating
 } from '../lib/gameLogic'
 
@@ -1490,7 +1490,11 @@ function CoachDraftScreen({ coaches, onCoachSelected, onRestart }: {
                     </div>
                     <div className="flex flex-wrap gap-x-3 mt-1.5" style={{ fontSize: 11, color: G.greyDark }}>
                       <span style={{ color: G.grey }}>{coach.playoffG > 0 ? `${(coach.playoffWLPct * 100).toFixed(1)}% playoffs` : 'No playoffs'}</span>
-                      {coach.champ > 0 && <><span>·</span><span style={{ color: G.gold }}>{coach.champ}× Champion</span></>}
+                      {coach.champ > 0 && <><span>·</span>
+                        <TagTooltip tip={`${Math.min(coach.champ, 8)}× title${coach.champ > 8 ? ' (capped at 8)' : ''} — coaches who've won it all provide a small but real edge to your team. +${(coachChampBonus(coach) * 100).toFixed(1)}% team rating.`}>
+                          <span style={{ color: G.gold }}>{coach.champ}× Champion</span>
+                        </TagTooltip>
+                      </>}
                       {coach.conf > 0 && coach.champ === 0 && <><span>·</span><span style={{ color: G.grey }}>{coach.conf} conf title{coach.conf !== 1 ? 's' : ''}</span></>}
                     </div>
                   </div>
@@ -1935,6 +1939,20 @@ function computeSeasonAwards(
     })
   }
 
+  // ── 65-win All-Star guarantee ──
+  if (wins > 65) {
+    const topScorer = [...rated].sort((a, b) => b.s.PTS - a.s.PTS)[0]
+    const alreadyAllStar = awards.some(a => a.award === 'All-Star' && a.player.player.person_id === topScorer?.s.player.person_id)
+    if (topScorer && !alreadyAllStar) {
+      awards.push({
+        award: 'All-Star',
+        player: topScorer.s,
+        justification: `${topScorer.s.PTS.toFixed(1)} PPG · Team-high scorer on ${wins}-win team`,
+        gold: false,
+      })
+    }
+  }
+
   // ── DPOY ──
   const dpoy = rated
     .filter(({ s, base }) =>
@@ -2115,7 +2133,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
 
   const startSim = () => {
     setSimStarted(true); setGames([]); setDone(false); setSeasonStats([])
-    const { games: allGames, seasonStats: stats, avgTeamScore: ats, avgOppScore: aos } = simulateSeason(tr, pr, coach.defGrade, coach.offGrade, simEra)
+    const { games: allGames, seasonStats: stats, avgTeamScore: ats, avgOppScore: aos } = simulateSeason(tr, pr, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'))
     setSeasonStats(stats)
     setAvgTeamScore(ats)
     setAvgOppScore(aos)
@@ -2130,7 +2148,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
     setPlayoffStarted(true)
     setPlayoffRevealIndex(-1)
     setPlayoffDone(false)
-    const result = simulatePlayoffs(tr, pr, wins, coach.defGrade, coach.offGrade, simEra)
+    const result = simulatePlayoffs(tr, pr, wins, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'))
     setPlayoffResult(result)
     setTimeout(() => setPlayoffRevealIndex(0), 400)
   }
@@ -2217,7 +2235,8 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
             <div className="flex items-center gap-4">
               <span style={{ ...BEBAS, fontSize: 28, color: G.gold }}>{dispRating(tr)}</span>
               <span className="text-xs" style={{ color: G.grey }}>
-                Off {gradeBonus(coach.offGrade)} · Def {gradeBonus(coach.defGrade)}
+                Off {coach.offGuru ? '+6%' : gradeBonus(coach.offGrade)} · Def {coach.defGuru ? '+6%' : gradeBonus(coach.defGrade)}
+                {coach.champ > 0 && <span style={{ color: G.goldDim, marginLeft: 6 }}>+{(coachChampBonus(coach) * 100).toFixed(1)}% titles</span>}
               </span>
             </div>
           </div>
@@ -2792,6 +2811,24 @@ export default function Home() {
       {phase === 'draft' && <DraftScreen simEra={simEra} players={players} onDraftComplete={s => { setSlots(s); setPhase('coach-draft') }} onRestart={restart} />}
       {phase === 'coach-draft' && <CoachDraftScreen coaches={coaches} onCoachSelected={c => { setCoach(c); setPhase('simulation') }} onRestart={restart} />}
       {phase === 'simulation' && coach && <SimulationScreen slots={slots} coach={coach} simEra={simEra} onRestart={restart} />}
+
+      <a
+        href="https://x.com/Eshan_Design"
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          position: 'fixed', bottom: 20, right: 20, zIndex: 500,
+          fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
+          color: G.greyDark, border: `1px solid ${G.border}`,
+          padding: '6px 12px', background: G.surface,
+          textDecoration: 'none', opacity: 0.7,
+          transition: 'opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = G.white; e.currentTarget.style.borderColor = G.grey }}
+        onMouseLeave={e => { e.currentTarget.style.opacity = '0.7'; e.currentTarget.style.color = G.greyDark; e.currentTarget.style.borderColor = G.border }}
+      >
+        Suggestions or bugs? DM me
+      </a>
     </>
   )
 }

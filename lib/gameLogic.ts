@@ -410,7 +410,17 @@ export function coachOverallGrade(coach: Coach): 'A' | 'B' | 'C' | 'D' | 'F' {
 }
 
 export function coachBonus(grade: 'A' | 'B' | 'C' | 'D' | 'F'): number {
-  return { A: 0.04, B: 0.02, C: 0, D: -0.02, F: -0.04 }[grade]
+  return { A: 0.04, B: 0.02, C: 0, D: -0.04, F: -0.06 }[grade]
+}
+
+export function effectiveCoachBonus(coach: Coach, side: 'off' | 'def'): number {
+  if (side === 'off' && coach.offGuru) return 0.06
+  if (side === 'def' && coach.defGuru) return 0.06
+  return coachBonus(side === 'off' ? coach.offGrade : coach.defGrade)
+}
+
+export function coachChampBonus(coach: Coach): number {
+  return Math.min(coach.champ, 8) * 0.004
 }
 
 const STARTER_SLOTS: SlotPosition[] = ['PG', 'SG', 'SF', 'PF', 'C']
@@ -445,9 +455,10 @@ export function calcTeamRating(slots: CourtSlot[], coach: Coach, simEra: Era): {
   const benchAvg = benchCount > 0 ? benchSum / benchCount : 0
   const rawRating = starterAvg * 0.70 + benchAvg * 0.30
 
-  const offBonus = coachBonus(coach.offGrade)
-  const defBonus = coachBonus(coach.defGrade)
-  const teamRating = rawRating * (1 + (offBonus + defBonus) / 2)
+  const offBonus = effectiveCoachBonus(coach, 'off')
+  const defBonus = effectiveCoachBonus(coach, 'def')
+  const champBonus = coachChampBonus(coach)
+  const teamRating = rawRating * (1 + (offBonus + defBonus) / 2 + champBonus)
 
   console.log('[Rating] --- Player breakdown ---')
   for (const pr of playerRatings) {
@@ -549,7 +560,9 @@ export function simulateSeason(
   playerRatings: PlayerRating[],
   coachDefGrade: 'A' | 'B' | 'C' | 'D' | 'F',
   coachOffGrade: 'A' | 'B' | 'C' | 'D' | 'F',
-  simEra: Era
+  simEra: Era,
+  coachDefBonus?: number,
+  coachOffBonus?: number,
 ): { wins: number; losses: number; games: boolean[]; seasonStats: PlayerSeasonStats[]; avgTeamScore: number; avgOppScore: number } {
   const games: boolean[] = []
   let wins = 0
@@ -574,8 +587,8 @@ export function simulateSeason(
   const playerDefFactor = calcPlayerDefFactor(entries)
   const rebFactor = calcRebFactor(entries)
   const astFactor = calcAstFactor(entries)
-  const defBonus = coachBonus(coachDefGrade)
-  const offBonus = coachBonus(coachOffGrade)
+  const defBonus = coachDefBonus ?? coachBonus(coachDefGrade)
+  const offBonus = coachOffBonus ?? coachBonus(coachOffGrade)
 
   for (let i = 0; i < 82; i++) {
     const oppRating = OPP_BASELINE * playerDefFactor + randn() * OPP_SPREAD
@@ -673,7 +686,9 @@ export function simulatePlayoffs(
   regularSeasonWins: number,
   coachDefGrade: 'A' | 'B' | 'C' | 'D' | 'F',
   coachOffGrade: 'A' | 'B' | 'C' | 'D' | 'F',
-  simEra: Era
+  simEra: Era,
+  coachDefBonus?: number,
+  coachOffBonus?: number,
 ): PlayoffResult {
   const OPP_SPREAD = 3
   const GAME_NOISE = 5
@@ -688,8 +703,8 @@ export function simulatePlayoffs(
   const playerDefFactor = calcPlayerDefFactor(entries)
   const rebFactor = calcRebFactor(entries)
   const astFactor = calcAstFactor(entries)
-  const defBonus = coachBonus(coachDefGrade)
-  const offBonus = coachBonus(coachOffGrade)
+  const defBonus = coachDefBonus ?? coachBonus(coachDefGrade)
+  const offBonus = coachOffBonus ?? coachBonus(coachOffGrade)
 
   // Ring-boosted effective team rating for playoff win determination
   const totalAdjusted = entries.reduce((s, e) => s + e.pr.adjusted, 0)
