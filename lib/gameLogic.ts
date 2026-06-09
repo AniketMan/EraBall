@@ -139,6 +139,7 @@ const PLAYER_ANCHORS: Record<string, AnchorType> = {
   'Marcus Smart':    'def',
   'Dikembe Mutombo': 'def',
   'Rudy Gobert':     'def',
+  'Aaron Gordon':    'def',
 }
 
 export function applyAnchors(player: Player): Player {
