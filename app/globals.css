@@ -123,6 +123,14 @@ body {
   border-color: #C9A84C !important;
 }
 
+/* ── Roster scroll ───────────────────────────────────────────────────────── */
+
+.roster-scroll::-webkit-scrollbar        { width: 4px; }
+.roster-scroll::-webkit-scrollbar-track  { background: transparent; }
+.roster-scroll::-webkit-scrollbar-thumb  { background: rgba(201, 168, 76, 0.25); border-radius: 2px; }
+.roster-scroll::-webkit-scrollbar-thumb:hover { background: rgba(201, 168, 76, 0.5); }
+.roster-scroll { scrollbar-width: thin; scrollbar-color: rgba(201, 168, 76, 0.25) transparent; }
+
 /* ── Roster player rows ──────────────────────────────────────────────────── */
 
 .roster-row:not(.roster-row--selected):hover {
