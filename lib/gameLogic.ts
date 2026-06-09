@@ -128,6 +128,25 @@ export function applyRings(player: Player): Player {
   return { ...player, rings }
 }
 
+// ─── Player anchors ────────────────────────────────────────────────────────────
+type AnchorType = 'def' | 'off'
+const PLAYER_ANCHORS: Record<string, AnchorType> = {
+  // Defensive Anchors (+12)
+  'Draymond Green':  'def',
+  'Dennis Rodman':   'def',
+  'Ben Wallace':     'def',
+  'Gary Payton':     'def',
+  'Marcus Smart':    'def',
+  'Dikembe Mutombo': 'def',
+  'Rudy Gobert':     'def',
+}
+
+export function applyAnchors(player: Player): Player {
+  const anchor = PLAYER_ANCHORS[player.full_name]
+  if (!anchor) return player
+  return { ...player, defAnchor: anchor === 'def', offAnchor: anchor === 'off' }
+}
+
 function playoffRingBoost(rings: number): number {
   if (rings >= 9)  return 0.13
   if (rings >= 6)  return 0.10
@@ -159,10 +178,10 @@ const ERA_DECADE_START: Record<Era, number> = {
   '90s': 1990, '00s': 2000, '10s': 2010, '20s': 2020,
 }
 
-// Assigned minutes per slot (5 × 32 + 24 + 20 + 20 + 16 = 240 total)
+// Assigned minutes per slot (5 × 35 + 25 + 16 + 14 + 10 = 240 total)
 export const SLOT_MPG: Record<SlotPosition, number> = {
-  PG: 32, SG: 32, SF: 32, PF: 32, C: 32,
-  B1: 24, B2: 20, B3: 20, B4: 16,
+  PG: 35, SG: 35, SF: 35, PF: 35, C: 35,
+  B1: 25, B2: 16, B3: 14, B4: 10,
 }
 // Playoff rotations: starters play more, bench gets cut significantly
 const PLAYOFF_MPG: Record<SlotPosition, number> = {
@@ -170,8 +189,8 @@ const PLAYOFF_MPG: Record<SlotPosition, number> = {
   B1: 20, B2: 15, B3: 10, B4: 6,
 }
 // Assumed historical baseline MPG for computing scale factor
-const STARTER_BASELINE_MPG = 34
-const BENCH_BASELINE_MPG   = 24
+const STARTER_BASELINE_MPG = 35
+const BENCH_BASELINE_MPG   = 25
 
 // Returns the player with era-specific stats substituted in, falling back to
 // career stats if no era data exists. Pass team when a player had multiple
@@ -232,10 +251,11 @@ export function imputeTOV(player: Player): number {
 
 export function playerBaseRating(player: Player, simEra?: Era): number {
   const ts = calcTS(player)
-  // FG3M captures 3-point volume; zero in pre-3PT eras. TS% already handles efficiency.
   const threePtBonus = (!simEra || PRE_THREE_PT_ERAS.includes(simEra))
     ? 0
     : (player.FG3M ?? 0) * 1.5
+  const anchorBonus = player.defAnchor ? 12 : player.offAnchor ? 8 : 0
+  const top75Bonus = player.greatest_75_flag === 'Y' ? 3 : 0
   return (
     (player.PTS ?? 0)     * 1.0 +
     (player.REB ?? 0)     * 0.7 +
@@ -244,7 +264,9 @@ export function playerBaseRating(player: Player, simEra?: Era): number {
     threePtBonus               +
     imputeSTL(player)     * 1.5 +
     imputeBLK(player)     * 1.5 -
-    imputeTOV(player)     * 1.0
+    imputeTOV(player)     * 1.0 +
+    anchorBonus                +
+    top75Bonus
   )
 }
 
@@ -663,9 +685,6 @@ export function simulatePlayoffs(
     return { pr, assignedMPG, minScale }
   })
 
-  const expectedTeamScore = Math.max(85, Math.min(132,
-    entries.reduce((s, e) => s + (e.pr.player.PTS ?? 0) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty), 0)
-  ))
   const playerDefFactor = calcPlayerDefFactor(entries)
   const rebFactor = calcRebFactor(entries)
   const astFactor = calcAstFactor(entries)
@@ -679,10 +698,14 @@ export function simulatePlayoffs(
     : 0
   const effectiveTeamRating = teamRating * (1 + avgRingBoost)
 
+  // Ring boost also raises the score ceiling so champions actually put up bigger numbers
+  const baseTeamScore = entries.reduce((s, e) => s + (e.pr.player.PTS ?? 0) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty), 0)
+  const expectedTeamScore = Math.max(85, Math.min(138, baseTeamScore * (1 + avgRingBoost)))
+
   // Per-player expected averages for game leader generation
-  const expPTS = entries.map(e => (e.pr.player.PTS ?? 0) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty))
-  const expREB = entries.map(e => (e.pr.player.REB ?? 0) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty))
-  const expAST = entries.map(e => (e.pr.player.AST ?? 0) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty))
+  const expPTS = entries.map(e => (e.pr.player.PTS ?? 0) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty) * (1 + playoffRingBoost(e.pr.player.rings ?? 0)))
+  const expREB = entries.map(e => (e.pr.player.REB ?? 0) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty) * (1 + playoffRingBoost(e.pr.player.rings ?? 0)))
+  const expAST = entries.map(e => (e.pr.player.AST ?? 0) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty) * (1 + playoffRingBoost(e.pr.player.rings ?? 0)))
   const totalExpPTS = expPTS.reduce((a, b) => a + b, 0)
 
   // Accumulators — filled per-game from actual generated lines
@@ -786,8 +809,14 @@ export function simulatePlayoffs(
       }
       if (r === 3) finalsGames++
 
+      const playerLines = entries.map((e, i) => ({
+        personId: e.pr.player.person_id,
+        pts: scaledPTS[i],
+        reb: gameREB[i],
+        ast: gameAST[i],
+      }))
       if (win) sW++; else sL++
-      allGames.push({ win, roundIndex: r, teamScore, oppScore, gameInSeries, leaders, special })
+      allGames.push({ win, roundIndex: r, teamScore, oppScore, gameInSeries, leaders, special, playerLines })
     }
 
     const advanced = sW === winsNeeded
@@ -807,43 +836,49 @@ export function simulatePlayoffs(
     return { STL: imputeSTL(pr.player) * s, BLK: imputeBLK(pr.player) * s, TOV: imputeTOV(pr.player) * s }
   })
 
-  const playoffStats: PlayerSeasonStats[] = entries.map(({ pr, assignedMPG }, i) => ({
-    player:  pr.player,
-    slot:    pr.slot,
-    GP:      numGames,
-    MPG:     assignedMPG,
-    PTS:     numGames > 0 ? accumPTS[i] / numGames : 0,
-    REB:     numGames > 0 ? accumREB[i] / numGames : 0,
-    AST:     numGames > 0 ? accumAST[i] / numGames : 0,
-    STL:     stlBlkTov[i].STL,
-    BLK:     stlBlkTov[i].BLK,
-    TOV:     stlBlkTov[i].TOV,
-    FG_PCT:  Math.min(0.80, Math.max(0.20, (pr.player.FG_PCT ?? 0.45) + randn() * 0.025)),
-    FG3_PCT: PRE_THREE_PT_ERAS.includes(simEra) ? null
-      : pr.player.FG3_PCT != null
-        ? Math.min(0.60, Math.max(0.15, pr.player.FG3_PCT + randn() * 0.025))
-        : null,
-    FT_PCT:  Math.min(0.99, Math.max(0.30, (pr.player.FT_PCT ?? 0.70) + randn() * 0.025)),
-  }))
+  const playoffStats: PlayerSeasonStats[] = entries.map(({ pr, assignedMPG }, i) => {
+    const effBoost = playoffRingBoost(pr.player.rings ?? 0) * 0.5
+    return {
+      player:  pr.player,
+      slot:    pr.slot,
+      GP:      numGames,
+      MPG:     assignedMPG,
+      PTS:     numGames > 0 ? accumPTS[i] / numGames : 0,
+      REB:     numGames > 0 ? accumREB[i] / numGames : 0,
+      AST:     numGames > 0 ? accumAST[i] / numGames : 0,
+      STL:     stlBlkTov[i].STL,
+      BLK:     stlBlkTov[i].BLK,
+      TOV:     stlBlkTov[i].TOV,
+      FG_PCT:  Math.min(0.80, Math.max(0.20, (pr.player.FG_PCT ?? 0.45) + effBoost + randn() * 0.025)),
+      FG3_PCT: PRE_THREE_PT_ERAS.includes(simEra) ? null
+        : pr.player.FG3_PCT != null
+          ? Math.min(0.60, Math.max(0.15, pr.player.FG3_PCT + effBoost + randn() * 0.025))
+          : null,
+      FT_PCT:  Math.min(0.99, Math.max(0.30, (pr.player.FT_PCT ?? 0.70) + effBoost + randn() * 0.025)),
+    }
+  })
 
-  const finalsStats: PlayerSeasonStats[] = entries.map(({ pr, assignedMPG }, i) => ({
-    player:  pr.player,
-    slot:    pr.slot,
-    GP:      finalsGames,
-    MPG:     assignedMPG,
-    PTS:     finalsGames > 0 ? finalsPTS[i] / finalsGames : 0,
-    REB:     finalsGames > 0 ? finalsREB[i] / finalsGames : 0,
-    AST:     finalsGames > 0 ? finalsAST[i] / finalsGames : 0,
-    STL:     stlBlkTov[i].STL,
-    BLK:     stlBlkTov[i].BLK,
-    TOV:     stlBlkTov[i].TOV,
-    FG_PCT:  Math.min(0.80, Math.max(0.20, (pr.player.FG_PCT ?? 0.45) + randn() * 0.025)),
-    FG3_PCT: PRE_THREE_PT_ERAS.includes(simEra) ? null
-      : pr.player.FG3_PCT != null
-        ? Math.min(0.60, Math.max(0.15, pr.player.FG3_PCT + randn() * 0.025))
-        : null,
-    FT_PCT:  Math.min(0.99, Math.max(0.30, (pr.player.FT_PCT ?? 0.70) + randn() * 0.025)),
-  }))
+  const finalsStats: PlayerSeasonStats[] = entries.map(({ pr, assignedMPG }, i) => {
+    const effBoost = playoffRingBoost(pr.player.rings ?? 0) * 0.5
+    return {
+      player:  pr.player,
+      slot:    pr.slot,
+      GP:      finalsGames,
+      MPG:     assignedMPG,
+      PTS:     finalsGames > 0 ? finalsPTS[i] / finalsGames : 0,
+      REB:     finalsGames > 0 ? finalsREB[i] / finalsGames : 0,
+      AST:     finalsGames > 0 ? finalsAST[i] / finalsGames : 0,
+      STL:     stlBlkTov[i].STL,
+      BLK:     stlBlkTov[i].BLK,
+      TOV:     stlBlkTov[i].TOV,
+      FG_PCT:  Math.min(0.80, Math.max(0.20, (pr.player.FG_PCT ?? 0.45) + effBoost + randn() * 0.025)),
+      FG3_PCT: PRE_THREE_PT_ERAS.includes(simEra) ? null
+        : pr.player.FG3_PCT != null
+          ? Math.min(0.60, Math.max(0.15, pr.player.FG3_PCT + effBoost + randn() * 0.025))
+          : null,
+      FT_PCT:  Math.min(0.99, Math.max(0.30, (pr.player.FT_PCT ?? 0.70) + effBoost + randn() * 0.025)),
+    }
+  })
 
   return { rounds, champion, allGames, playoffStats, finalsStats }
 }

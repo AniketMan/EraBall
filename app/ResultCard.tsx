@@ -50,6 +50,7 @@ interface ResultCardProps {
   playoffOutcome?: PlayoffOutcome | null
   playerAwards?: Record<string, string[]>   // person_id → short award labels
   finalsMVPId?: string | null
+  finalsMVPStats?: PlayerSeasonStats | null
 }
 
 function eliminationLabel(round: string | undefined): string {
@@ -153,7 +154,7 @@ function StatRow({ lbl, val, lead }: { lbl: string; val: string; lead: boolean }
 }
 
 const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
-  function ResultCard({ simEra, wins, losses, seasonStats, coach, teamRating, headshots, playoffOutcome, playerAwards = {}, finalsMVPId }, ref) {
+  function ResultCard({ simEra, wins, losses, seasonStats, coach, teamRating, headshots, playoffOutcome, playerAwards = {}, finalsMVPId, finalsMVPStats }, ref) {
     const starters = seasonStats.filter(s => !s.slot.startsWith('B'))
     const bench    = seasonStats.filter(s =>  s.slot.startsWith('B'))
 
@@ -256,22 +257,19 @@ const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
                 </div>
                 <div style={{ height: 2, flex: 1, background: `linear-gradient(to left, transparent, ${C.gold})` }} />
               </div>
-              {finalsMVPId && (() => {
-                const mvp = seasonStats.find(s => s.player.person_id === finalsMVPId)
-                return mvp ? (
-                  <div style={{ textAlign: 'center', marginTop: 6 }}>
-                    <span style={{ fontFamily: INTER, fontSize: 9, color: C.goldDim, letterSpacing: '0.28em', textTransform: 'uppercase' }}>
-                      Finals MVP
-                    </span>
-                    <span style={{ fontFamily: BEBAS, fontSize: 18, color: C.gold, letterSpacing: '0.12em', marginLeft: 10 }}>
-                      {mvp.player.full_name}
-                    </span>
-                    <span style={{ fontFamily: INTER, fontSize: 9, color: C.grey, letterSpacing: '0.1em', marginLeft: 10 }}>
-                      {mvp.PTS.toFixed(1)} PPG · {mvp.REB.toFixed(1)} RPG · {mvp.AST.toFixed(1)} APG
-                    </span>
-                  </div>
-                ) : null
-              })()}
+              {finalsMVPStats && (
+                <div style={{ textAlign: 'center', marginTop: 6 }}>
+                  <span style={{ fontFamily: INTER, fontSize: 9, color: C.goldDim, letterSpacing: '0.28em', textTransform: 'uppercase' }}>
+                    Finals MVP
+                  </span>
+                  <span style={{ fontFamily: BEBAS, fontSize: 18, color: C.gold, letterSpacing: '0.12em', marginLeft: 10 }}>
+                    {finalsMVPStats.player.full_name}
+                  </span>
+                  <span style={{ fontFamily: INTER, fontSize: 9, color: C.grey, letterSpacing: '0.1em', marginLeft: 10 }}>
+                    {finalsMVPStats.PTS.toFixed(1)} PPG · {finalsMVPStats.REB.toFixed(1)} RPG · {finalsMVPStats.AST.toFixed(1)} APG
+                  </span>
+                </div>
+              )}
             </div>
           ) : playoffOutcome && !playoffOutcome.champion ? (
             <div style={{
@@ -573,12 +571,6 @@ const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
                   {coach.name}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap', marginTop: 2 }}>
-                  {coach.offGuru && (
-                    <span style={{ fontFamily: INTER, fontSize: 8, fontWeight: 700, letterSpacing: '0.12em', color: '#000', background: C.gold, padding: '2px 5px', borderRadius: 2, textTransform: 'uppercase', flexShrink: 0 }}>OFF GURU</span>
-                  )}
-                  {coach.defGuru && (
-                    <span style={{ fontFamily: INTER, fontSize: 8, fontWeight: 700, letterSpacing: '0.12em', color: '#000', background: '#4A9ECC', padding: '2px 5px', borderRadius: 2, textTransform: 'uppercase', flexShrink: 0 }}>DEF GURU</span>
-                  )}
                   <div style={{ display: 'flex', gap: 12, flexShrink: 0 }}>
                     {([['OFF', coach.offGrade], ['DEF', coach.defGrade], ['OVR', coach.overallGrade]] as [string, string][]).map(([lbl, grade]) => (
                       <div key={lbl} style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>

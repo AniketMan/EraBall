@@ -37,6 +37,8 @@ export interface Player {
   all_teams_by_era?: Partial<Record<Era, string[]>>
   stats_by_era?: Record<string, EraStats>  // keyed by "era:team" e.g. "20s:MIL"
   rings?: number
+  defAnchor?: boolean
+  offAnchor?: boolean
   eraTeam?: string  // set by withEraStats to reflect which team's era stats are loaded
 }
 
@@ -145,6 +147,7 @@ export interface PlayoffGame {
   gameInSeries: number
   leaders: { pts: GameLeader; reb: GameLeader; ast: GameLeader }
   special?: SpecialPerformance
+  playerLines?: { personId: string; pts: number; reb: number; ast: number }[]
 }
 
 export interface PlayoffResult {
