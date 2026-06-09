@@ -1413,8 +1413,8 @@ function CoachDraftScreen({ coaches, onCoachSelected, onRestart }: {
 }
 
 // ─── Shared stats table ───────────────────────────────────────────────────────
-function StatsTable({ stats, simEra, title, subtitle, teamActualPPG }: {
-  stats: PlayerSeasonStats[]; simEra: Era; title: string; subtitle: string; teamActualPPG?: number
+function StatsTable({ stats, simEra, title, subtitle, teamActualPPG, teamActualOppPPG }: {
+  stats: PlayerSeasonStats[]; simEra: Era; title: string; subtitle: string; teamActualPPG?: number; teamActualOppPPG?: number
 }) {
   const [cardPlayer, setCardPlayer] = useState<Player | null>(null)
 
@@ -1454,7 +1454,7 @@ function StatsTable({ stats, simEra, title, subtitle, teamActualPPG }: {
         <table className="w-full text-xs">
           <thead>
             <tr style={{ borderBottom: `1px solid ${G.border}` }}>
-              {['Player', 'Slot', 'MPG', 'PPG', 'RPG', 'APG', 'SPG', 'BPG', 'TOV', 'FG%', '3P%', 'FT%'].map(h => (
+              {['Player', 'Slot', 'MPG', 'PPG', 'RPG', 'APG', 'SPG', 'BPG', 'TOV', 'TS%', 'FG%', '3P%', 'FT%'].map(h => (
                 <th key={h} className={`py-2 px-3 uppercase tracking-widest font-normal ${h === 'Player' ? 'text-left' : 'text-right'}`} style={{ color: G.grey }}>{h}</th>
               ))}
             </tr>
@@ -1486,6 +1486,7 @@ function StatsTable({ stats, simEra, title, subtitle, teamActualPPG }: {
                   <td className="py-2 px-3 text-right" style={{ color: G.grey }}>{s.STL.toFixed(1)}</td>
                   <td className="py-2 px-3 text-right" style={{ color: G.grey }}>{s.BLK.toFixed(1)}</td>
                   <td className="py-2 px-3 text-right" style={{ color: G.grey }}>{s.TOV.toFixed(1)}</td>
+                  <td className="py-2 px-3 text-right" style={{ color: G.grey }}>{(calcTS(s.player) * 100).toFixed(1)}%</td>
                   <td className="py-2 px-3 text-right" style={{ color: G.grey }}>{(s.FG_PCT * 100).toFixed(1)}%</td>
                   <td className="py-2 px-3 text-right" style={{ color: G.grey }}>
                     {s.FG3_PCT != null ? `${(s.FG3_PCT * 100).toFixed(1)}%` : '—'}
@@ -1501,28 +1502,42 @@ function StatsTable({ stats, simEra, title, subtitle, teamActualPPG }: {
               // Percentages weighted by minutes
               const wFG  = sum(s => s.FG_PCT * s.MPG) / totalMPG
               const wFT  = sum(s => s.FT_PCT * s.MPG) / totalMPG
+              const wTS  = sum(s => calcTS(s.player) * s.MPG) / totalMPG
               const fg3s = stats.filter(s => s.FG3_PCT != null)
               const wFG3MPG = fg3s.reduce((acc, s) => acc + s.MPG, 0)
               const wFG3 = wFG3MPG > 0 ? fg3s.reduce((acc, s) => acc + s.FG3_PCT! * s.MPG, 0) / wFG3MPG : null
               return (
-                <tr style={{ borderTop: `1px solid ${G.gold}55`, background: '#1a1a1a' }}>
-                  <td className="py-2 px-3 font-bold uppercase tracking-widest text-xs" style={{ color: G.gold }}>Team</td>
-                  <td className="py-2 px-3" />
-                  <td className="py-2 px-3" />
-                  <td className="py-2 px-3 text-right font-bold" style={{ color: G.gold }}>
-                    {(teamActualPPG ?? sum(s => s.PTS)).toFixed(1)}
-                  </td>
-                  <td className="py-2 px-3 text-right font-bold" style={{ color: G.white }}>{sum(s => s.REB).toFixed(1)}</td>
-                  <td className="py-2 px-3 text-right font-bold" style={{ color: G.white }}>{sum(s => s.AST).toFixed(1)}</td>
-                  <td className="py-2 px-3 text-right font-bold" style={{ color: G.grey }}>{sum(s => s.STL).toFixed(1)}</td>
-                  <td className="py-2 px-3 text-right font-bold" style={{ color: G.grey }}>{sum(s => s.BLK).toFixed(1)}</td>
-                  <td className="py-2 px-3 text-right font-bold" style={{ color: G.grey }}>{sum(s => s.TOV).toFixed(1)}</td>
-                  <td className="py-2 px-3 text-right font-bold" style={{ color: G.grey }}>{(wFG * 100).toFixed(1)}%</td>
-                  <td className="py-2 px-3 text-right font-bold" style={{ color: G.grey }}>
-                    {wFG3 != null ? `${(wFG3 * 100).toFixed(1)}%` : '—'}
-                  </td>
-                  <td className="py-2 px-3 text-right font-bold" style={{ color: G.grey }}>{(wFT * 100).toFixed(1)}%</td>
-                </tr>
+                <>
+                  <tr style={{ borderTop: `1px solid ${G.gold}55`, background: '#1a1a1a' }}>
+                    <td className="py-2 px-3 font-bold uppercase tracking-widest text-xs" style={{ color: G.gold }}>Team</td>
+                    <td className="py-2 px-3" />
+                    <td className="py-2 px-3" />
+                    <td className="py-2 px-3 text-right font-bold" style={{ color: G.gold }}>
+                      {(teamActualPPG ?? sum(s => s.PTS)).toFixed(1)}
+                    </td>
+                    <td className="py-2 px-3 text-right font-bold" style={{ color: G.white }}>{sum(s => s.REB).toFixed(1)}</td>
+                    <td className="py-2 px-3 text-right font-bold" style={{ color: G.white }}>{sum(s => s.AST).toFixed(1)}</td>
+                    <td className="py-2 px-3 text-right font-bold" style={{ color: G.grey }}>{sum(s => s.STL).toFixed(1)}</td>
+                    <td className="py-2 px-3 text-right font-bold" style={{ color: G.grey }}>{sum(s => s.BLK).toFixed(1)}</td>
+                    <td className="py-2 px-3 text-right font-bold" style={{ color: G.grey }}>{sum(s => s.TOV).toFixed(1)}</td>
+                    <td className="py-2 px-3 text-right font-bold" style={{ color: G.grey }}>{(wTS * 100).toFixed(1)}%</td>
+                    <td className="py-2 px-3 text-right font-bold" style={{ color: G.grey }}>{(wFG * 100).toFixed(1)}%</td>
+                    <td className="py-2 px-3 text-right font-bold" style={{ color: G.grey }}>
+                      {wFG3 != null ? `${(wFG3 * 100).toFixed(1)}%` : '—'}
+                    </td>
+                    <td className="py-2 px-3 text-right font-bold" style={{ color: G.grey }}>{(wFT * 100).toFixed(1)}%</td>
+                  </tr>
+                  {teamActualOppPPG != null && (
+                    <tr style={{ borderTop: `1px solid ${G.borderSub}`, background: '#0f0f0f' }}>
+                      <td className="py-2 px-3 font-bold uppercase tracking-widest text-xs" style={{ color: G.greyDark }}>Opp</td>
+                      <td className="py-2 px-3" /><td className="py-2 px-3" />
+                      <td className="py-2 px-3 text-right font-bold" style={{ color: G.greyDark }}>{teamActualOppPPG.toFixed(1)}</td>
+                      {Array(9).fill(null).map((_, i) => (
+                        <td key={i} className="py-2 px-3 text-right" style={{ color: G.greyDark }}>—</td>
+                      ))}
+                    </tr>
+                  )}
+                </>
               )
             })()}
           </tbody>
@@ -1800,6 +1815,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
 
   // ── Season actual scores ──
   const [avgTeamScore, setAvgTeamScore] = useState<number | null>(null)
+  const [avgOppScore, setAvgOppScore] = useState<number | null>(null)
 
   // ── Playoffs ──
   const [playoffStarted, setPlayoffStarted] = useState(false)
@@ -1896,9 +1912,10 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
 
   const startSim = () => {
     setSimStarted(true); setGames([]); setDone(false); setSeasonStats([])
-    const { games: allGames, seasonStats: stats, avgTeamScore: ats } = simulateSeason(tr, pr, coach.defGrade, coach.offGrade, simEra)
+    const { games: allGames, seasonStats: stats, avgTeamScore: ats, avgOppScore: aos } = simulateSeason(tr, pr, coach.defGrade, coach.offGrade, simEra)
     setSeasonStats(stats)
     setAvgTeamScore(ats)
+    setAvgOppScore(aos)
     let idx = 0
     intervalRef.current = setInterval(() => {
       setGames(allGames.slice(0, ++idx))
@@ -2118,6 +2135,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
             title="Regular Season Stats"
             subtitle="Era-adjusted, minutes-scaled per-game averages across 82 games"
             teamActualPPG={avgTeamScore ?? undefined}
+            teamActualOppPPG={avgOppScore ?? undefined}
           />
         )}
 
@@ -2307,6 +2325,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
             title="Playoff Stats"
             subtitle={`Era-adjusted, minutes-scaled per-game averages · ${playoffResult.allGames.length} games`}
             teamActualPPG={playoffResult.allGames.reduce((sum, g) => sum + g.teamScore, 0) / playoffResult.allGames.length}
+            teamActualOppPPG={playoffResult.allGames.reduce((sum, g) => sum + g.oppScore, 0) / playoffResult.allGames.length}
           />
         )}
 

@@ -528,10 +528,11 @@ export function simulateSeason(
   coachDefGrade: 'A' | 'B' | 'C' | 'D' | 'F',
   coachOffGrade: 'A' | 'B' | 'C' | 'D' | 'F',
   simEra: Era
-): { wins: number; losses: number; games: boolean[]; seasonStats: PlayerSeasonStats[]; avgTeamScore: number } {
+): { wins: number; losses: number; games: boolean[]; seasonStats: PlayerSeasonStats[]; avgTeamScore: number; avgOppScore: number } {
   const games: boolean[] = []
   let wins = 0
   let totalTeamScore = 0
+  let totalOppScore = 0
 
   const OPP_BASELINE = 36
   const OPP_SPREAD   = 6
@@ -561,11 +562,13 @@ export function simulateSeason(
     const win       = teamRoll > oppRoll
     games.push(win)
     if (win) wins++
-    const { teamScore } = generateGameScore(expectedTeamScore, playerDefFactor, rebFactor, astFactor, defBonus, offBonus, win, simEra)
+    const { teamScore, oppScore } = generateGameScore(expectedTeamScore, playerDefFactor, rebFactor, astFactor, defBonus, offBonus, win, simEra)
     totalTeamScore += teamScore
+    totalOppScore += oppScore
   }
 
   const avgTeamScore = totalTeamScore / 82
+  const avgOppScore = totalOppScore / 82
 
   // Weights: era_stat × eraMod × minScale × fitPenalty — proportional share per player
   const weights = entries.map(({ pr, minScale }) => {
@@ -612,7 +615,7 @@ export function simulateSeason(
     }
   })
 
-  return { wins, losses: 82 - wins, games, seasonStats, avgTeamScore }
+  return { wins, losses: 82 - wins, games, seasonStats, avgTeamScore, avgOppScore }
 }
 
 export const ALL_ERAS: Era[] = ['50s', '60s', '70s', '80s', '90s', '00s', '10s', '20s']
