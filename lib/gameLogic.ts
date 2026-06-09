@@ -672,8 +672,10 @@ export function simulatePlayoffs(
     while (sW < winsNeeded && sL < winsNeeded) {
       const gameInSeries = sW + sL + 1
 
-      // Special performance: 15% chance — boosts win probability slightly
-      const specialTrigger = Math.random() < 0.15
+      // Special performance: base 15% + 1% per ring across the roster (cap 25%)
+      const totalRings = entries.reduce((s, e) => s + (e.pr.player.rings ?? 0), 0)
+      const specialChance = Math.min(0.15 + totalRings * 0.01, 0.25)
+      const specialTrigger = Math.random() < specialChance
       const specialBoost = specialTrigger ? 2 + Math.random() * 4 : 0
 
       const oppRating = oppMean * playerDefFactor + randn() * OPP_SPREAD
