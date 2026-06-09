@@ -455,10 +455,14 @@ function randn(): number {
 }
 
 // playerDefFactor: derived from roster STL+BLK — primary driver of opponent scoring
+// rebFactor: high REB boosts team scoring (2nd-chance pts) and reduces opp scoring (def boards)
+// astFactor: high AST boosts team scoring only (better shot quality)
 // coachDefBonus / coachOffBonus: small ±2% nudge on top of player-driven baselines
 function generateGameScore(
   expectedTeamScore: number,
   playerDefFactor: number,
+  rebFactor: number,
+  astFactor: number,
   coachDefBonus: number,
   coachOffBonus: number,
   win: boolean,
@@ -468,10 +472,12 @@ function generateGameScore(
   const scoreFloor = ERA_SCORE_FLOOR[simEra]
   const oppBase    = ERA_OPP_BASELINE[simEra]
 
-  const adjTeamScore = expectedTeamScore * (1 + coachOffBonus * 0.5)
+  const adjTeamScore = expectedTeamScore * rebFactor * astFactor * (1 + coachOffBonus * 0.5)
   let teamScore = Math.round(Math.min(scoreCap, Math.max(scoreFloor, adjTeamScore + randn() * 7)))
 
-  const oppBaseline = oppBase * playerDefFactor * (1 - coachDefBonus * 0.5)
+  // rebFactor inverted at half weight for defensive rebound effect on opp possessions
+  const rebDefEffect = 1.0 + (1.0 - rebFactor) * 0.5
+  const oppBaseline = oppBase * playerDefFactor * rebDefEffect * (1 - coachDefBonus * 0.5)
   let oppScore = Math.round(Math.min(scoreCap - 5, Math.max(scoreFloor - 4, oppBaseline + randn() * 7)))
 
   if (win && teamScore <= oppScore) {
@@ -483,8 +489,10 @@ function generateGameScore(
   return { teamScore: Math.min(scoreCap, teamScore), oppScore: Math.min(scoreCap, oppScore) }
 }
 
-// League-average defensive index for normalisation (calibrated to typical 9-man roster)
+// League-average indices for normalisation (calibrated to typical 9-man roster)
 const LEAGUE_AVG_DEF_INDEX = 10.5
+const LEAGUE_AVG_REB_INDEX = 38
+const LEAGUE_AVG_AST_INDEX = 22
 
 function calcPlayerDefFactor(entries: { pr: PlayerRating; minScale: number }[]): number {
   const defIndex = entries.reduce((s, { pr, minScale }) => {
@@ -495,6 +503,22 @@ function calcPlayerDefFactor(entries: { pr: PlayerRating; minScale: number }[]):
   // Soft clamp: ±8% swing from league average — players matter but it stays grounded
   const raw = 1.0 + (LEAGUE_AVG_DEF_INDEX - defIndex) / LEAGUE_AVG_DEF_INDEX * 0.08
   return Math.max(0.93, Math.min(1.07, raw))
+}
+
+// High REB → more team possessions (+score) and fewer opp second chances (−opp score)
+function calcRebFactor(entries: { pr: PlayerRating; minScale: number }[]): number {
+  const rebIndex = entries.reduce((s, { pr, minScale }) =>
+    s + (pr.player.REB ?? 0) * pr.eraMod * minScale, 0)
+  const raw = 1.0 + (rebIndex - LEAGUE_AVG_REB_INDEX) / LEAGUE_AVG_REB_INDEX * 0.06
+  return Math.max(0.94, Math.min(1.06, raw))
+}
+
+// High AST → better shot quality → scoring efficiency boost (offense only)
+function calcAstFactor(entries: { pr: PlayerRating; minScale: number }[]): number {
+  const astIndex = entries.reduce((s, { pr, minScale }) =>
+    s + (pr.player.AST ?? 0) * pr.eraMod * minScale, 0)
+  const raw = 1.0 + (astIndex - LEAGUE_AVG_AST_INDEX) / LEAGUE_AVG_AST_INDEX * 0.05
+  return Math.max(0.95, Math.min(1.05, raw))
 }
 
 
@@ -522,9 +546,11 @@ export function simulateSeason(
   })
 
   const expectedTeamScore = Math.max(85, Math.min(132,
-    entries.reduce((s, e) => s + (e.pr.player.PTS ?? 0) * e.pr.eraMod * e.minScale, 0)
+    entries.reduce((s, e) => s + (e.pr.player.PTS ?? 0) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty), 0)
   ))
   const playerDefFactor = calcPlayerDefFactor(entries)
+  const rebFactor = calcRebFactor(entries)
+  const astFactor = calcAstFactor(entries)
   const defBonus = coachBonus(coachDefGrade)
   const offBonus = coachBonus(coachOffGrade)
 
@@ -535,16 +561,16 @@ export function simulateSeason(
     const win       = teamRoll > oppRoll
     games.push(win)
     if (win) wins++
-    const { teamScore } = generateGameScore(expectedTeamScore, playerDefFactor, defBonus, offBonus, win, simEra)
+    const { teamScore } = generateGameScore(expectedTeamScore, playerDefFactor, rebFactor, astFactor, defBonus, offBonus, win, simEra)
     totalTeamScore += teamScore
   }
 
   const avgTeamScore = totalTeamScore / 82
 
-  // Weights: era_stat × eraMod × minScale — proportional share per player
+  // Weights: era_stat × eraMod × minScale × fitPenalty — proportional share per player
   const weights = entries.map(({ pr, minScale }) => {
     const p = pr.player
-    const s = pr.eraMod * minScale
+    const s = pr.eraMod * minScale * (1 - pr.fitPenalty)
     return {
       PTS: (p.PTS ?? 0) * s,
       REB: (p.REB ?? 0) * s,
@@ -635,9 +661,11 @@ export function simulatePlayoffs(
   })
 
   const expectedTeamScore = Math.max(85, Math.min(132,
-    entries.reduce((s, e) => s + (e.pr.player.PTS ?? 0) * e.pr.eraMod * e.minScale, 0)
+    entries.reduce((s, e) => s + (e.pr.player.PTS ?? 0) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty), 0)
   ))
   const playerDefFactor = calcPlayerDefFactor(entries)
+  const rebFactor = calcRebFactor(entries)
+  const astFactor = calcAstFactor(entries)
   const defBonus = coachBonus(coachDefGrade)
   const offBonus = coachBonus(coachOffGrade)
 
@@ -649,9 +677,9 @@ export function simulatePlayoffs(
   const effectiveTeamRating = teamRating * (1 + avgRingBoost)
 
   // Per-player expected averages for game leader generation
-  const expPTS = entries.map(e => (e.pr.player.PTS ?? 0) * e.pr.eraMod * e.minScale)
-  const expREB = entries.map(e => (e.pr.player.REB ?? 0) * e.pr.eraMod * e.minScale)
-  const expAST = entries.map(e => (e.pr.player.AST ?? 0) * e.pr.eraMod * e.minScale)
+  const expPTS = entries.map(e => (e.pr.player.PTS ?? 0) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty))
+  const expREB = entries.map(e => (e.pr.player.REB ?? 0) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty))
+  const expAST = entries.map(e => (e.pr.player.AST ?? 0) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty))
   const totalExpPTS = expPTS.reduce((a, b) => a + b, 0)
 
   // Accumulators — filled per-game from actual generated lines
@@ -679,7 +707,7 @@ export function simulatePlayoffs(
 
       const oppRating = oppMean * playerDefFactor + randn() * OPP_SPREAD
       const win = effectiveTeamRating + specialBoost + randn() * GAME_NOISE > oppRating + randn() * GAME_NOISE
-      const { teamScore, oppScore } = generateGameScore(expectedTeamScore, playerDefFactor, defBonus, offBonus, win, simEra)
+      const { teamScore, oppScore } = generateGameScore(expectedTeamScore, playerDefFactor, rebFactor, astFactor, defBonus, offBonus, win, simEra)
 
       // Per-game individual stat lines (high variance — 60–140% of expected)
       const gamePTS = expPTS.map(e => Math.max(0, e * (0.6 + Math.random() * 0.8)))
@@ -762,7 +790,7 @@ export function simulatePlayoffs(
 
   // STL/BLK/TOV still from weights (not tracked per-game)
   const stlBlkTov = entries.map(({ pr, minScale }) => {
-    const s = pr.eraMod * minScale
+    const s = pr.eraMod * minScale * (1 - pr.fitPenalty)
     return { STL: imputeSTL(pr.player) * s, BLK: imputeBLK(pr.player) * s, TOV: imputeTOV(pr.player) * s }
   })
 

@@ -302,28 +302,8 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra }: { player: Pl
       <div className="mt-2 text-xs text-center" style={{ color: G.greyDark }}>
         {(() => {
           if (!activeEra) return `${player.from_year}–${player.to_year ?? 'present'}`
-          const eraStart = ({ '50s':1950,'60s':1960,'70s':1970,'80s':1980,'90s':1990,'00s':2000,'10s':2010,'20s':2020 } as Record<string,number>)[activeEra]
-          const careerEnd = player.to_year ?? 9999
-          const eraEnd = Math.min(eraStart + 9, careerEnd)
-          const teamsOrdered = player.all_teams_by_era?.[activeEra] as string[] | undefined
-          // For multi-team era players, estimate year ranges per team using GP ÷ 75
-          if (teamsOrdered && teamsOrdered.length > 1 && player.eraTeam) {
-            let cursor = Math.max(player.from_year, eraStart)
-            for (let i = 0; i < teamsOrdered.length; i++) {
-              const t = teamsOrdered[i]
-              const gp = player.stats_by_era?.[`${activeEra}:${t}`]?.GP ?? 75
-              const isLast = i === teamsOrdered.length - 1
-              const teamEnd = isLast ? eraEnd : Math.min(cursor + Math.max(1, Math.ceil(gp / 75)) - 1, eraEnd)
-              if (t === player.eraTeam) {
-                return cursor === teamEnd ? String(cursor) : `${cursor}–${teamEnd}`
-              }
-              cursor = teamEnd + 1
-              if (cursor > eraEnd) break
-            }
-          }
-          const from = Math.max(player.from_year, eraStart)
-          const stillActive = player.to_year == null && activeEra === '20s'
-          return `${from}–${stillActive ? 'present' : eraEnd}`
+          const seasons = Math.max(1, Math.ceil(player.GP / 82))
+          return `${seasons} ${seasons === 1 ? 'season' : 'seasons'}`
         })()}
       </div>
     </div>
@@ -748,7 +728,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
   const [slots, setSlots] = useState<CourtSlot[]>(emptySlots())
   const [spinning, setSpinning] = useState(false)
   const [rosterPool, setRosterPool] = useState<Player[]>([])
-  const [sortBy, setSortBy] = useState<'PTS' | 'REB' | 'AST' | 'TS'>('PTS')
+  const [sortBy, setSortBy] = useState<'PTS' | 'REB' | 'AST' | 'TS' | 'STL' | 'BLK'>('PTS')
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
   const [pendingSlotIdx, setPendingSlotIdx] = useState<number | null>(null)
   const [highlightEmpty, setHighlightEmpty] = useState(false)
@@ -1146,14 +1126,20 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
                           <span style={{ color: sortBy === 'PTS' ? G.gold : G.grey, fontWeight: sortBy === 'PTS' ? 700 : 400 }}>{p.PTS?.toFixed(1)}</span>
                           <span style={{ color: sortBy === 'REB' ? G.gold : G.grey, fontWeight: sortBy === 'REB' ? 700 : 400 }}>{p.REB?.toFixed(1)}</span>
                           <span style={{ color: sortBy === 'AST' ? G.gold : G.grey, fontWeight: sortBy === 'AST' ? 700 : 400 }}>{p.AST?.toFixed(1)}</span>
-                          <span style={{ color: sortBy === 'TS' ? G.gold : G.greyDark, fontWeight: sortBy === 'TS' ? 700 : 400 }}>{ts}%</span>
+                          {sortBy === 'STL' ? (
+                            <span style={{ color: G.gold, fontWeight: 700 }}>{(p.STL ?? 0).toFixed(1)}</span>
+                          ) : sortBy === 'BLK' ? (
+                            <span style={{ color: G.gold, fontWeight: 700 }}>{(p.BLK ?? 0).toFixed(1)}</span>
+                          ) : (
+                            <span style={{ color: sortBy === 'TS' ? G.gold : G.greyDark, fontWeight: sortBy === 'TS' ? 700 : 400 }}>{ts}%</span>
+                          )}
                         </div>
                       </button>
                     )
                   })}
                 </div>
                 <div className="flex justify-end gap-1 mt-1">
-                  {(['PTS', 'REB', 'AST', 'TS'] as const).map(s => (
+                  {(['PTS', 'REB', 'AST', 'TS', 'STL', 'BLK'] as const).map(s => (
                     <button
                       key={s}
                       onClick={() => setSortBy(s)}
