@@ -30,8 +30,8 @@ const BEBAS = { fontFamily: 'var(--font-bebas), "Bebas Neue", impact, sans-serif
 // ─── Tier backgrounds ─────────────────────────────────────────────────────────
 function tierBg(player: Player): string {
   const r = playerBaseRating(player, player.era as Era)
-  if (r >= 54) return 'linear-gradient(145deg, #0f0620 0%, #1e0c3d 40%, #130826 70%, #0a0415 100%)'  // S: amethyst
-  if (r >= 46) return 'linear-gradient(145deg, #2e2000 0%, #6b4800 28%, #3e2a00 60%, #1c1200 100%)'  // A: gold
+  if (r >= 56) return 'linear-gradient(145deg, #0f0620 0%, #1e0c3d 40%, #130826 70%, #0a0415 100%)'  // S: amethyst
+  if (r >= 47) return 'linear-gradient(145deg, #2e2000 0%, #6b4800 28%, #3e2a00 60%, #1c1200 100%)'  // A: gold
   if (r >= 38) return 'linear-gradient(145deg, #001508 0%, #002d12 40%, #001c0a 70%, #000e05 100%)'  // B: emerald
   if (r >= 31) return 'linear-gradient(145deg, #040e1c 0%, #0a1e3a 40%, #061428 70%, #020810 100%)'  // C: sapphire
   if (r >= 24) return 'linear-gradient(145deg, #1a0900 0%, #2e1200 40%, #1e0c00 70%, #100600 100%)'  // D: bronze
@@ -535,6 +535,27 @@ function HowToPlayModal({ onClose }: { onClose: () => void }) {
               </div>
             </div>
           ))}
+
+          {/* Tier legend */}
+          <div style={{ borderTop: `1px solid ${G.border}`, paddingTop: 20 }}>
+            <div style={{ ...BEBAS, fontSize: 16, color: G.white, letterSpacing: '0.15em', marginBottom: 12 }}>PLAYER TIERS</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {[
+                { label: 'S', color: '#9b6dff', bg: 'linear-gradient(90deg, #1e0c3d, #0a0415)', desc: 'All-time legends — multi-MVP, Hall of Fame impact' },
+                { label: 'A', color: '#C9A84C', bg: 'linear-gradient(90deg, #6b4800, #1c1200)', desc: 'Star players — All-Star caliber, franchise cornerstones' },
+                { label: 'B', color: '#4caf78', bg: 'linear-gradient(90deg, #002d12, #000e05)', desc: 'Solid starters — strong contributors every night' },
+                { label: 'C', color: '#5b8fd4', bg: 'linear-gradient(90deg, #0a1e3a, #020810)', desc: 'Quality rotation players — reliable in their role' },
+                { label: 'D', color: '#c47a35', bg: 'linear-gradient(90deg, #2e1200, #100600)', desc: 'Role players and specialists' },
+                { label: 'E', color: '#666',    bg: 'linear-gradient(90deg, #181818, #0e0e0e)', desc: 'Bench depth — limited but serviceable' },
+                { label: 'F', color: '#444',    bg: '#0a0a0a',                                   desc: 'Deep bench / minimal impact' },
+              ].map(t => (
+                <div key={t.label} style={{ display: 'flex', alignItems: 'center', gap: 10, background: t.bg, border: `1px solid ${G.border}`, padding: '6px 10px' }}>
+                  <div style={{ ...BEBAS, fontSize: 18, color: t.color, width: 18, flexShrink: 0, textAlign: 'center' }}>{t.label}</div>
+                  <div style={{ fontSize: 12, color: G.grey, lineHeight: 1.4 }}>{t.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
