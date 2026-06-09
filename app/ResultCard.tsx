@@ -231,6 +231,7 @@ const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
           {playoffOutcome?.champion ? (
             <div style={{
               flexShrink: 0,
+              marginTop: -5,
               marginBottom: 14,
               background: 'rgba(201,168,76,0.10)',
               border: `2px solid ${C.gold}`,
