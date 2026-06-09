@@ -146,42 +146,40 @@ body {
 
 /* ── Court slot animations ───────────────────────────────────────────────── */
 
-/* Pulsing border overlay while a player is staged (pending) */
+/* Pulsing background while a player is staged (pending) */
 @keyframes slot-pending-pulse {
-  0%, 100% { opacity: 0.3; }
-  50%       { opacity: 1; }
+  0%, 100% { background: rgba(201, 168, 76, 0.04); }
+  50%       { background: rgba(201, 168, 76, 0.14); }
 }
 .slot-pending-glow {
   position: absolute;
-  inset: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   pointer-events: none;
-  border: 1px solid rgba(201, 168, 76, 0.65);
-  animation: slot-pending-pulse 1.6s ease-in-out infinite;
-  z-index: 2;
+  border: 1px solid rgba(201, 168, 76, 0.55);
+  animation: slot-pending-pulse 1.4s ease-in-out infinite;
+  z-index: 1;
 }
 
-/* Slide-up enter for pending player content */
+/* Slide-up enter when player content appears in a slot */
 @keyframes slot-player-enter {
-  0%   { opacity: 0; transform: translateY(10px); }
-  100% { opacity: 0.7; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 0.8; transform: translateY(0); }
 }
 .slot-player-enter {
-  animation: slot-player-enter 0.22s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: slot-player-enter 0.2s ease-out forwards;
 }
 
-/* One-shot gold flash when a player is locked in */
+/* One-shot bright flash on lock */
 @keyframes slot-lock-flash {
-  0%   { opacity: 1; }
-  100% { opacity: 0; }
+  0%   { background: rgba(201, 168, 76, 0.5); box-shadow: inset 0 0 40px 12px rgba(201, 168, 76, 0.35); }
+  100% { background: transparent; box-shadow: none; }
 }
 .slot-lock-overlay {
   position: absolute;
-  inset: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   pointer-events: none;
-  background: rgba(201, 168, 76, 0.32);
-  box-shadow: inset 0 0 35px 8px rgba(201, 168, 76, 0.28);
-  animation: slot-lock-flash 0.6s ease-out forwards;
-  z-index: 3;
+  animation: slot-lock-flash 0.55s ease-out forwards;
+  z-index: 4;
 }
 
 /* ── Modal close button ──────────────────────────────────────────────────── */

@@ -336,15 +336,8 @@ function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, acti
   pendingPlayer?: Player | null; activePlayer?: Player | null; simEra?: Era; justLocked?: boolean
 }) {
   const [dragOver, setDragOver] = useState(false)
-  const [pendingKey, setPendingKey] = useState(0)
-  const wasPendingRef = useRef(false)
   const confirmed = slot.player
   const isPending = !confirmed && !!pendingPlayer
-
-  useEffect(() => {
-    if (isPending && !wasPendingRef.current) setPendingKey(k => k + 1)
-    wasPendingRef.current = isPending
-  }, [isPending])
 
   const { label: pendingFitLabel } = pendingPlayer ? calcFitPenalty(pendingPlayer, slot.position) : { label: null }
 
@@ -435,7 +428,7 @@ function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, acti
           </div>
         </div>
       ) : isPending && pendingPlayer ? (
-        <div key={pendingKey} className="flex flex-col items-center px-2 pb-2 pt-5 gap-1.5 slot-player-enter">
+        <div className="flex flex-col items-center px-2 pb-2 pt-5 gap-1.5 slot-player-enter">
           <PlayerHeadshot personId={pendingPlayer.person_id} size={52} initial={pendingPlayer.position?.[0]} />
           <div className="w-full text-center min-w-0">
             <div className="font-semibold text-white leading-tight truncate" style={{ fontSize: 11 }}>{pendingPlayer.full_name}</div>
