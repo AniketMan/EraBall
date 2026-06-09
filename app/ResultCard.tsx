@@ -174,7 +174,7 @@ const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: C.gold }} />
 
         <div style={{
-          padding: '42px 50px 32px',
+          padding: '36px 50px 24px',
           height: '100%',
           boxSizing: 'border-box',
           display: 'flex',
@@ -187,7 +187,7 @@ const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
             alignItems: 'flex-end',
             justifyContent: 'space-between',
             flexShrink: 0,
-            paddingBottom: 30,
+            paddingBottom: 20,
           }}>
             {/* Logo */}
             <div style={{
@@ -298,7 +298,7 @@ const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
             color: C.gold,
             letterSpacing: '0.4em',
             flexShrink: 0,
-            marginBottom: 10,
+            marginBottom: 7,
           }}>
             STARTING FIVE
           </div>
@@ -309,12 +309,12 @@ const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
             gap: 8,
             flex: 1,
             minHeight: 0,
-            marginBottom: 12,
+            marginBottom: 8,
           }}>
             {starters.map(s => {
               const allAwards = [
                 ...(playerAwards[s.player.person_id] ?? []),
-                ...(finalsMVPId === s.player.person_id ? ['FIN MVP'] : []),
+                ...(finalsMVPId === s.player.person_id ? ['FMVP'] : []),
               ]
               const statRows = [
                 { lbl: 'PPG', val: s.PTS.toFixed(1), lead: s.PTS === maxPPG },
@@ -420,9 +420,9 @@ const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
           <div style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: 5,
+            gap: 4,
             flexShrink: 0,
-            marginBottom: 14,
+            marginBottom: 10,
           }}>
             {bench.map(s => (
               <div
@@ -434,7 +434,7 @@ const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
                   background: C.surface2,
                   border: `1px solid ${C.border}`,
                   padding: '0 14px',
-                  minHeight: 38,
+                  minHeight: 32,
                 }}
               >
                 {/* Left: name + era + awards */}
@@ -462,7 +462,7 @@ const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
                   </span>
                   {[
                     ...(playerAwards[s.player.person_id] ?? []),
-                    ...(finalsMVPId === s.player.person_id ? ['FIN MVP'] : []),
+                    ...(finalsMVPId === s.player.person_id ? ['FMVP'] : []),
                   ].map(a => (
                     <span key={a} style={{
                       fontFamily: INTER,
