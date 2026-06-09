@@ -231,7 +231,7 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra }: { player: Pl
           <div className="min-w-0">
             <div className="font-bold text-white text-base leading-tight truncate">{player.full_name}</div>
             <div className="text-xs mt-0.5 uppercase tracking-wide" style={{ color: G.grey }}>
-              {player.position} · {eraLabel(player.era)} · {displayEra ? playerTeamForEra(player, displayEra) : player.team_abbreviation}
+              {player.position} · {eraLabel(player.era)} · {player.eraTeam ?? (displayEra ? playerTeamForEra(player, displayEra) : player.team_abbreviation)}
             </div>
           </div>
           <div className="flex flex-col items-end gap-1 ml-2 shrink-0">
@@ -303,11 +303,27 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra }: { player: Pl
         {(() => {
           if (!activeEra) return `${player.from_year}–${player.to_year ?? 'present'}`
           const eraStart = ({ '50s':1950,'60s':1960,'70s':1970,'80s':1980,'90s':1990,'00s':2000,'10s':2010,'20s':2020 } as Record<string,number>)[activeEra]
-          const from = Math.max(player.from_year, eraStart)
           const careerEnd = player.to_year ?? 9999
-          const to = Math.min(careerEnd, eraStart + 9)
+          const eraEnd = Math.min(eraStart + 9, careerEnd)
+          const teamsOrdered = player.all_teams_by_era?.[activeEra] as string[] | undefined
+          // For multi-team era players, estimate year ranges per team using GP ÷ 75
+          if (teamsOrdered && teamsOrdered.length > 1 && player.eraTeam) {
+            let cursor = Math.max(player.from_year, eraStart)
+            for (let i = 0; i < teamsOrdered.length; i++) {
+              const t = teamsOrdered[i]
+              const gp = player.stats_by_era?.[`${activeEra}:${t}`]?.GP ?? 75
+              const isLast = i === teamsOrdered.length - 1
+              const teamEnd = isLast ? eraEnd : Math.min(cursor + Math.max(1, Math.ceil(gp / 75)) - 1, eraEnd)
+              if (t === player.eraTeam) {
+                return cursor === teamEnd ? String(cursor) : `${cursor}–${teamEnd}`
+              }
+              cursor = teamEnd + 1
+              if (cursor > eraEnd) break
+            }
+          }
+          const from = Math.max(player.from_year, eraStart)
           const stillActive = player.to_year == null && activeEra === '20s'
-          return `${from}–${stillActive ? 'present' : to}`
+          return `${from}–${stillActive ? 'present' : eraEnd}`
         })()}
       </div>
     </div>
@@ -1136,7 +1152,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
           {/* ── Right: Court ── */}
           <div style={{ background: G.black, border: `1px solid ${G.border}`, padding: '20px' }}>
             {/* Half-court line art */}
-            <div className="relative mb-5" style={{ height: 4 }}>
+            <div className="relative mb-8" style={{ height: 4 }}>
               <div className="absolute inset-x-0 top-0 h-px" style={{ background: G.border }} />
               <div className="absolute left-1/2 -translate-x-1/2 top-0 w-16 h-8 rounded-b-full"
                 style={{ border: `1px solid ${G.border}`, borderTop: 'none' }} />

@@ -183,8 +183,8 @@ export function withEraStats(player: Player, era: Era, team?: string): Player {
     (team ? player.stats_by_era?.[`${era}:${team}`] : undefined) ??
     player.stats_by_era?.[era]
   if (!eraData) return { ...player, era }
-  const { team: _team, GP, ...stats } = eraData
-  return { ...player, era, GP, ...stats }
+  const { team: eraTeam, GP, ...stats } = eraData
+  return { ...player, era, eraTeam, GP, ...stats }
 }
 
 export function playerMatchesEra(player: Player, era: Era): boolean {

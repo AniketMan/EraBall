@@ -35,6 +35,7 @@ export interface Player {
   all_teams_by_era?: Partial<Record<Era, string[]>>
   stats_by_era?: Record<string, EraStats>  // keyed by "era:team" e.g. "20s:MIL"
   rings?: number
+  eraTeam?: string  // set by withEraStats to reflect which team's era stats are loaded
 }
 
 export interface Coach {
