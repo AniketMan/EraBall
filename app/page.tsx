@@ -1234,12 +1234,16 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
                       <button
                         key={p.person_id}
                         onClick={() => { setSelectedPlayer(p); setHighlightEmpty(true); setPendingSlotIdx(null) }}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 text-left roster-row${isSel ? ' roster-row--selected' : ''}`}
+                        className={`w-full flex items-center gap-3 px-3 text-left roster-row${isSel ? ' roster-row--selected' : ''}`}
                         style={{
                           background: isSel ? `${G.gold}18` : G.surface,
                           borderBottom: `1px solid ${G.borderSub}`,
                           borderLeft: isSel ? `2px solid ${G.gold}` : '2px solid transparent',
+                          paddingTop: 10, paddingBottom: 10,
+                          transition: 'background 0.15s ease, border-left-color 0.15s ease, padding 0.15s ease',
                         }}
+                        onMouseEnter={e => { if (!isSel) { e.currentTarget.style.paddingTop = '14px'; e.currentTarget.style.paddingBottom = '14px'; } }}
+                        onMouseLeave={e => { e.currentTarget.style.paddingTop = '10px'; e.currentTarget.style.paddingBottom = '10px'; }}
                       >
                         <PlayerHeadshot personId={p.person_id} size={36} initial={p.position?.[0]} />
                         <div className="flex-1 min-w-0">
