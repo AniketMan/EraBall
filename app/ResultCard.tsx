@@ -1,7 +1,8 @@
 'use client'
 
 import React from 'react'
-import type { PlayerSeasonStats, Coach, Era } from '../lib/types'
+import type { PlayerSeasonStats, Coach, Era, Player } from '../lib/types'
+import { playerBaseRating } from '../lib/gameLogic'
 
 // Literal font strings — no CSS variables so html2canvas resolves them reliably
 const BEBAS = '"Bebas Neue", Impact, sans-serif'
@@ -20,6 +21,17 @@ const C = {
   grey:       '#888888',
   greyDark:   '#444444',
   red:        '#CC3333',
+}
+
+function tierBg(player: Player): string {
+  const r = playerBaseRating(player, player.era as Era)
+  if (r >= 54) return 'linear-gradient(145deg, #0f0620 0%, #1e0c3d 40%, #130826 70%, #0a0415 100%)'
+  if (r >= 46) return 'linear-gradient(145deg, #2e2000 0%, #6b4800 28%, #3e2a00 60%, #1c1200 100%)'
+  if (r >= 38) return 'linear-gradient(145deg, #001508 0%, #002d12 40%, #001c0a 70%, #000e05 100%)'
+  if (r >= 31) return 'linear-gradient(145deg, #040e1c 0%, #0a1e3a 40%, #061428 70%, #020810 100%)'
+  if (r >= 24) return 'linear-gradient(145deg, #1a0900 0%, #2e1200 40%, #1e0c00 70%, #100600 100%)'
+  if (r >= 16) return 'linear-gradient(145deg, #0e0e0e 0%, #181818 50%, #0e0e0e 100%)'
+  return '#0a0a0a'
 }
 
 interface PlayoffOutcome {
@@ -331,7 +343,7 @@ const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
                   key={s.player.person_id}
                   style={{
                     flex: 1,
-                    background: C.surface,
+                    background: tierBg(s.player),
                     border: `1px solid ${C.border}`,
                     display: 'flex',
                     flexDirection: 'column',
@@ -432,7 +444,7 @@ const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  background: C.surface2,
+                  background: tierBg(s.player),
                   border: `1px solid ${C.border}`,
                   padding: '0 14px',
                   minHeight: 32,
