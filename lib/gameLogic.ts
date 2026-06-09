@@ -140,6 +140,12 @@ const PLAYER_ANCHORS: Record<string, AnchorType> = {
   'Dikembe Mutombo': 'def',
   'Rudy Gobert':     'def',
   'Aaron Gordon':    'def',
+  // Offensive Anchors (+8)
+  'Nikola Jokic':    'off',
+  'LeBron James':    'off',
+  'Stephen Curry':   'off',
+  'Steve Nash':      'off',
+  'Chris Paul':      'off',
 }
 
 export function applyAnchors(player: Player): Player {
