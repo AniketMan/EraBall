@@ -235,7 +235,7 @@ const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
               marginBottom: 14,
               background: 'rgba(201,168,76,0.10)',
               border: `2px solid ${C.gold}`,
-              padding: '12px 24px',
+              padding: '4px 24px',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
                 <div style={{ height: 2, flex: 1, background: `linear-gradient(to right, transparent, ${C.gold})` }} />
