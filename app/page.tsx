@@ -412,10 +412,15 @@ function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, acti
           <div className="w-full text-center min-w-0">
             <div className="font-semibold text-white leading-tight truncate" style={{ fontSize: 11 }}>{confirmed.full_name}</div>
             <div style={{ color: G.grey, fontSize: 10 }} className="mt-0.5 truncate">{confirmed.position} · {eraLabel(confirmed.era)}</div>
-            <div className="flex justify-center gap-2 mt-1" style={{ fontSize: 11 }}>
+            {/* Desktop: pts · reb r · ast a */}
+            <div className="hidden md:flex justify-center gap-2 mt-1" style={{ fontSize: 11 }}>
               <span style={{ color: G.gold, fontWeight: 700 }}>{confirmed.PTS?.toFixed(1)}</span>
               <span style={{ color: G.grey }}>{confirmed.REB?.toFixed(1)}r</span>
               <span style={{ color: G.grey }}>{confirmed.AST?.toFixed(1)}a</span>
+            </div>
+            {/* Mobile: pts/reb/ast */}
+            <div className="flex md:hidden justify-center mt-1" style={{ fontSize: 11, color: G.gold, fontWeight: 700 }}>
+              {confirmed.PTS?.toFixed(1)}<span style={{ color: G.greyDark }}>/</span>{confirmed.REB?.toFixed(1)}<span style={{ color: G.greyDark }}>/</span>{confirmed.AST?.toFixed(1)}
             </div>
             {slot.fitLabel && <div className="mt-1" style={{ fontSize: 10, color: fitLabelColor(slot.fitLabel) }}>{slot.fitLabel}</div>}
             {simEra && (() => { const mod = calcEraModifier(confirmed, simEra); return (
