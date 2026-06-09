@@ -199,9 +199,8 @@ export function eraDistance(playerEra: Era, simEra: Era): number {
 }
 
 export function calcTS(player: Player): number {
-  // True Shooting % approximation from available stats
-  // TS% = PTS / (2 * (FGA + 0.44 * FTA)) — we don't have FGA/FTA per game
-  // Use FG_PCT as proxy scaled to ~0.5 range
+  if (player.TS_PCT != null) return player.TS_PCT
+  // Fallback for pre-era-stats players (imputed/historical): approximate from FG%
   if (player.FG_PCT == null) return 0.45
   return player.FG_PCT * 0.9 + (player.FT_PCT ?? 0.7) * 0.1
 }
