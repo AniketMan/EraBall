@@ -1212,7 +1212,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
                   <GoldLabel>{lockedTeam} · {lockedEra ? eraLabel(lockedEra) : ''}</GoldLabel>
                   <GoldLabel>{rosterPool.length} available</GoldLabel>
                 </div>
-                <div style={{ border: `1px solid ${G.border}`, maxHeight: 220, overflowY: 'auto' }}>
+                <div style={{ border: `1px solid ${G.border}`, maxHeight: 220, overflowY: 'auto', overflowX: 'hidden' }}>
                   {[...rosterPool].sort((a, b) => {
                     if (sortBy === 'SPECIAL') {
                       const isSpecial = (p: Player) =>
