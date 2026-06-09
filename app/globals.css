@@ -126,11 +126,13 @@ body {
 /* ── Roster player rows ──────────────────────────────────────────────────── */
 
 .roster-row {
-  transition: background 0.1s ease, border-left-color 0.1s ease;
+  transition: background 0.15s ease, border-left-color 0.15s ease, transform 0.15s ease;
+  transform-origin: left center;
 }
 .roster-row:not(.roster-row--selected):hover {
   background: rgba(201, 168, 76, 0.1) !important;
   border-left-color: rgba(201, 168, 76, 0.45) !important;
+  transform: scaleX(1.012) scaleY(1.04);
 }
 
 /* ── Court slot ──────────────────────────────────────────────────────────── */
