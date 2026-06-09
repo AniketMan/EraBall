@@ -31,7 +31,7 @@ const BEBAS = { fontFamily: 'var(--font-bebas), "Bebas Neue", impact, sans-serif
 function tierBg(player: Player): string {
   const r = playerBaseRating(player, player.era as Era)
   if (r >= 54) return 'linear-gradient(145deg, #0f0620 0%, #1e0c3d 40%, #130826 70%, #0a0415 100%)'  // S: amethyst
-  if (r >= 46) return 'linear-gradient(145deg, #1a1000 0%, #302000 40%, #1e1400 70%, #110c00 100%)'  // A: deep gold
+  if (r >= 46) return 'linear-gradient(145deg, #2e2000 0%, #6b4800 28%, #3e2a00 60%, #1c1200 100%)'  // A: gold
   if (r >= 38) return 'linear-gradient(145deg, #001508 0%, #002d12 40%, #001c0a 70%, #000e05 100%)'  // B: emerald
   if (r >= 31) return 'linear-gradient(145deg, #040e1c 0%, #0a1e3a 40%, #061428 70%, #020810 100%)'  // C: sapphire
   if (r >= 24) return 'linear-gradient(145deg, #1a0900 0%, #2e1200 40%, #1e0c00 70%, #100600 100%)'  // D: bronze
