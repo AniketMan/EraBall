@@ -232,10 +232,10 @@ export function imputeTOV(player: Player): number {
 
 export function playerBaseRating(player: Player, simEra?: Era): number {
   const ts = calcTS(player)
-  // No 3PT bonus in pre-3PT eras — the line didn't exist before 1979-80
+  // FG3M captures 3-point volume; zero in pre-3PT eras. TS% already handles efficiency.
   const threePtBonus = (!simEra || PRE_THREE_PT_ERAS.includes(simEra))
     ? 0
-    : (player.FG3_PCT ?? 0) * 15
+    : (player.FG3M ?? 0) * 1.5
   return (
     (player.PTS ?? 0)     * 1.0 +
     (player.REB ?? 0)     * 0.7 +

@@ -30,6 +30,7 @@ export interface Player {
   FG3_PCT: number | null
   FT_PCT: number | null
   TS_PCT?: number | null
+  FG3M?: number | null
   imputed_stats?: string[]
   flexPositions?: SlotPosition[]  // FLEX tag: these starter slots have no fit penalty
   teams_by_era?: Partial<Record<Era, string>>
@@ -91,6 +92,7 @@ export interface EraStats {
   FG3_PCT: number | null
   FT_PCT: number | null
   TS_PCT?: number | null
+  FG3M?: number | null
 }
 
 export interface PlayerRating {
