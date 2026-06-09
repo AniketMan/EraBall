@@ -662,7 +662,8 @@ export function simulateSeason(
     const v = seasonVar[i]
     // Role stretch: player forced into heavier usage than their natural level
     const naturalMPG     = Math.min(38, Math.max(10, (pr.player.PTS ?? 0) * 1.6))
-    const stretchPenalty = -Math.max(0, (assignedMPG - naturalMPG) / 28) * 0.06
+    const stretchMax     = Math.max(0, (assignedMPG - naturalMPG) / 28) * 0.06
+    const stretchPenalty = stretchMax > 0 ? -(stretchMax * Math.random()) : 0
     const fgCtx  = spacingMod + playmakingMod + teamQualityMod + stretchPenalty
     const ftCtx  = stretchPenalty * 0.4   // FT% mostly skill, only slightly role-affected
     return {
@@ -896,7 +897,8 @@ export function simulatePlayoffs(
   const playoffStats: PlayerSeasonStats[] = entries.map(({ pr, assignedMPG }, i) => {
     const effBoost       = playoffRingBoost(pr.player.rings ?? 0) * 0.5
     const naturalMPG     = Math.min(38, Math.max(10, (pr.player.PTS ?? 0) * 1.6))
-    const stretchPenalty = -Math.max(0, (assignedMPG - naturalMPG) / 28) * 0.06
+    const stretchMax     = Math.max(0, (assignedMPG - naturalMPG) / 28) * 0.06
+    const stretchPenalty = stretchMax > 0 ? -(stretchMax * Math.random()) : 0
     const fgCtx  = pSpacingMod + pPlaymakingMod + pTeamQualityMod + stretchPenalty
     const ftCtx  = stretchPenalty * 0.4
     return {
@@ -922,7 +924,8 @@ export function simulatePlayoffs(
   const finalsStats: PlayerSeasonStats[] = entries.map(({ pr, assignedMPG }, i) => {
     const effBoost       = playoffRingBoost(pr.player.rings ?? 0) * 0.5
     const naturalMPG     = Math.min(38, Math.max(10, (pr.player.PTS ?? 0) * 1.6))
-    const stretchPenalty = -Math.max(0, (assignedMPG - naturalMPG) / 28) * 0.06
+    const stretchMax     = Math.max(0, (assignedMPG - naturalMPG) / 28) * 0.06
+    const stretchPenalty = stretchMax > 0 ? -(stretchMax * Math.random()) : 0
     const fgCtx  = pSpacingMod + pPlaymakingMod + pTeamQualityMod + stretchPenalty
     const ftCtx  = stretchPenalty * 0.4
     return {
