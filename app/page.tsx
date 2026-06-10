@@ -446,16 +446,6 @@ function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, acti
       onDrop={() => { setDragOver(false); onDrop() }}
     >
       {isPending && <div className="slot-pending-glow" />}
-      {isPending && (
-        <>
-          <div className="absolute bottom-1.5 left-0 right-0 text-center sm:hidden" style={{ fontSize: 8, letterSpacing: '0.12em', color: G.gold, textTransform: 'uppercase', zIndex: 2 }}>
-            Pending · Tap to lock
-          </div>
-          <div className="absolute bottom-1.5 left-0 right-0 text-center hidden sm:block" style={{ fontSize: 8, letterSpacing: '0.12em', color: G.gold, textTransform: 'uppercase', zIndex: 2 }}>
-            Pending · Click to lock
-          </div>
-        </>
-      )}
       {/* Position label + minutes (bench only) */}
       <div className="absolute top-1 left-1.5" style={{ lineHeight: 1 }}>
         <div style={{ ...BEBAS, fontSize: 11, letterSpacing: '0.1em' }}>
@@ -533,7 +523,8 @@ function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, acti
                 Era Fit {Math.round(mod * 100)}%
               </div>
             ) })()}
-            <div style={{ fontSize: 10, color: G.goldDim }} className="mt-1">pending</div>
+            <div style={{ fontSize: 9, color: G.goldDim, letterSpacing: '0.08em', textTransform: 'uppercase' }} className="mt-1 sm:hidden">Pending · Tap to lock</div>
+            <div style={{ fontSize: 9, color: G.goldDim, letterSpacing: '0.08em', textTransform: 'uppercase' }} className="mt-1 hidden sm:block">Pending · Click to lock</div>
           </div>
         </div>
       ) : (
