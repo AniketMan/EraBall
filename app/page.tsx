@@ -446,13 +446,12 @@ function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, acti
       onDrop={() => { setDragOver(false); onDrop() }}
     >
       {isPending && <div className="slot-pending-glow" />}
-      {/* Position label + minutes */}
+      {/* Position label + minutes (bench only) */}
       <div className="absolute top-1 left-1.5" style={{ lineHeight: 1 }}>
         <div style={{ ...BEBAS, color: G.goldDim, fontSize: 11, letterSpacing: '0.1em' }}>
-          {slot.position}
-        </div>
-        <div style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: 8, color: G.grey, letterSpacing: '0.05em', marginTop: 1 }}>
-          {SLOT_MPG[slot.position]} MIN
+          {slot.position.startsWith('B')
+            ? `${slot.position} · ${SLOT_MPG[slot.position]} MIN`
+            : slot.position}
         </div>
       </div>
 
@@ -1374,8 +1373,9 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
                 style={{ background: G.border, marginTop: -3 }} />
             </div>
 
-            <div className="text-xs uppercase tracking-[0.2em] mb-4 text-center" style={{ color: G.greyDark }}>
-              Starting Five
+            <div className="mb-4 text-center">
+              <div className="text-xs uppercase tracking-[0.2em]" style={{ color: G.greyDark }}>Starting Five</div>
+              <div className="text-xs mt-0.5" style={{ color: G.greyDark, opacity: 0.6, letterSpacing: '0.04em' }}>Starters · 35 min each</div>
             </div>
             <div className="grid grid-cols-5 gap-1.5 mb-4">
               {starterSlots.map((slot, i) => (
