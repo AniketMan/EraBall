@@ -1665,13 +1665,14 @@ function StatsTable({ stats, simEra, title, subtitle, teamActualPPG, teamActualO
               const maxAST = Math.max(...stats.map(s => s.AST))
               const maxSTL = Math.max(...stats.map(s => s.STL))
               const maxBLK = Math.max(...stats.map(s => s.BLK))
-              const maxTS  = Math.max(...stats.map(s => calcTS(s.player)))
+              const simTS  = (s: typeof stats[0]) => s.FG_PCT * 0.9 + s.FT_PCT * 0.1
+              const maxTS  = Math.max(...stats.map(simTS))
               const maxFG  = Math.max(...stats.map(s => s.FG_PCT))
               const maxFG3 = Math.max(...stats.filter(s => s.FG3_PCT != null).map(s => s.FG3_PCT!))
               const maxFT  = Math.max(...stats.map(s => s.FT_PCT))
               return stats.map(s => {
               const isStarter = !s.slot.startsWith('B')
-              const ts = calcTS(s.player)
+              const ts = simTS(s)
               const gl = (val: number, max: number) => val === max ? G.gold : G.grey
               return (
                 <tr key={s.player.person_id} style={{ borderBottom: `1px solid ${G.borderSub}` }}>
@@ -1713,7 +1714,7 @@ function StatsTable({ stats, simEra, title, subtitle, teamActualPPG, teamActualO
               // Percentages weighted by minutes
               const wFG  = sum(s => s.FG_PCT * s.MPG) / totalMPG
               const wFT  = sum(s => s.FT_PCT * s.MPG) / totalMPG
-              const wTS  = sum(s => calcTS(s.player) * s.MPG) / totalMPG
+              const wTS  = sum(s => simTS(s) * s.MPG) / totalMPG
               const fg3s = stats.filter(s => s.FG3_PCT != null)
               const wFG3MPG = fg3s.reduce((acc, s) => acc + s.MPG, 0)
               const wFG3 = wFG3MPG > 0 ? fg3s.reduce((acc, s) => acc + s.FG3_PCT! * s.MPG, 0) / wFG3MPG : null

@@ -511,7 +511,7 @@ function randn(): number {
 // Efficiency noise — guarantees at least ±1pp so simulated % never matches the card exactly
 function effNoise(sigma: number): number {
   const n = randn() * sigma
-  const MIN = 0.010
+  const MIN = 0.020
   return Math.abs(n) < MIN ? (Math.random() < 0.5 ? -MIN : MIN) : n
 }
 
