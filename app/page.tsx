@@ -494,9 +494,9 @@ function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, acti
               <span style={{ color: G.grey }}>{confirmed.REB?.toFixed(1)}r</span>
               <span style={{ color: G.grey }}>{confirmed.AST?.toFixed(1)}a</span>
             </div>
-            {/* Mobile: pts/reb/ast rounded up to nearest 10 */}
+            {/* Mobile: pts/reb/ast rounded to nearest whole number */}
             <div className="flex md:hidden justify-center mt-1" style={{ fontSize: 11, color: G.gold, fontWeight: 700 }}>
-              {Math.ceil((confirmed.PTS ?? 0) / 10) * 10}<span style={{ color: G.greyDark }}>/</span>{Math.ceil((confirmed.REB ?? 0) / 10) * 10}<span style={{ color: G.greyDark }}>/</span>{Math.ceil((confirmed.AST ?? 0) / 10) * 10}
+              {Math.round(confirmed.PTS ?? 0)}<span style={{ color: G.greyDark }}>/</span>{Math.round(confirmed.REB ?? 0)}<span style={{ color: G.greyDark }}>/</span>{Math.round(confirmed.AST ?? 0)}
             </div>
             {slot.fitLabel && <div className="mt-1" style={{ fontSize: 10, color: fitLabelColor(slot.fitLabel) }}>{slot.fitLabel}</div>}
             {simEra && (() => { const mod = calcEraModifier(confirmed, simEra); return (
