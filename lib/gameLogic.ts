@@ -153,6 +153,7 @@ const PLAYER_ANCHORS: Record<string, AnchorType> = {
   'John Stockton':   'off',
   'James Harden':    'off',
   'Shai Gilgeous-Alexander': 'off',
+  'Joel Embiid':             'off',
   // Defensive Anchors (+12)
   'Tony Allen':      'def',
   'Scottie Pippen':  'def',
@@ -245,6 +246,40 @@ export function calcTS(player: Player): number {
   return player.FG_PCT * 0.9 + (player.FT_PCT ?? 0.7) * 0.1
 }
 
+export interface OppTeamStats {
+  REB: number; AST: number; STL: number | null; BLK: number | null; TOV: number
+  FG_PCT: number; FG3_PCT: number | null; FT_PCT: number; TS_PCT: number
+}
+
+export function genOppTeamStats(avgOppScore: number, era: Era): OppTeamStats {
+  type B = { ppg: number; reb: number; ast: number; stl: number | null; blk: number | null; tov: number; fg: number; fg3: number | null; ft: number; ts: number }
+  const BL: Record<Era, B> = {
+    '50s': { ppg: 79,  reb: 65, ast: 14, stl: null, blk: null, tov: 18, fg: 0.372, fg3: null,  ft: 0.675, ts: 0.480 },
+    '60s': { ppg: 107, reb: 58, ast: 18, stl: null, blk: null, tov: 17, fg: 0.440, fg3: null,  ft: 0.718, ts: 0.520 },
+    '70s': { ppg: 105, reb: 46, ast: 24, stl: 8.0,  blk: 5.0,  tov: 17, fg: 0.458, fg3: null,  ft: 0.728, ts: 0.530 },
+    '80s': { ppg: 110, reb: 43, ast: 26, stl: 8.5,  blk: 5.2,  tov: 15, fg: 0.477, fg3: 0.278, ft: 0.748, ts: 0.548 },
+    '90s': { ppg: 99,  reb: 43, ast: 24, stl: 8.6,  blk: 5.3,  tov: 15, fg: 0.454, fg3: 0.340, ft: 0.742, ts: 0.540 },
+    '00s': { ppg: 97,  reb: 42, ast: 22, stl: 7.8,  blk: 5.0,  tov: 13, fg: 0.450, fg3: 0.350, ft: 0.740, ts: 0.538 },
+    '10s': { ppg: 105, reb: 43, ast: 24, stl: 7.8,  blk: 5.1,  tov: 14, fg: 0.460, fg3: 0.362, ft: 0.760, ts: 0.555 },
+    '20s': { ppg: 114, reb: 44, ast: 28, stl: 8.0,  blk: 5.2,  tov: 14, fg: 0.470, fg3: 0.362, ft: 0.778, ts: 0.570 },
+  }
+  const b = BL[era]
+  const scale = avgOppScore / b.ppg
+  const cn = (r: number) => (Math.random() - 0.5) * r
+  const pn = () => randn() * 0.018
+  return {
+    REB:     Math.max(28, +(b.reb * scale + cn(5)).toFixed(1)),
+    AST:     Math.max(10, +(b.ast * scale + cn(4)).toFixed(1)),
+    STL:     b.stl != null ? Math.max(4,  +(b.stl + cn(1.5)).toFixed(1)) : null,
+    BLK:     b.blk != null ? Math.max(2,  +(b.blk + cn(1.0)).toFixed(1)) : null,
+    TOV:     Math.max(8,  +(b.tov * scale + cn(3)).toFixed(1)),
+    FG_PCT:  Math.min(0.58, Math.max(0.35, b.fg + pn())),
+    FG3_PCT: b.fg3 != null ? Math.min(0.48, Math.max(0.22, b.fg3 + pn())) : null,
+    FT_PCT:  Math.min(0.88, Math.max(0.58, b.ft + pn())),
+    TS_PCT:  Math.min(0.68, Math.max(0.42, b.ts + pn())),
+  }
+}
+
 function isBigPosition(position: string): boolean {
   const pos = (position ?? '').toUpperCase()
   if (pos.includes('CENTER')) return true
@@ -281,7 +316,7 @@ export function playerBaseRating(player: Player, simEra?: Era): number {
     (player.PTS ?? 0)     * 1.0 +
     (player.REB ?? 0)     * 0.7 +
     (player.AST ?? 0)     * 0.7 +
-    ts                    * 30  +
+    ts                    * 25  +
     threePtBonus               +
     imputeSTL(player)     * 1.5 +
     imputeBLK(player)     * 1.5 -

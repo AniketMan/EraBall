@@ -7,8 +7,9 @@ import ResultCard from './ResultCard'
 import {
   ALL_ERAS, SLOT_POSITIONS, SLOT_MPG, calcFitPenalty, calcEraModifier, calcTeamRating,
   simulateSeason, simulatePlayoffs, calcTS, coachBonus, effectiveCoachBonus, coachChampBonus, playerMatchesEra, withEraStats, applyFlexTag, applyRings, applyAnchors,
-  firstRoundLabel, playerBaseRating
+  firstRoundLabel, playerBaseRating, genOppTeamStats,
 } from '../lib/gameLogic'
+import type { OppTeamStats } from '../lib/gameLogic'
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const G = {
@@ -75,6 +76,7 @@ const COACH_GURUS: Record<string, CoachGuru> = {
   'Red Auerbach*':    { offGuru: true, defGuru: true },
   'Wes Unseld':       { offOverride: 'B', defOverride: 'A' },
   'Wes Unseld Jr.':   { offOverride: 'B', defOverride: 'A' },
+  'Richie Guerin':    { offOverride: 'B', defOverride: 'B' },
 }
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -1578,8 +1580,8 @@ function CoachDraftScreen({ coaches, onCoachSelected, onRestart }: {
 // ─── Shared stats table ───────────────────────────────────────────────────────
 const PLAYOFF_ROUND_LABELS = ['First Round', 'Semifinals', 'Conference Finals', 'NBA Finals']
 
-function StatsTable({ stats, simEra, title, subtitle, teamActualPPG, teamActualOppPPG, playoffGames }: {
-  stats: PlayerSeasonStats[]; simEra: Era; title: string; subtitle: string; teamActualPPG?: number; teamActualOppPPG?: number; playoffGames?: import('../lib/types').PlayoffGame[]
+function StatsTable({ stats, simEra, title, subtitle, teamActualPPG, teamActualOppPPG, oppStats, playoffGames }: {
+  stats: PlayerSeasonStats[]; simEra: Era; title: string; subtitle: string; teamActualPPG?: number; teamActualOppPPG?: number; oppStats?: OppTeamStats | null; playoffGames?: import('../lib/types').PlayoffGame[]
 }) {
   const [cardPlayer, setCardPlayer] = useState<Player | null>(null)
 
@@ -1660,7 +1662,12 @@ function StatsTable({ stats, simEra, title, subtitle, teamActualPPG, teamActualO
           </thead>
           <tbody>
             {(() => {
-              const simTS  = (s: typeof stats[0]) => s.FG_PCT * 0.9 + s.FT_PCT * 0.1
+              const simTS  = (s: typeof stats[0]) => {
+                const baseTS  = s.player.TS_PCT ?? calcTS(s.player)
+                const fgDelta = s.FG_PCT - (s.player.FG_PCT ?? 0.45)
+                const ftDelta = s.FT_PCT - (s.player.FT_PCT ?? 0.70)
+                return Math.min(0.85, Math.max(0.30, baseTS + fgDelta * 0.8 + ftDelta * 0.08))
+              }
               const maxPTS = Math.max(...stats.map(s => s.PTS))
               const maxREB = Math.max(...stats.map(s => s.REB))
               const maxAST = Math.max(...stats.map(s => s.AST))
@@ -1714,7 +1721,12 @@ function StatsTable({ stats, simEra, title, subtitle, teamActualPPG, teamActualO
               // Percentages weighted by minutes
               const wFG  = sum(s => s.FG_PCT * s.MPG) / totalMPG
               const wFT  = sum(s => s.FT_PCT * s.MPG) / totalMPG
-              const wTS  = sum(s => (s.FG_PCT * 0.9 + s.FT_PCT * 0.1) * s.MPG) / totalMPG
+              const wTS  = sum(s => {
+                const baseTS  = s.player.TS_PCT ?? calcTS(s.player)
+                const fgDelta = s.FG_PCT - (s.player.FG_PCT ?? 0.45)
+                const ftDelta = s.FT_PCT - (s.player.FT_PCT ?? 0.70)
+                return Math.min(0.85, Math.max(0.30, baseTS + fgDelta * 0.8 + ftDelta * 0.08)) * s.MPG
+              }) / totalMPG
               const fg3s = stats.filter(s => s.FG3_PCT != null)
               const wFG3MPG = fg3s.reduce((acc, s) => acc + s.MPG, 0)
               const wFG3 = wFG3MPG > 0 ? fg3s.reduce((acc, s) => acc + s.FG3_PCT! * s.MPG, 0) / wFG3MPG : null
@@ -1744,9 +1756,15 @@ function StatsTable({ stats, simEra, title, subtitle, teamActualPPG, teamActualO
                       <td className="py-2 px-3 font-bold uppercase tracking-widest text-xs" style={{ color: G.greyDark }}>Opp</td>
                       <td className="py-2 px-3" /><td className="py-2 px-3" />
                       <td className="py-2 px-3 text-right font-bold" style={{ color: G.greyDark }}>{teamActualOppPPG.toFixed(1)}</td>
-                      {Array(9).fill(null).map((_, i) => (
-                        <td key={i} className="py-2 px-3 text-right" style={{ color: G.greyDark }}>—</td>
-                      ))}
+                      <td className="py-2 px-3 text-right" style={{ color: G.greyDark }}>{oppStats ? oppStats.REB.toFixed(1) : '—'}</td>
+                      <td className="py-2 px-3 text-right" style={{ color: G.greyDark }}>{oppStats ? oppStats.AST.toFixed(1) : '—'}</td>
+                      <td className="py-2 px-3 text-right" style={{ color: G.greyDark }}>{oppStats?.STL != null ? oppStats.STL.toFixed(1) : '—'}</td>
+                      <td className="py-2 px-3 text-right" style={{ color: G.greyDark }}>{oppStats?.BLK != null ? oppStats.BLK.toFixed(1) : '—'}</td>
+                      <td className="py-2 px-3 text-right" style={{ color: G.greyDark }}>{oppStats ? oppStats.TOV.toFixed(1) : '—'}</td>
+                      <td className="py-2 px-3 text-right" style={{ color: G.greyDark }}>{oppStats ? (oppStats.TS_PCT * 100).toFixed(1) + '%' : '—'}</td>
+                      <td className="py-2 px-3 text-right" style={{ color: G.greyDark }}>{oppStats ? (oppStats.FG_PCT * 100).toFixed(1) + '%' : '—'}</td>
+                      <td className="py-2 px-3 text-right" style={{ color: G.greyDark }}>{oppStats?.FG3_PCT != null ? (oppStats.FG3_PCT * 100).toFixed(1) + '%' : '—'}</td>
+                      <td className="py-2 px-3 text-right" style={{ color: G.greyDark }}>{oppStats ? (oppStats.FT_PCT * 100).toFixed(1) + '%' : '—'}</td>
                     </tr>
                   )}
                 </>
@@ -2050,6 +2068,8 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
   // ── Season actual scores ──
   const [avgTeamScore, setAvgTeamScore] = useState<number | null>(null)
   const [avgOppScore, setAvgOppScore] = useState<number | null>(null)
+  const [seasonOppStats, setSeasonOppStats] = useState<OppTeamStats | null>(null)
+  const [playoffOppStats, setPlayoffOppStats] = useState<OppTeamStats | null>(null)
 
   // ── Playoffs ──
   const [playoffStarted, setPlayoffStarted] = useState(false)
@@ -2152,6 +2172,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
     setSeasonStats(stats)
     setAvgTeamScore(ats)
     setAvgOppScore(aos)
+    setSeasonOppStats(genOppTeamStats(aos, simEra))
     let idx = 0
     intervalRef.current = setInterval(() => {
       setGames(allGames.slice(0, ++idx))
@@ -2165,6 +2186,8 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
     setPlayoffDone(false)
     const result = simulatePlayoffs(tr, pr, wins, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'))
     setPlayoffResult(result)
+    const poAvgOpp = result.allGames.reduce((s, g) => s + g.oppScore, 0) / result.allGames.length
+    setPlayoffOppStats(genOppTeamStats(poAvgOpp, simEra))
     setTimeout(() => setPlayoffRevealIndex(0), 400)
   }
 
@@ -2401,6 +2424,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
             subtitle="Era-adjusted, minutes-scaled per-game averages across 82 games"
             teamActualPPG={avgTeamScore ?? undefined}
             teamActualOppPPG={avgOppScore ?? undefined}
+            oppStats={seasonOppStats}
           />
         )}
 
@@ -2591,6 +2615,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
             subtitle={`Era-adjusted, minutes-scaled per-game averages · ${playoffResult.allGames.length} games`}
             teamActualPPG={playoffResult.allGames.reduce((sum, g) => sum + g.teamScore, 0) / playoffResult.allGames.length}
             teamActualOppPPG={playoffResult.allGames.reduce((sum, g) => sum + g.oppScore, 0) / playoffResult.allGames.length}
+            oppStats={playoffOppStats}
             playoffGames={playoffResult.allGames}
           />
         )}
