@@ -1391,8 +1391,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
               <div className="text-xs uppercase tracking-[0.2em]" style={{ color: G.greyDark }}>Starting Five</div>
               <div className="text-xs mt-0.5" style={{ color: G.greyDark, opacity: 0.6, letterSpacing: '0.04em' }}>Starters · 35 min each</div>
             </div>
-            {/* Mobile: 3 top + 2 centered bottom; Desktop: single 5-col row */}
-            <div className="mb-4 space-y-1.5">
+            <div className="mb-4 space-y-1.5 sm:max-w-sm sm:mx-auto">
               <div className="grid grid-cols-3 gap-1.5">
                 {starterSlots.slice(0, 3).map((slot, i) => (
                   <CourtSlotView key={slot.position} slot={slot}
