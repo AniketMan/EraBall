@@ -806,6 +806,9 @@ function EraSelection({ onEraSelected, onRestart }: { onEraSelected: (era: Era) 
                   }}>
                     {ERA_DESC[era].note}
                   </div>
+                  <div className="mt-3 text-xs" style={{ color: G.greyDark, letterSpacing: '0.04em' }}>
+                    Players perform best in their home era · drafting across decades applies a rating penalty
+                  </div>
                 </>
               )}
             </div>
