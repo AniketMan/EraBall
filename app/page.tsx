@@ -896,6 +896,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
   const [noPlayersMsg, setNoPlayersMsg] = useState(false)
   const [spinsThisRound, setSpinsThisRound] = useState(0)
   const [respinUsed, setRespinUsed] = useState(false)
+  const [rosterReady, setRosterReady] = useState(true)
   const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   const [devMode, setDevMode] = useState(false)
   const [devTeam, setDevTeam] = useState(NBA_TEAMS[0])
@@ -988,6 +989,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
           }
           setLockedTeam(team); setLockedEra(era)
           setRosterPool([...pool].map(p => applyAnchors(applyRings(applyFlexTag(withEraStats(p, era, team))))).sort((a, b) => (b.PTS ?? 0) - (a.PTS ?? 0)))
+          setRosterReady(false)
           setSpinning(false)
           return ids
         })
@@ -1026,13 +1028,21 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
     return () => window.removeEventListener('keydown', handler)
   }, [pendingSlotIdx, selectedPlayer])
 
-  // Prefetch headshots for the first 20 roster players as soon as the pool loads
+  // Preload first 10 headshots before showing the roster list; prefetch 11-20 in background
   useEffect(() => {
-    if (rosterPool.length === 0) return
-    rosterPool.slice(0, 20).forEach(p => {
+    if (rosterPool.length === 0) { setRosterReady(true); return }
+    const first10 = rosterPool.slice(0, 10)
+    let remaining = first10.length
+    const timer = setTimeout(() => setRosterReady(true), 600)
+    const done = () => { if (--remaining <= 0) { clearTimeout(timer); setRosterReady(true) } }
+    first10.forEach(p => {
       const img = new Image()
+      img.onload = done
+      img.onerror = done
       img.src = `/api/headshot?id=${p.person_id}`
     })
+    rosterPool.slice(10, 20).forEach(p => { const img = new Image(); img.src = `/api/headshot?id=${p.person_id}` })
+    return () => clearTimeout(timer)
   }, [rosterPool])
 
   const loadDevRoster = () => {
@@ -1047,6 +1057,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
       setLockedTeam(devTeam); setLockedEra(devEra)
       setSpinTeamDisplay(devTeam); setSpinEraDisplay(devEra)
       setRosterPool(sorted)
+      setRosterReady(false)
       setSelectedPlayer(null); setPendingSlotIdx(null); setHighlightEmpty(false); setAwaitingSpin(false)
       return ids
     })
@@ -1267,6 +1278,21 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
                   <GoldLabel>{lockedTeam} · {lockedEra ? eraLabel(lockedEra) : ''}</GoldLabel>
                   <GoldLabel>{rosterPool.length} available</GoldLabel>
                 </div>
+                {!rosterReady ? (
+                  <div className="roster-scroll" style={{ border: `1px solid ${G.border}`, maxHeight: 220, overflow: 'hidden', background: G.surface }}>
+                    {[60, 52, 68, 55, 63, 48].map((w, i) => (
+                      <div key={i} className="flex items-center gap-3 px-3" style={{ borderBottom: `1px solid ${G.borderSub}`, paddingTop: 10, paddingBottom: 10, opacity: 1 - i * 0.14 }}>
+                        <div style={{ width: 36, height: 36, borderRadius: '50%', background: G.surface2, flexShrink: 0 }} />
+                        <div className="flex-1">
+                          <div style={{ height: 10, width: `${w}%`, background: G.surface2, borderRadius: 2, marginBottom: 4 }} />
+                          <div style={{ height: 8, width: '22%', background: G.surface2, borderRadius: 2 }} />
+                        </div>
+                        <div style={{ height: 8, width: 56, background: G.surface2, borderRadius: 2 }} />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                <>
                 <div className="roster-scroll" style={{ border: `1px solid ${G.border}`, maxHeight: 220, overflowY: 'auto', overflowX: 'hidden' }}>
                   {[...rosterPool].sort((a, b) => {
                     if (sortBy === 'SPECIAL') {
@@ -1347,11 +1373,13 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
                     </button>
                   ))}
                 </div>
+                </>
+                )}
               </div>
             )}
 
             {/* Hint: roster visible but no player selected yet */}
-            {rosterPool.length > 0 && !selectedPlayer && !awaitingSpin && (
+            {rosterPool.length > 0 && rosterReady && !selectedPlayer && !awaitingSpin && (
               <div className="text-center text-xs" style={{ color: G.greyDark, letterSpacing: '0.04em' }}>
                 Select a player · then tap a slot to place
               </div>
@@ -1417,7 +1445,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
             {/* Empty-court onboarding hint */}
             {filledCount === 0 && rosterPool.length === 0 && !spinning && !awaitingSpin && (
               <div className="text-center text-xs mb-3" style={{ color: G.greyDark, opacity: 0.55, letterSpacing: '0.04em' }}>
-                Spin a team roster · select players · fill all 9 slots
+                Spin a team roster · LOCK in players · Once locked you cannot move them · Fill all 9 slots
               </div>
             )}
 
