@@ -1003,9 +1003,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
     setSpinsThisRound(0)
     setAwaitingSpin(true)
     if (window.innerWidth < 640) requestAnimationFrame(() => {
-      window.scrollTo(0, 0)
-      document.documentElement.scrollTop = 0
-      document.body.scrollTop = 0
+      document.documentElement.scrollTo({ top: 0, behavior: 'smooth' })
     })
   }
 
