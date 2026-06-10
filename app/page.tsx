@@ -1944,6 +1944,14 @@ function computeSeasonAwards(
     })
   }
 
+  // ── 30 PPG All-Star guarantee ──
+  for (const { s } of rated) {
+    if (s.PTS >= 30) {
+      const already = awards.some(a => a.award === 'All-Star' && a.player.player.person_id === s.player.person_id)
+      if (!already) awards.push({ award: 'All-Star', player: s, justification: `${s.PTS.toFixed(1)} PPG`, gold: false })
+    }
+  }
+
   // ── 65-win All-Star guarantee ──
   if (wins > 65) {
     const topScorer = [...rated].sort((a, b) => b.s.PTS - a.s.PTS)[0]
