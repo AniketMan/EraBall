@@ -449,15 +449,8 @@ function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, acti
       {isPending && <div className="slot-pending-glow" />}
       {/* Position label + minutes (bench only) */}
       <div className="absolute top-1 left-1.5" style={{ lineHeight: 1 }}>
-        <div style={{ ...BEBAS, fontSize: 11, letterSpacing: '0.1em' }}>
-          {slot.position.startsWith('B') ? (
-            <>
-              <span style={{ color: G.goldDim }}>{slot.position}</span>
-              <span style={{ color: 'rgba(255,255,255,0.45)' }}>{` · ${SLOT_MPG[slot.position]} MIN`}</span>
-            </>
-          ) : (
-            <span style={{ color: G.goldDim }}>{slot.position}</span>
-          )}
+        <div style={{ ...BEBAS, letterSpacing: '0.1em' }} className="text-[11px] md:text-[16px]">
+          <span style={{ color: G.goldDim }}>{slot.position}</span>
         </div>
       </div>
 
@@ -1036,15 +1029,22 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
 
   const loadDevRoster = () => {
     setDraftedIds(ids => {
+      const isAll = devTeam === 'ALL'
       const pool = players.filter(p => {
-        const allTeams = p.all_teams_by_era?.[devEra] as string[] | undefined
-        const onTeam = allTeams ? allTeams.includes(devTeam) : playerTeamForEra(p, devEra) === devTeam
-        return onTeam && playerMatchesEra(p, devEra) && !ids.has(p.person_id)
+        if (!playerMatchesEra(p, devEra) || ids.has(p.person_id)) return false
+        if (isAll) return true
+        const eraTeams = p.all_teams_by_era?.[devEra] as string[] | undefined
+        return eraTeams ? eraTeams.includes(devTeam) : playerTeamForEra(p, devEra) === devTeam
       })
-      if (pool.length === 0) { alert(`No players found for ${devTeam} / ${devEra}`); return ids }
-      const sorted = [...pool].map(p => applyAnchors(applyRings(applyFlexTag(withEraStats(p, devEra, devTeam))))).sort((a, b) => (b.PTS ?? 0) - (a.PTS ?? 0))
+      if (pool.length === 0) { alert(`No players found for ${devEra}`); return ids }
+      const sorted = [...pool].map(p => {
+        const team = isAll
+          ? ((p.all_teams_by_era?.[devEra] as string[] | undefined)?.[0] ?? p.team_abbreviation)
+          : devTeam
+        return applyAnchors(applyRings(applyFlexTag(withEraStats(p, devEra, team))))
+      }).sort((a, b) => (b.PTS ?? 0) - (a.PTS ?? 0))
       setLockedTeam(devTeam); setLockedEra(devEra)
-      setSpinTeamDisplay(devTeam); setSpinEraDisplay(devEra)
+      setSpinTeamDisplay(isAll ? devEra : devTeam); setSpinEraDisplay(devEra)
       setRosterPool(sorted)
       setSelectedPlayer(null); setPendingSlotIdx(null); setHighlightEmpty(false); setAwaitingSpin(false)
       return ids
@@ -1080,6 +1080,40 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
     })
     setSlots(newSlots)
     setDraftedIds(new Set(picks.map(p => p.person_id)))
+    setSelectedPlayer(null); setPendingSlotIdx(null); setHighlightEmpty(false)
+    setRosterPool([]); setAwaitingSpin(false)
+  }
+
+  const fillDevPreset = () => {
+    const preset: { name: string; era: Era; team: string; slot: SlotPosition }[] = [
+      { name: 'Damian Lillard',          era: '10s', team: 'POR', slot: 'PG' },
+      { name: 'Michael Jordan',          era: '90s', team: 'CHI', slot: 'SG' },
+      { name: 'LeBron James',            era: '10s', team: 'CLE', slot: 'SF' },
+      { name: 'Aaron Gordon',            era: '20s', team: 'DEN', slot: 'PF' },
+      { name: 'Andre Drummond',          era: '10s', team: 'DET', slot: 'C'  },
+      { name: 'Donovan Mitchell',        era: '20s', team: 'UTA', slot: 'B1' },
+      { name: 'Shai Gilgeous-Alexander', era: '20s', team: 'OKC', slot: 'B2' },
+      { name: 'Steve Nash',              era: '10s', team: 'LAL', slot: 'B3' },
+      { name: 'Trae Young',              era: '10s', team: 'ATL', slot: 'B4' },
+    ]
+    const newSlots = emptySlots()
+    const drafted = new Set<string>()
+    for (const { name, era, team, slot } of preset) {
+      // Match by exact name + all_teams_by_era (not the player's primary era field)
+      const match = players.find(p => {
+        if (p.full_name !== name) return false
+        const teamsForEra = (p.all_teams_by_era as Record<string, string[]>)?.[era]
+        return teamsForEra?.includes(team)
+      })
+      if (!match) continue
+      const tagged = applyRings(applyFlexTag(withEraStats(match, era, team)))
+      const slotIdx = SLOT_POSITIONS.indexOf(slot)
+      const { penalty, label } = calcFitPenalty(tagged, slot)
+      newSlots[slotIdx] = { position: slot, player: tagged, fitPenalty: penalty, fitLabel: label }
+      drafted.add(match.person_id)
+    }
+    setSlots(newSlots)
+    setDraftedIds(drafted)
     setSelectedPlayer(null); setPendingSlotIdx(null); setHighlightEmpty(false)
     setRosterPool([]); setAwaitingSpin(false)
   }
@@ -1132,6 +1166,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
                       className="w-full px-3 py-2 text-sm font-semibold"
                       style={{ background: G.surface2, border: `1px solid ${G.border}`, color: G.white, outline: 'none' }}
                     >
+                      <option value="ALL">— ALL —</option>
                       {allTeams.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
                   </div>
@@ -1154,6 +1189,9 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
                   </Btn>
                   <Btn onClick={fillRandom} variant="ghost" className="w-full py-3">
                     Random Fill
+                  </Btn>
+                  <Btn onClick={fillDevPreset} variant="ghost" className="w-full py-3">
+                    Preset Roster
                   </Btn>
 
                   <div>
@@ -1447,8 +1485,15 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
 
             <div className="h-px mb-4" style={{ background: G.border }} />
 
-            <div className="text-xs uppercase tracking-[0.2em] mb-4 text-center" style={{ color: G.greyDark }}>
+            <div className="text-xs uppercase tracking-[0.2em] mb-3 text-center" style={{ color: G.greyDark }}>
               Bench
+            </div>
+            <div className="grid grid-cols-4 gap-1.5 mb-1">
+              {benchSlots.map(slot => (
+                <div key={slot.position} className="text-center" style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.08em' }}>
+                  {SLOT_MPG[slot.position]} MIN
+                </div>
+              ))}
             </div>
             <div className="grid grid-cols-4 gap-1.5">
               {benchSlots.map((slot, i) => (
@@ -1457,6 +1502,31 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
                   pendingPlayer={pendingSlotIdx === i + 5 ? selectedPlayer : null} simEra={simEra}
                   onClick={() => previewSlot(i + 5)} onDrop={() => previewSlot(i + 5)} />
               ))}
+            </div>
+
+            {/* Tag key */}
+            <div className="mt-5 flex flex-col gap-2 py-3 px-4" style={{ background: '#0d0d0d', border: `1px solid ${G.border}` }}>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+                <div className="flex items-start gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wide shrink-0" style={{ color: G.gold }}>Champion</span>
+                  <span className="text-xs leading-tight" style={{ color: G.greyDark }}>Elevates their game in the playoffs. The more championships, the bigger boost.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wide shrink-0" style={{ color: '#4A9ECC' }}>Def Anchor</span>
+                  <span className="text-xs leading-tight" style={{ color: G.greyDark }}>Impact beyond the individual stat sheet on defense.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wide shrink-0" style={{ color: G.gold }}>Off Anchor</span>
+                  <span className="text-xs leading-tight" style={{ color: G.greyDark }}>Elevates the team's offense.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wide shrink-0" style={{ color: '#4A9ECC' }}>FLEX</span>
+                  <span className="text-xs leading-tight" style={{ color: G.greyDark }}>Fits multiple positions without penalty.</span>
+                </div>
+              </div>
+              <div className="text-xs mt-1 text-center" style={{ color: G.greyDark, opacity: 0.6, letterSpacing: '0.02em' }}>
+                Scoring isn't everything. Defense, playmaking, and rebounding all shape your season.
+              </div>
             </div>
           </div>
         </div>
@@ -1629,10 +1699,43 @@ function CoachDraftScreen({ coaches, onCoachSelected, onRestart }: {
             DEV
           </button>
           {devMode && (
-            <div className="mt-3">
+            <div className="mt-3 space-y-3">
+              {/* Preset test coaches */}
+              <div className="text-xs uppercase tracking-widest mb-1" style={{ color: G.greyDark }}>Test Presets</div>
+              <div className="flex flex-col gap-1">
+                {([
+                  { label: 'F Off · A Def', off: 'F', def: 'A', ovr: 'C' },
+                  { label: 'C Off · C Def', off: 'C', def: 'C', ovr: 'C' },
+                  { label: 'A Off · F Def', off: 'A', def: 'F', ovr: 'C' },
+                  { label: 'D Off · D Def', off: 'D', def: 'D', ovr: 'D' },
+                  { label: 'B Off · B Def', off: 'B', def: 'B', ovr: 'B' },
+                  { label: 'F Off · F Def', off: 'F', def: 'F', ovr: 'F' },
+                ] as { label: string; off: Coach['offGrade']; def: Coach['defGrade']; ovr: Coach['overallGrade'] }[]).map(preset => {
+                  const testCoach: Coach = {
+                    name: `Test Coach (${preset.label})`, from: 2000, to: 2020, years: 20,
+                    regG: 1640, regW: 820, regL: 820, regWLPct: 0.500,
+                    playoffG: 80, playoffW: 40, playoffL: 40, playoffWLPct: 0.500,
+                    conf: 0, champ: 0,
+                    offGrade: preset.off, defGrade: preset.def, overallGrade: preset.ovr,
+                  }
+                  return (
+                    <div
+                      key={preset.label}
+                      onClick={() => { setCoach(testCoach); setDisplayName(testCoach.name); setDevMode(false) }}
+                      style={{ padding: '6px 10px', cursor: 'pointer', fontSize: 12, color: G.white, border: `1px solid ${G.border}`, background: G.surface }}
+                      onMouseEnter={e => (e.currentTarget.style.background = G.surface2)}
+                      onMouseLeave={e => (e.currentTarget.style.background = G.surface)}
+                    >
+                      {preset.label}
+                    </div>
+                  )
+                })}
+              </div>
+              {/* Coach search */}
+              <div className="text-xs uppercase tracking-widest mb-1" style={{ color: G.greyDark }}>Search Real Coach</div>
               <input
                 type="text"
-                placeholder="Search coach name..."
+                placeholder="Coach name..."
                 value={devSearch}
                 onChange={e => setDevSearch(e.target.value)}
                 style={{ width: '100%', background: G.surface, border: `1px solid ${G.border}`, color: G.white, padding: '8px 12px', fontSize: 13, outline: 'none' }}
@@ -2250,11 +2353,13 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
 
   const SITE_URL = typeof window !== 'undefined' ? window.location.origin : 'https://eraball.app'
 
-  const { teamRating: tr, playerRatings: pr } = calcTeamRating(slots, coach, simEra)
+  const { teamRating: tr, rawRating, playerRatings: pr } = calcTeamRating(slots, coach, simEra)
+  // rawRating with champ bonus on the team side — passed to sims so off/def apply separately
+  const simRaw = rawRating * (1 + coachChampBonus(coach))
 
   const startSim = () => {
     setSimStarted(true); setGames([]); setDone(false); setSeasonStats([])
-    const { games: allGames, seasonStats: stats, avgTeamScore: ats, avgOppScore: aos } = simulateSeason(tr, pr, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'))
+    const { games: allGames, seasonStats: stats, avgTeamScore: ats, avgOppScore: aos } = simulateSeason(simRaw, pr, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'))
     setSeasonStats(stats)
     setAvgTeamScore(ats)
     setAvgOppScore(aos)
@@ -2270,7 +2375,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
     setPlayoffStarted(true)
     setPlayoffRevealIndex(-1)
     setPlayoffDone(false)
-    const result = simulatePlayoffs(tr, pr, wins, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'))
+    const result = simulatePlayoffs(simRaw, pr, wins, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'))
     setPlayoffResult(result)
     const poAvgOpp = result.allGames.reduce((s, g) => s + g.oppScore, 0) / result.allGames.length
     setPlayoffOppStats(genOppTeamStats(poAvgOpp, simEra))

@@ -207,16 +207,12 @@ const ERA_DECADE_START: Record<Era, number> = {
   '90s': 1990, '00s': 2000, '10s': 2010, '20s': 2020,
 }
 
-// Assigned minutes per slot (5 × 35 + 25 + 16 + 14 + 10 = 240 total)
+// Assigned minutes per slot (5 × 35 + 25 + 15 + 13 + 12 = 240 total)
 export const SLOT_MPG: Record<SlotPosition, number> = {
   PG: 35, SG: 35, SF: 35, PF: 35, C: 35,
-  B1: 25, B2: 16, B3: 14, B4: 10,
+  B1: 25, B2: 15, B3: 13, B4: 12,
 }
-// Playoff rotations: starters play more, bench gets cut significantly
-const PLAYOFF_MPG: Record<SlotPosition, number> = {
-  PG: 37, SG: 36, SF: 37, PF: 36, C: 35,
-  B1: 20, B2: 15, B3: 10, B4: 6,
-}
+
 // Assumed historical baseline MPG for computing scale factor
 const STARTER_BASELINE_MPG = 35
 const BENCH_BASELINE_MPG   = 25
@@ -487,12 +483,12 @@ export function coachOverallGrade(coach: Coach): 'A' | 'B' | 'C' | 'D' | 'F' {
 }
 
 export function coachBonus(grade: 'A' | 'B' | 'C' | 'D' | 'F'): number {
-  return { A: 0.04, B: 0.02, C: 0, D: -0.04, F: -0.06 }[grade]
+  return { A: 0.06, B: 0.03, C: 0, D: -0.04, F: -0.05 }[grade]
 }
 
 export function effectiveCoachBonus(coach: Coach, side: 'off' | 'def'): number {
-  if (side === 'off' && coach.offGuru) return 0.06
-  if (side === 'def' && coach.defGuru) return 0.06
+  if (side === 'off' && coach.offGuru) return 0.09
+  if (side === 'def' && coach.defGuru) return 0.09
   return coachBonus(side === 'off' ? coach.offGrade : coach.defGrade)
 }
 
@@ -505,6 +501,7 @@ const BENCH_SLOTS: SlotPosition[] = ['B1', 'B2', 'B3', 'B4']
 
 export function calcTeamRating(slots: CourtSlot[], coach: Coach, simEra: Era): {
   teamRating: number
+  rawRating: number
   playerRatings: PlayerRating[]
 } {
   const playerRatings: PlayerRating[] = []
@@ -554,7 +551,7 @@ export function calcTeamRating(slots: CourtSlot[], coach: Coach, simEra: Era): {
   )
   console.log(`[Rating] coach ${coach.name}: offBonus=${(offBonus*100).toFixed(0)}% defBonus=${(defBonus*100).toFixed(0)}% → teamRating=${teamRating.toFixed(1)}`)
 
-  return { teamRating, playerRatings }
+  return { teamRating, rawRating, playerRatings }
 }
 
 function randn(): number {
@@ -645,7 +642,7 @@ function calcAstFactor(entries: { pr: PlayerRating; minScale: number }[]): numbe
 
 
 export function simulateSeason(
-  teamRating: number,
+  rawRating: number,
   playerRatings: PlayerRating[],
   coachDefGrade: 'A' | 'B' | 'C' | 'D' | 'F',
   coachOffGrade: 'A' | 'B' | 'C' | 'D' | 'F',
@@ -690,9 +687,10 @@ export function simulateSeason(
   const offBonus = coachOffBonus ?? coachBonus(coachOffGrade)
 
   for (let i = 0; i < 82; i++) {
-    const oppRating = OPP_BASELINE * playerDefFactor + randn() * OPP_SPREAD
-    const teamRoll  = teamRating + randn() * GAME_NOISE
-    const oppRoll   = oppRating  + randn() * GAME_NOISE
+    const oppBase   = OPP_BASELINE * playerDefFactor * (1 - defBonus)
+    const oppRating = oppBase + randn() * OPP_SPREAD
+    const teamRoll  = rawRating * (1 + offBonus) + randn() * GAME_NOISE
+    const oppRoll   = oppRating + randn() * GAME_NOISE
     const win       = teamRoll > oppRoll
     games.push(win)
     if (win) wins++
@@ -734,7 +732,7 @@ export function simulateSeason(
   const topAST        = Math.max(...entries.map(e => e.pr.player.AST ?? 0))
   const playmakingMod = Math.min(0.018, Math.max(-0.012, (topAST - 5) * 0.003))
   // Team quality: stronger teams create better shots
-  const teamQualityMod = (teamRating - 70) * 0.0008
+  const teamQualityMod = (rawRating - 70) * 0.0008
 
   const seasonStats: PlayerSeasonStats[] = entries.map(({ pr, assignedMPG }, i) => {
     const w = weights[i]
@@ -781,18 +779,22 @@ export function firstRoundLabel(simEra: Era): string {
   return w === 2 ? 'Best of 3' : w === 3 ? 'Best of 5' : 'Best of 7'
 }
 
-// Opponent mean rating per round based on team's regular season wins.
-// Better records earn easier first-round matchups; all rounds get harder.
-function playoffOppRating(round: number, teamWins: number): number {
+// Opponent profile per round based on team's regular season wins.
+// offRating: raw opponent strength (then scaled by user's playerDefFactor)
+// defFactor: how well the opponent defends — multiplied against effectiveTeamRating each round
+function playoffOppRating(round: number, teamWins: number): { offRating: number; defFactor: number } {
   const idx = round - 1
-  if (teamWins >= 60) return [38, 41, 43, 45][idx]
-  if (teamWins >= 53) return [39, 41, 43, 45][idx]
-  if (teamWins >= 47) return [40, 42, 44, 46][idx]
-  return                      [42, 43, 45, 46][idx]  // 41-46 wins / low seed
+  const offRating = teamWins >= 60 ? [37, 41, 44, 48][idx]
+                  : teamWins >= 53 ? [38, 42, 45, 49][idx]
+                  : teamWins >= 47 ? [40, 43, 46, 49][idx]
+                  :                  [42, 44, 47, 51][idx]
+  // Later rounds face better defenses — mild progressive reduction to team's effective rating
+  const defFactor = [1.00, 0.99, 0.97, 0.95][idx]
+  return { offRating, defFactor }
 }
 
 export function simulatePlayoffs(
-  teamRating: number,
+  rawRating: number,
   playerRatings: PlayerRating[],
   regularSeasonWins: number,
   coachDefGrade: 'A' | 'B' | 'C' | 'D' | 'F',
@@ -822,7 +824,7 @@ export function simulatePlayoffs(
   const avgRingBoost = totalAdjusted > 0
     ? entries.reduce((s, e) => s + playoffRingBoost(e.pr.player.rings ?? 0) * e.pr.adjusted / totalAdjusted, 0)
     : 0
-  const effectiveTeamRating = teamRating * (1 + avgRingBoost)
+  const effectiveRawRating = rawRating * (1 + avgRingBoost)
 
   // Ring boost also raises the score ceiling so champions actually put up bigger numbers
   const baseTeamScore = entries.reduce((s, e) => s + (e.pr.player.PTS ?? 0) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty), 0)
@@ -848,7 +850,7 @@ export function simulatePlayoffs(
   let champion = false
 
   for (let r = 0; r < 4; r++) {
-    const oppMean = playoffOppRating(r + 1, regularSeasonWins)
+    const { offRating: oppMean, defFactor: roundDefFactor } = playoffOppRating(r + 1, regularSeasonWins)
     const winsNeeded = r === 0 ? firstRoundWinsNeeded(simEra) : 4
     let sW = 0, sL = 0
 
@@ -861,8 +863,8 @@ export function simulatePlayoffs(
       const specialTrigger = Math.random() < specialChance
       const specialBoost = specialTrigger ? 2 + Math.random() * 4 : 0
 
-      const oppRating = oppMean * playerDefFactor + randn() * OPP_SPREAD
-      const win = effectiveTeamRating + specialBoost + randn() * GAME_NOISE > oppRating + randn() * GAME_NOISE
+      const oppRating = oppMean * playerDefFactor * (1 - defBonus) + randn() * OPP_SPREAD
+      const win = effectiveRawRating * (1 + offBonus) * roundDefFactor + specialBoost + randn() * GAME_NOISE > oppRating + randn() * GAME_NOISE
       const { teamScore, oppScore } = generateGameScore(expectedTeamScore, playerDefFactor, rebFactor, astFactor, defBonus, offBonus, win, simEra)
 
       // Per-game individual stat lines (high variance — 60–140% of expected)
@@ -967,7 +969,7 @@ export function simulatePlayoffs(
   const pSpacingMod    = (pShooterCount - 2) * 0.006
   const pTopAST        = Math.max(...entries.map(e => e.pr.player.AST ?? 0))
   const pPlaymakingMod = Math.min(0.018, Math.max(-0.012, (pTopAST - 5) * 0.003))
-  const pTeamQualityMod = (teamRating - 70) * 0.0008
+  const pTeamQualityMod = (rawRating - 70) * 0.0008
 
   const playoffStats: PlayerSeasonStats[] = entries.map(({ pr, assignedMPG }, i) => {
     const effBoost       = playoffRingBoost(pr.player.rings ?? 0) * 0.5
