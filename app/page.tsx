@@ -492,11 +492,16 @@ function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, acti
           <div className="w-full text-center min-w-0">
             <div className="font-semibold text-white leading-tight truncate" style={{ fontSize: 11 }}>{confirmed.full_name}</div>
             <div style={{ color: G.grey, fontSize: 10 }} className="mt-0.5 truncate">{confirmed.position} · {eraLabel(confirmed.era)}</div>
-            {/* Desktop: pts · reb r · ast a */}
-            <div className="hidden md:flex justify-center gap-2 mt-1" style={{ fontSize: 11 }}>
+            {/* Desktop: x.x ppg / x.x rpg / x.x apg */}
+            <div className="hidden md:flex justify-center items-baseline gap-1 mt-1 flex-wrap" style={{ fontSize: 10 }}>
               <span style={{ color: G.gold, fontWeight: 700 }}>{confirmed.PTS?.toFixed(1)}</span>
-              <span style={{ color: G.grey }}>{confirmed.REB?.toFixed(1)}r</span>
-              <span style={{ color: G.grey }}>{confirmed.AST?.toFixed(1)}a</span>
+              <span style={{ color: G.greyDark, fontSize: 8 }}>ppg</span>
+              <span style={{ color: G.greyDark }}>·</span>
+              <span style={{ color: G.grey }}>{confirmed.REB?.toFixed(1)}</span>
+              <span style={{ color: G.greyDark, fontSize: 8 }}>rpg</span>
+              <span style={{ color: G.greyDark }}>·</span>
+              <span style={{ color: G.grey }}>{confirmed.AST?.toFixed(1)}</span>
+              <span style={{ color: G.greyDark, fontSize: 8 }}>apg</span>
             </div>
             {/* Mobile: pts/reb/ast rounded to nearest whole number */}
             <div className="flex md:hidden justify-center mt-1" style={{ fontSize: 11, color: G.gold, fontWeight: 700 }}>
