@@ -1413,7 +1413,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
             <div className="text-xs uppercase tracking-[0.2em] mb-4 text-center" style={{ color: G.greyDark }}>
               Bench
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+            <div className="grid grid-cols-4 gap-1.5">
               {benchSlots.map((slot, i) => (
                 <CourtSlotView key={slot.position} slot={slot}
                   highlighted={!!selectedPlayer && !slot.player}
