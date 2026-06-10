@@ -152,6 +152,7 @@ const PLAYER_ANCHORS: Record<string, AnchorType> = {
   'Kareem Abdul-Jabbar': 'off',
   'John Stockton':   'off',
   'James Harden':    'off',
+  'Shai Gilgeous-Alexander': 'off',
   // Defensive Anchors (+12)
   'Tony Allen':      'def',
   'Scottie Pippen':  'def',
