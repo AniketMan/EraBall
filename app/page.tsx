@@ -1377,7 +1377,8 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
               <div className="text-xs uppercase tracking-[0.2em]" style={{ color: G.greyDark }}>Starting Five</div>
               <div className="text-xs mt-0.5" style={{ color: G.greyDark, opacity: 0.6, letterSpacing: '0.04em' }}>Starters · 35 min each</div>
             </div>
-            <div className="grid grid-cols-5 gap-1.5 mb-4">
+            {/* Mobile: 3 top + 2 centered bottom; Desktop: single 5-col row */}
+            <div className="hidden sm:grid grid-cols-5 gap-1.5 mb-4">
               {starterSlots.map((slot, i) => (
                 <CourtSlotView key={slot.position} slot={slot}
                   highlighted={!!selectedPlayer && !slot.player}
@@ -1386,13 +1387,33 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
                   onClick={() => previewSlot(i)} onDrop={() => previewSlot(i)} />
               ))}
             </div>
+            <div className="sm:hidden mb-4 space-y-1.5">
+              <div className="grid grid-cols-3 gap-1.5">
+                {starterSlots.slice(0, 3).map((slot, i) => (
+                  <CourtSlotView key={slot.position} slot={slot}
+                    highlighted={!!selectedPlayer && !slot.player}
+                    pendingPlayer={pendingSlotIdx === i ? selectedPlayer : null}
+                    activePlayer={selectedPlayer} simEra={simEra}
+                    onClick={() => previewSlot(i)} onDrop={() => previewSlot(i)} />
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-1.5" style={{ width: '66.67%', margin: '0 auto' }}>
+                {starterSlots.slice(3, 5).map((slot, i) => (
+                  <CourtSlotView key={slot.position} slot={slot}
+                    highlighted={!!selectedPlayer && !slot.player}
+                    pendingPlayer={pendingSlotIdx === i + 3 ? selectedPlayer : null}
+                    activePlayer={selectedPlayer} simEra={simEra}
+                    onClick={() => previewSlot(i + 3)} onDrop={() => previewSlot(i + 3)} />
+                ))}
+              </div>
+            </div>
 
             <div className="h-px mb-4" style={{ background: G.border }} />
 
             <div className="text-xs uppercase tracking-[0.2em] mb-4 text-center" style={{ color: G.greyDark }}>
               Bench
             </div>
-            <div className="grid grid-cols-4 gap-1.5">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
               {benchSlots.map((slot, i) => (
                 <CourtSlotView key={slot.position} slot={slot}
                   highlighted={!!selectedPlayer && !slot.player}
