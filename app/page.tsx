@@ -2133,34 +2133,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
     link.click()
   }
 
-  const SHARE_MSG = `I just simulated my all-time NBA lineup on EraBall — ${wins}-${losses} record. Think you can build a better team? 🏀`
   const SITE_URL = typeof window !== 'undefined' ? window.location.origin : 'https://eraball.app'
-
-  const handleShareTwitter = () => {
-    handleDownload()
-    const text = encodeURIComponent(SHARE_MSG)
-    const url  = encodeURIComponent(SITE_URL)
-    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank')
-  }
-
-  const handleShareWhatsApp = () => {
-    const text = encodeURIComponent(`${SHARE_MSG} ${SITE_URL}`)
-    window.open(`https://wa.me/?text=${text}`, '_blank')
-  }
-
-  const handleShareSMS = async () => {
-    if (shareImageUrl && navigator.canShare) {
-      try {
-        const blob = await (await fetch(shareImageUrl)).blob()
-        const file = new File([blob], 'eraball-team.png', { type: 'image/png' })
-        if (navigator.canShare({ files: [file] })) {
-          await navigator.share({ title: 'EraBall', text: SHARE_MSG, url: SITE_URL, files: [file] })
-          return
-        }
-      } catch {}
-    }
-    window.location.href = `sms:?body=${encodeURIComponent(`${SHARE_MSG} ${SITE_URL}`)}`
-  }
 
   const { teamRating: tr, playerRatings: pr } = calcTeamRating(slots, coach, simEra)
 
@@ -2211,6 +2184,34 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
   const wins = games.filter(Boolean).length
   const losses = games.length - wins
   const madePlayoffs = wins >= 41
+
+  const SHARE_MSG = `I just simulated my all-time NBA lineup on EraBall — ${wins}-${losses} record. Think you can build a better team? 🏀`
+
+  const handleShareTwitter = () => {
+    handleDownload()
+    const text = encodeURIComponent(SHARE_MSG)
+    const url  = encodeURIComponent(SITE_URL)
+    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank')
+  }
+
+  const handleShareWhatsApp = () => {
+    const text = encodeURIComponent(`${SHARE_MSG} ${SITE_URL}`)
+    window.open(`https://wa.me/?text=${text}`, '_blank')
+  }
+
+  const handleShareSMS = async () => {
+    if (shareImageUrl && navigator.canShare) {
+      try {
+        const blob = await (await fetch(shareImageUrl)).blob()
+        const file = new File([blob], 'eraball-team.png', { type: 'image/png' })
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({ title: 'EraBall', text: SHARE_MSG, url: SITE_URL, files: [file] })
+          return
+        }
+      } catch {}
+    }
+    window.location.href = `sms:?body=${encodeURIComponent(`${SHARE_MSG} ${SITE_URL}`)}`
+  }
 
   const verdict = wins === 82 ? 'Perfect Season' : wins === 0 ? 'Winless Season' : wins >= 60 ? 'Championship Contender' : wins >= 50 ? 'Playoff Team' : wins >= 41 ? '.500 Season' : 'Lottery Bound'
 
