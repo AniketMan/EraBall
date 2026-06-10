@@ -214,15 +214,26 @@ const PLAYOFF_MPG: Record<SlotPosition, number> = {
 const STARTER_BASELINE_MPG = 35
 const BENCH_BASELINE_MPG   = 25
 
+// Small-sample overrides: redirect "name:era:team" to use a different era:team stat line.
+// Used when a player's stint with a team is too short to reflect their true level.
+const STAT_REDIRECT: Record<string, string> = {
+  'Nikola Vucevic:20s:ORL': '20s:CHI',
+}
+
 // Returns the player with era-specific stats substituted in, falling back to
 // career stats if no era data exists. Pass team when a player had multiple
 // teams in the same era (key format: "era:team"). The player's native .era
 // field is preserved — only counting/shooting stats change.
 export function withEraStats(player: Player, era: Era, team?: string): Player {
+  // Check manual stat redirect (e.g. small-sample overrides)
+  const redirectKey = team ? `${player.full_name}:${era}:${team}` : null
+  const redirectTarget = redirectKey ? STAT_REDIRECT[redirectKey] : null
+
   // Try era:team first (for players with per-team splits), then era alone.
-  const eraData: EraStats | undefined =
-    (team ? player.stats_by_era?.[`${era}:${team}`] : undefined) ??
-    player.stats_by_era?.[era]
+  const eraData: EraStats | undefined = redirectTarget
+    ? player.stats_by_era?.[redirectTarget]
+    : (team ? player.stats_by_era?.[`${era}:${team}`] : undefined) ??
+      player.stats_by_era?.[era]
   if (!eraData) return { ...player, era }
   const { team: eraTeam, GP, ...stats } = eraData
   return { ...player, era, eraTeam, GP, ...stats }
