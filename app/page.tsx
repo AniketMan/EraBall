@@ -182,8 +182,8 @@ function GradeDisplay({ grade, label }: { grade: string; label: string }) {
   )
 }
 
-function Btn({ children, onClick, disabled, variant = 'gold', className = '' }: {
-  children: React.ReactNode; onClick?: () => void; disabled?: boolean; variant?: 'gold' | 'outline' | 'ghost'; className?: string
+function Btn({ children, onClick, disabled, variant = 'gold', className = '', style }: {
+  children: React.ReactNode; onClick?: () => void; disabled?: boolean; variant?: 'gold' | 'outline' | 'ghost'; className?: string; style?: React.CSSProperties
 }) {
   const base = 'px-6 py-3 text-sm uppercase tracking-[0.15em] font-semibold active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed'
   const styles: Record<string, React.CSSProperties> = {
@@ -192,7 +192,7 @@ function Btn({ children, onClick, disabled, variant = 'gold', className = '' }: 
     ghost:   { background: 'transparent', color: G.grey, border: `1px solid ${G.border}` },
   }
   return (
-    <button onClick={onClick} disabled={disabled} className={`${base} btn-${variant} ${className}`} style={styles[variant]}>
+    <button onClick={onClick} disabled={disabled} className={`${base} btn-${variant} ${className}`} style={{ ...styles[variant], ...style }}>
       {children}
     </button>
   )

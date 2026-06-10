@@ -609,9 +609,19 @@ export function simulateSeason(
     return { pr, assignedMPG, minScale }
   })
 
-  const expectedTeamScore = Math.max(85, Math.min(132,
-    entries.reduce((s, e) => s + (e.pr.player.PTS ?? 0) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty), 0)
-  ))
+  // Pre-generate per-player efficiency components so scoring and displayed stats stay in sync
+  const preEff = entries.map(({ pr, assignedMPG }) => {
+    const naturalMPG     = Math.min(38, Math.max(10, (pr.player.PTS ?? 0) * 1.6))
+    const stretchMax     = Math.max(0, (assignedMPG - naturalMPG) / 28) * 0.06
+    const stretch        = stretchMax > 0 ? -(stretchMax * Math.random()) : 0
+    return { fg: effNoise(0.035), ft: effNoise(0.030), fg3: effNoise(0.040), stretch }
+  })
+  // Weighted average FG delta → shifts expectedTeamScore (±3-4 wins impact)
+  const totalMinWeight = entries.reduce((s, { minScale }) => s + minScale, 0)
+  const avgFGDelta     = entries.reduce((s, { minScale }, i) => s + (preEff[i].fg + preEff[i].stretch) * minScale, 0) / totalMinWeight
+
+  const baseExpectedScore = entries.reduce((s, e) => s + (e.pr.player.PTS ?? 0) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty), 0)
+  const expectedTeamScore = Math.max(85, Math.min(132, baseExpectedScore * (1 + avgFGDelta * 3)))
   const playerDefFactor = calcPlayerDefFactor(entries)
   const rebFactor = calcRebFactor(entries)
   const astFactor = calcAstFactor(entries)
@@ -668,12 +678,8 @@ export function simulateSeason(
   const seasonStats: PlayerSeasonStats[] = entries.map(({ pr, assignedMPG }, i) => {
     const w = weights[i]
     const v = seasonVar[i]
-    // Role stretch: player forced into heavier usage than their natural level
-    const naturalMPG     = Math.min(38, Math.max(10, (pr.player.PTS ?? 0) * 1.6))
-    const stretchMax     = Math.max(0, (assignedMPG - naturalMPG) / 28) * 0.06
-    const stretchPenalty = stretchMax > 0 ? -(stretchMax * Math.random()) : 0
-    const fgCtx  = spacingMod + playmakingMod + teamQualityMod + stretchPenalty
-    const ftCtx  = stretchPenalty * 0.4   // FT% mostly skill, only slightly role-affected
+    const fgCtx = spacingMod + playmakingMod + teamQualityMod + preEff[i].fg + preEff[i].stretch
+    const ftCtx = preEff[i].ft + preEff[i].stretch * 0.4
     return {
       player:  pr.player,
       slot:    pr.slot,
@@ -685,12 +691,12 @@ export function simulateSeason(
       STL:     w.STL * v,
       BLK:     w.BLK * v,
       TOV:     w.TOV * v,
-      FG_PCT:  Math.min(0.80, Math.max(0.20, (pr.player.FG_PCT ?? 0.45) + fgCtx + effNoise(0.035))),
+      FG_PCT:  Math.min(0.80, Math.max(0.20, (pr.player.FG_PCT ?? 0.45) + fgCtx)),
       FG3_PCT: PRE_THREE_PT_ERAS.includes(simEra) ? null
         : pr.player.FG3_PCT != null
-          ? Math.min(0.60, Math.max(0.15, pr.player.FG3_PCT + fgCtx + effNoise(0.040)))
+          ? Math.min(0.60, Math.max(0.15, pr.player.FG3_PCT + fgCtx + preEff[i].fg3))
           : null,
-      FT_PCT:  Math.min(0.99, Math.max(0.30, (pr.player.FT_PCT ?? 0.70) + ftCtx + effNoise(0.030))),
+      FT_PCT:  Math.min(0.99, Math.max(0.30, (pr.player.FT_PCT ?? 0.70) + ftCtx)),
     }
   })
 
