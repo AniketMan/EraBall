@@ -2925,27 +2925,62 @@ export default function Home() {
       {phase === 'simulation' && coach && <SimulationScreen slots={slots} coach={coach} simEra={simEra} onRestart={restart} />}
 
       {/* Desktop: fixed bottom-right */}
-      <a
-        href="https://x.com/Eshan_Design"
-        target="_blank"
-        rel="noopener noreferrer"
+      <div
         className="suggestions-btn-desktop"
         style={{
           position: 'fixed', bottom: 20, right: 20, zIndex: 500,
-          fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
-          color: G.greyDark, border: `1px solid ${G.border}`,
-          padding: '6px 12px', background: G.surface,
-          textDecoration: 'none', opacity: 0.7,
-          transition: 'opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease',
+          display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6,
         }}
-        onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = G.white; e.currentTarget.style.borderColor = G.grey }}
-        onMouseLeave={e => { e.currentTarget.style.opacity = '0.7'; e.currentTarget.style.color = G.greyDark; e.currentTarget.style.borderColor = G.border }}
       >
-        Suggestions or bugs? DM me
-      </a>
+        <a
+          href="https://eshanbhattdesign.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
+            color: G.greyDark, border: `1px solid ${G.border}`,
+            padding: '6px 12px', background: G.surface,
+            textDecoration: 'none', opacity: 0.7,
+            transition: 'opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = G.white; e.currentTarget.style.borderColor = G.grey }}
+          onMouseLeave={e => { e.currentTarget.style.opacity = '0.7'; e.currentTarget.style.color = G.greyDark; e.currentTarget.style.borderColor = G.border }}
+        >
+          eshanbhattdesign.com
+        </a>
+        <a
+          href="https://x.com/Eshan_Design"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
+            color: G.greyDark, border: `1px solid ${G.border}`,
+            padding: '6px 12px', background: G.surface,
+            textDecoration: 'none', opacity: 0.7,
+            transition: 'opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = G.white; e.currentTarget.style.borderColor = G.grey }}
+          onMouseLeave={e => { e.currentTarget.style.opacity = '0.7'; e.currentTarget.style.color = G.greyDark; e.currentTarget.style.borderColor = G.border }}
+        >
+          Suggestions or bugs? DM me
+        </a>
+      </div>
 
       {/* Mobile: inline at page bottom, doesn't float over content */}
-      <div className="suggestions-btn-mobile" style={{ textAlign: 'center', padding: '24px 0 32px' }}>
+      <div className="suggestions-btn-mobile" style={{ textAlign: 'center', padding: '16px 0 32px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+        <a
+          href="https://eshanbhattdesign.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
+            color: G.greyDark, border: `1px solid ${G.border}`,
+            padding: '6px 12px', background: G.surface,
+            textDecoration: 'none', opacity: 0.7,
+          }}
+        >
+          eshanbhattdesign.com
+        </a>
         <a
           href="https://x.com/Eshan_Design"
           target="_blank"
