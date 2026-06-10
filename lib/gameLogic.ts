@@ -582,7 +582,11 @@ function generateGameScore(
     oppScore = teamScore + Math.max(1, Math.round(Math.abs(randn()) * 4 + 1))
   }
 
-  return { teamScore: Math.min(scoreCap, teamScore), oppScore: Math.min(scoreCap, oppScore) }
+  let ts = Math.min(scoreCap, teamScore)
+  let os = Math.min(scoreCap, oppScore)
+  // Tie-break after capping: basketball can't end in a tie
+  if (ts === os) { if (win) ts += 1; else os += 1 }
+  return { teamScore: ts, oppScore: os }
 }
 
 // League-average indices for normalisation (calibrated to typical 9-man roster)
