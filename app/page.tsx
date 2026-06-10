@@ -77,6 +77,7 @@ const COACH_GURUS: Record<string, CoachGuru> = {
   'Wes Unseld':       { offOverride: 'B', defOverride: 'A' },
   'Wes Unseld Jr.':   { offOverride: 'B', defOverride: 'A' },
   'Richie Guerin':    { offOverride: 'B', defOverride: 'B' },
+  'Cotton Fitzsimmons': { offOverride: 'B', defOverride: 'C' },
 }
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
