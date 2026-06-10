@@ -746,13 +746,14 @@ function EraSelection({ onEraSelected, onRestart }: { onEraSelected: (era: Era) 
                   key={displayEra}
                   src={`/era-banners/${displayEra}.webp`}
                   alt=""
+                  className="era-banner-img"
                   onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
                   style={{
                     position: 'absolute', inset: 0, width: '100%', height: '100%',
                     objectFit: 'cover', pointerEvents: 'none', zIndex: 0,
                     maskImage: 'linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)',
                     WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)',
-                    maskComposite: 'intersect',
+                    maskComposite: 'intersect' as React.CSSProperties['maskComposite'],
                     WebkitMaskComposite: 'destination-in',
                   }}
                 />
