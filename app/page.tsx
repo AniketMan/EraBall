@@ -1626,7 +1626,8 @@ function StatsTable({ stats, simEra, title, subtitle, teamActualPPG, teamActualO
       <div
         style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)',
-          zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, overflowY: 'auto',
+          zIndex: 1000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+          padding: '48px 24px 24px', overflowY: 'auto',
         }}
         onClick={e => { if (e.target === e.currentTarget) setCardPlayer(null) }}
       >
@@ -1635,7 +1636,7 @@ function StatsTable({ stats, simEra, title, subtitle, teamActualPPG, teamActualO
             onClick={() => setCardPlayer(null)}
             className="modal-close"
             style={{
-              position: 'absolute', top: -14, right: 0, zIndex: 1,
+              position: 'absolute', top: -40, right: 0, zIndex: 1,
               background: 'transparent', border: `1px solid ${G.border}`,
               color: G.grey, fontSize: 18, lineHeight: 1,
               width: 32, height: 32, cursor: 'pointer',
