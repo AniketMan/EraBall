@@ -1002,7 +1002,11 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
     setSelectedPlayer(null); setPendingSlotIdx(null); setHighlightEmpty(false)
     setSpinsThisRound(0)
     setAwaitingSpin(true)
-    if (window.innerWidth < 640) window.scrollTo({ top: 0, behavior: 'smooth' })
+    if (window.innerWidth < 640) requestAnimationFrame(() => {
+      window.scrollTo(0, 0)
+      document.documentElement.scrollTop = 0
+      document.body.scrollTop = 0
+    })
   }
 
   useEffect(() => {
