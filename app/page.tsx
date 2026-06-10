@@ -448,10 +448,15 @@ function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, acti
       {isPending && <div className="slot-pending-glow" />}
       {/* Position label + minutes (bench only) */}
       <div className="absolute top-1 left-1.5" style={{ lineHeight: 1 }}>
-        <div style={{ ...BEBAS, color: G.goldDim, fontSize: 11, letterSpacing: '0.1em' }}>
-          {slot.position.startsWith('B')
-            ? `${slot.position} · ${SLOT_MPG[slot.position]} MIN`
-            : slot.position}
+        <div style={{ ...BEBAS, fontSize: 11, letterSpacing: '0.1em' }}>
+          {slot.position.startsWith('B') ? (
+            <>
+              <span style={{ color: G.goldDim }}>{slot.position}</span>
+              <span style={{ color: 'rgba(255,255,255,0.45)' }}>{` · ${SLOT_MPG[slot.position]} MIN`}</span>
+            </>
+          ) : (
+            <span style={{ color: G.goldDim }}>{slot.position}</span>
+          )}
         </div>
       </div>
 
@@ -997,6 +1002,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
     setSelectedPlayer(null); setPendingSlotIdx(null); setHighlightEmpty(false)
     setSpinsThisRound(0)
     setAwaitingSpin(true)
+    if (window.innerWidth < 640) window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   useEffect(() => {
