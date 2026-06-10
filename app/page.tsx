@@ -447,9 +447,14 @@ function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, acti
     >
       {isPending && <div className="slot-pending-glow" />}
       {isPending && (
-        <div className="absolute bottom-1.5 left-0 right-0 text-center" style={{ fontSize: 8, letterSpacing: '0.12em', color: G.gold, textTransform: 'uppercase', zIndex: 2 }}>
-          Tap to lock
-        </div>
+        <>
+          <div className="absolute bottom-1.5 left-0 right-0 text-center sm:hidden" style={{ fontSize: 8, letterSpacing: '0.12em', color: G.gold, textTransform: 'uppercase', zIndex: 2 }}>
+            Pending · Tap to lock
+          </div>
+          <div className="absolute bottom-1.5 left-0 right-0 text-center hidden sm:block" style={{ fontSize: 8, letterSpacing: '0.12em', color: G.gold, textTransform: 'uppercase', zIndex: 2 }}>
+            Pending · Click to lock
+          </div>
+        </>
       )}
       {/* Position label + minutes (bench only) */}
       <div className="absolute top-1 left-1.5" style={{ lineHeight: 1 }}>
