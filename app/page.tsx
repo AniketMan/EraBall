@@ -734,6 +734,11 @@ function EraSelection({ onEraSelected, onRestart }: { onEraSelected: (era: Era) 
     if (next !== era) selectEra(next)
   }
 
+  // Prefetch all era banner images so they're cached before the user clicks
+  React.useEffect(() => {
+    ALL_ERAS.forEach(era => { const img = new Image(); img.src = `/era-banners/${era}.webp` })
+  }, [])
+
   // Keyboard arrow navigation
   React.useEffect(() => {
     const handler = (ev: KeyboardEvent) => {
