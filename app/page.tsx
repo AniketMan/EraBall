@@ -1391,28 +1391,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
               <div className="text-xs uppercase tracking-[0.2em]" style={{ color: G.greyDark }}>Starting Five</div>
               <div className="text-xs mt-0.5" style={{ color: G.greyDark, opacity: 0.6, letterSpacing: '0.04em' }}>Starters · 35 min each</div>
             </div>
-            {/* Desktop: 4-col grid matching bench width — PG/SG/SF + spacer, spacer + PF/C + spacer */}
-            <div className="hidden sm:grid grid-cols-4 gap-1.5 mb-4">
-              {[0, 1, 2].map(i => (
-                <CourtSlotView key={starterSlots[i].position} slot={starterSlots[i]}
-                  highlighted={!!selectedPlayer && !starterSlots[i].player}
-                  pendingPlayer={pendingSlotIdx === i ? selectedPlayer : null}
-                  activePlayer={selectedPlayer} simEra={simEra}
-                  onClick={() => previewSlot(i)} onDrop={() => previewSlot(i)} />
-              ))}
-              <div />
-              <div />
-              {[3, 4].map(i => (
-                <CourtSlotView key={starterSlots[i].position} slot={starterSlots[i]}
-                  highlighted={!!selectedPlayer && !starterSlots[i].player}
-                  pendingPlayer={pendingSlotIdx === i ? selectedPlayer : null}
-                  activePlayer={selectedPlayer} simEra={simEra}
-                  onClick={() => previewSlot(i)} onDrop={() => previewSlot(i)} />
-              ))}
-              <div />
-            </div>
-            {/* Mobile: 3+2 layout */}
-            <div className="sm:hidden mb-4 space-y-1.5">
+            <div className="mb-4 space-y-1.5">
               <div className="grid grid-cols-3 gap-1.5">
                 {starterSlots.slice(0, 3).map((slot, i) => (
                   <CourtSlotView key={slot.position} slot={slot}
