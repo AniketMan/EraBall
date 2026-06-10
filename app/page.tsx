@@ -395,9 +395,9 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra }: { player: Pl
 }
 
 // ─── Court slot ───────────────────────────────────────────────────────────────
-function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, activePlayer, simEra, square }: {
+function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, activePlayer, simEra }: {
   slot: CourtSlot; onClick: () => void; onDrop: () => void; highlighted: boolean
-  pendingPlayer?: Player | null; activePlayer?: Player | null; simEra?: Era; square?: boolean
+  pendingPlayer?: Player | null; activePlayer?: Player | null; simEra?: Era
 }) {
   const [dragOver, setDragOver] = useState(false)
   const confirmed = slot.player
@@ -432,7 +432,7 @@ function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, acti
     <div
       className={`relative overflow-hidden cursor-pointer court-slot${confirmed ? ' court-slot--filled' : ''}`}
       style={{
-        ...(square ? { aspectRatio: '1 / 1' } : { minHeight: 140 }),
+        minHeight: 140,
         background: isPending ? `${G.gold}0a` : confirmed ? tierBg(confirmed) : G.black,
         border: `1px solid ${fitBorder}`,
         outline: isPending ? `1px solid ${G.goldDim}` : 'none',
@@ -1392,26 +1392,14 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
               <div className="text-xs mt-0.5" style={{ color: G.greyDark, opacity: 0.6, letterSpacing: '0.04em' }}>Starters · 35 min each</div>
             </div>
             {/* Mobile: 3 top + 2 centered bottom; Desktop: single 5-col row */}
-            {/* Desktop: SF/PF/C top, PG/SG centered below — square slots */}
-            <div className="hidden sm:block mb-4 space-y-1.5">
-              <div className="grid grid-cols-3 gap-1.5">
-                {[2, 3, 4].map(i => (
-                  <CourtSlotView key={starterSlots[i].position} slot={starterSlots[i]}
-                    highlighted={!!selectedPlayer && !starterSlots[i].player}
-                    pendingPlayer={pendingSlotIdx === i ? selectedPlayer : null}
-                    activePlayer={selectedPlayer} simEra={simEra} square
-                    onClick={() => previewSlot(i)} onDrop={() => previewSlot(i)} />
-                ))}
-              </div>
-              <div className="grid grid-cols-2 gap-1.5" style={{ width: '66.67%', margin: '0 auto' }}>
-                {[0, 1].map(i => (
-                  <CourtSlotView key={starterSlots[i].position} slot={starterSlots[i]}
-                    highlighted={!!selectedPlayer && !starterSlots[i].player}
-                    pendingPlayer={pendingSlotIdx === i ? selectedPlayer : null}
-                    activePlayer={selectedPlayer} simEra={simEra} square
-                    onClick={() => previewSlot(i)} onDrop={() => previewSlot(i)} />
-                ))}
-              </div>
+            <div className="hidden sm:grid grid-cols-5 gap-1.5 mb-4">
+              {starterSlots.map((slot, i) => (
+                <CourtSlotView key={slot.position} slot={slot}
+                  highlighted={!!selectedPlayer && !slot.player}
+                  pendingPlayer={pendingSlotIdx === i ? selectedPlayer : null}
+                  activePlayer={selectedPlayer} simEra={simEra}
+                  onClick={() => previewSlot(i)} onDrop={() => previewSlot(i)} />
+              ))}
             </div>
             <div className="sm:hidden mb-4 space-y-1.5">
               <div className="grid grid-cols-3 gap-1.5">
