@@ -873,6 +873,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
   const [noPlayersMsg, setNoPlayersMsg] = useState(false)
   const [spinsThisRound, setSpinsThisRound] = useState(0)
   const [respinUsed, setRespinUsed] = useState(false)
+  const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   const [devMode, setDevMode] = useState(false)
   const [devTeam, setDevTeam] = useState(NBA_TEAMS[0])
   const [devEra, setDevEra] = useState<Era>(ALL_ERAS[6]) // default 10s
@@ -1061,7 +1062,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
             <span className="mx-3" style={{ color: G.border }}>|</span>
             Picks: <span style={{ color: filledCount === 9 ? G.gold : G.white }}>{filledCount}/9</span>
           </span>
-          <button
+          {isLocalhost && <button
             onClick={() => setDevMode(d => !d)}
             className={`text-xs uppercase tracking-widest px-2 py-1 dev-btn${devMode ? ' dev-btn--active' : ''}`}
             style={{
@@ -1070,7 +1071,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
               border: `1px solid ${devMode ? G.gold : G.border}`,
             }}
             title="Developer mode — pick team/era directly"
-          >DEV</button>
+          >DEV</button>}
         </div>
       } />
 
@@ -1415,6 +1416,7 @@ function CoachDraftScreen({ coaches, onCoachSelected, onRestart }: {
   const [displayName, setDisplayName] = useState('')
   const [spinKey, setSpinKey] = useState(0)
   const [spinPhase, setSpinPhase] = useState<'fast' | 'slow' | 'land'>('fast')
+  const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   const [devMode, setDevMode] = useState(false)
   const [devSearch, setDevSearch] = useState('')
 
@@ -1551,7 +1553,7 @@ function CoachDraftScreen({ coaches, onCoachSelected, onRestart }: {
         </div>
 
         {/* DEV coach picker */}
-        <div className="mt-6 pt-4" style={{ borderTop: `1px solid ${G.border}` }}>
+        {isLocalhost && <div className="mt-6 pt-4" style={{ borderTop: `1px solid ${G.border}` }}>
           <button
             onClick={() => { setDevMode(d => !d); setDevSearch('') }}
             className="dev-btn text-xs uppercase tracking-widest px-3 py-1"
@@ -1586,7 +1588,7 @@ function CoachDraftScreen({ coaches, onCoachSelected, onRestart }: {
               )}
             </div>
           )}
-        </div>
+        </div>}
       </div>
       </div>
     </div>
