@@ -675,6 +675,7 @@ function TopBar({ onRestart, right }: { onRestart: () => void; right?: React.Rea
 function EraSelection({ onEraSelected, onRestart }: { onEraSelected: (era: Era) => void; onRestart: () => void }) {
   const [spinning, setSpinning] = useState(false)
   const [era, setEra] = useState<Era | null>(null)
+  const [showHelp, setShowHelp] = useState(false)
   const [displayEra, setDisplayEra] = useState<Era | null>(null)
   const [spinKey, setSpinKey] = useState(0)
   const [spinPhase, setSpinPhase] = useState<'fast' | 'slow' | 'land'>('fast')
@@ -835,6 +836,13 @@ function EraSelection({ onEraSelected, onRestart }: { onEraSelected: (era: Era) 
           <Btn onClick={spinRandom} disabled={spinning} variant="ghost" className="w-48 py-3">
             {spinning ? 'Spinning...' : 'Random'}
           </Btn>
+          <button
+            onClick={() => setShowHelp(true)}
+            className="text-xs uppercase tracking-widest"
+            style={{ background: 'none', border: 'none', color: G.greyDark, padding: '2px 0', cursor: 'pointer', letterSpacing: '0.2em' }}
+          >
+            How to Play
+          </button>
           {era && !spinning && (
             <Btn onClick={() => onEraSelected(era)} variant="gold" className="w-48 py-4 text-base">
               Begin Draft
@@ -846,6 +854,7 @@ function EraSelection({ onEraSelected, onRestart }: { onEraSelected: (era: Era) 
       <div className="px-8 pb-8 text-xs uppercase tracking-widest text-center" style={{ color: G.greyDark }}>
         Draft across decades
       </div>
+      {showHelp && <HowToPlayModal onClose={() => setShowHelp(false)} />}
     </div>
   )
 }
