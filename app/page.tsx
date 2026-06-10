@@ -1350,6 +1350,13 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
               </div>
             )}
 
+            {/* Hint: roster visible but no player selected yet */}
+            {rosterPool.length > 0 && !selectedPlayer && !awaitingSpin && (
+              <div className="text-center text-xs" style={{ color: G.greyDark, letterSpacing: '0.04em' }}>
+                Select a player · then tap a slot to place
+              </div>
+            )}
+
             {/* Selected player card */}
             {selectedPlayer && (
               <div className="space-y-2">
@@ -1400,6 +1407,19 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
               <div className="absolute left-1/2 -translate-x-1/2 top-0 w-2 h-2 rounded-full"
                 style={{ background: G.border, marginTop: -3 }} />
             </div>
+
+            {/* Mobile-only: bridge hint when player selected and court is below the fold */}
+            {selectedPlayer && pendingSlotIdx === null && (
+              <div className="sm:hidden text-center text-xs mb-3" style={{ color: G.goldDim, letterSpacing: '0.04em' }}>
+                Tap a slot to place {selectedPlayer.full_name.split(' ')[0]}
+              </div>
+            )}
+            {/* Empty-court onboarding hint */}
+            {filledCount === 0 && rosterPool.length === 0 && !spinning && !awaitingSpin && (
+              <div className="text-center text-xs mb-3" style={{ color: G.greyDark, opacity: 0.55, letterSpacing: '0.04em' }}>
+                Spin a team roster · select players · fill all 9 slots
+              </div>
+            )}
 
             <div className="mb-4 text-center">
               <div className="text-xs uppercase tracking-[0.2em]" style={{ color: G.greyDark }}>Starting Five</div>
