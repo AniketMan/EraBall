@@ -613,22 +613,6 @@ const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
             </div>
           </div>
 
-          {/* Branding */}
-          <div style={{
-            textAlign: 'center',
-            marginTop: 12,
-            flexShrink: 0,
-          }}>
-            <span style={{
-              fontFamily: INTER,
-              fontSize: 10,
-              color: 'rgba(201,168,76,0.35)',
-              letterSpacing: '0.3em',
-              textTransform: 'uppercase',
-            }}>
-              eraball.app
-            </span>
-          </div>
 
         </div>
       </div>

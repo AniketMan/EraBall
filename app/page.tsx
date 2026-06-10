@@ -553,35 +553,39 @@ const ERA_DESC: Record<Era, { style: string; note: string }> = {
 const HOW_TO_PLAY_STEPS = [
   {
     title: 'Pick Your Era',
-    body: 'Choose a decade — 50s through 20s — or hit Random. Your team will be built from players active in that era, but legends from other eras can appear too.',
+    body: 'Choose a decade: 50s through the 2020s. This is the era of basketball your season will be simulated in. Following the Era rules and trends.',
   },
   {
     title: 'Spin to Draft',
-    body: 'Each spin lands on a franchise and era. Pick 1 of 3 players from that team\'s roster for your open slot. You get one respin for the entire draft — use it wisely.',
+    body: 'Each spin lands on a franchise and an ERA of that franchise. Choose one player from all the players who played for that team during that era to fill an open slot. You get only ONE respin for the entire draft.',
   },
   {
     title: 'Fill 9 Spots',
-    body: '5 starters (PG · SG · SF · PF · C) and 4 bench spots. Starters get more minutes and carry more weight in your team rating.',
+    body: '5 starters (PG · SG · SF · PF · C) and 4 bench players. Starters play 35 minutes per game, and carry more weight in the simulation. Bench players contribute at a reduced rate.',
   },
   {
     title: 'Positional Fit',
-    body: 'Playing a player at their natural position = no penalty. One position off = −10%. Way out of position = −25%. FLEX players (LeBron, Jokić, Giannis, etc.) can play multiple spots with no penalty.',
+    body: 'Playing a player at their natural position = no penalty. One position off = −10% rating. Way out of position = −25%. FLEX players like LeBron, Jokić, and Giannis can fill multiple slots with no penalty.',
   },
   {
     title: 'Era Modifier',
-    body: 'Players perform best in their home decade. Each era away from home = −5% rating, capped at −15%. Pre-3PT era players (50s–70s) face an extra penalty in modern 3-point heavy simulations.',
+    body: 'Every player performs best in their home decade. Each era away is a larger era penalty Pre-3PT players (50s–70s) face an extra penalty in modern eras. Players selected within their ers have no penalty.',
+  },
+  {
+    title: 'Special Players - IMPORTANT',
+    body: 'Special contributors carry special tags. Defensive Anchors (Draymond, Tony Allen, Aaron Gordon, Kawhi, etc.) get a boost to their impact, beyond their stats. Offensive Anchors (LeBron, Jokić, Luka, Embiid, etc.) give an offensive boost to the team. Championship players perform better in the playoffs. The more championships they have, the better performances they will have when the lights are the brightest.',
   },
   {
     title: 'Draft a Coach',
-    body: 'Your coach has Offense and Defense grades (A–F). A good offensive coach boosts scoring; a great defensive coach limits opponents. Guru tags (OFF GURU / DEF GURU) guarantee an A in that category.',
+    body: 'Your coach has separate Offense and Defense grades (A–F). Offensive coaches boost scoring, defensive coaches limit opponents. Guru tags (OFF GURU / DEF GURU) excel at that side of the ball. Championship-winning coaches carry an extra bonus. The more Championships, the higher bonus.',
   },
   {
     title: 'Simulate the Season',
-    body: 'Your team plays an 82-game season. Make the playoffs (41+ wins) and you\'ll compete in a 4-round bracket. Win 4 rounds to become champions.',
+    body: 'Your team plays an 82-game season. Win 41+ games to make the playoffs. Navigate an era accurate bracket to win the championship. Player performance will vary each run based on team spacing, coaching, playmaking, defense and role fit. The same stars won\'t always get the same result.',
   },
   {
-    title: 'Awards',
-    body: 'Season awards — MVP, All-NBA, All-Star, Defensive POY, 6th Man — are handed out based on your players\' stats. Finals MVP goes to your best performer in the championship round.',
+    title: 'Awards & Stats',
+    body: 'MVP, All-NBA, All-Star, Defensive POY, and 6th Man are awarded based on simulated stats.',
   },
 ]
 
@@ -617,13 +621,13 @@ function HowToPlayModal({ onClose }: { onClose: () => void }) {
             <div style={{ ...BEBAS, fontSize: 16, color: G.white, letterSpacing: '0.15em', marginBottom: 12 }}>PLAYER TIERS</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {[
-                { label: 'S', color: '#9b6dff', bg: 'linear-gradient(90deg, #1e0c3d, #0a0415)', desc: 'All-time legends — multi-MVP, Hall of Fame impact' },
-                { label: 'A', color: '#C9A84C', bg: 'linear-gradient(90deg, #6b4800, #1c1200)', desc: 'Star players — All-Star caliber, franchise cornerstones' },
-                { label: 'B', color: '#4caf78', bg: 'linear-gradient(90deg, #002d12, #000e05)', desc: 'Solid starters — strong contributors every night' },
-                { label: 'C', color: '#5b8fd4', bg: 'linear-gradient(90deg, #0a1e3a, #020810)', desc: 'Quality rotation players — reliable in their role' },
-                { label: 'D', color: '#c47a35', bg: 'linear-gradient(90deg, #2e1200, #100600)', desc: 'Role players and specialists' },
-                { label: 'E', color: '#666',    bg: 'linear-gradient(90deg, #181818, #0e0e0e)', desc: 'Bench depth — limited but serviceable' },
-                { label: 'F', color: '#444',    bg: '#0a0a0a',                                   desc: 'Deep bench / minimal impact' },
+                { label: 'S', color: '#9b6dff', bg: 'linear-gradient(90deg, #1e0c3d, #0a0415)', desc: 'All-time legends.' },
+                { label: 'A', color: '#C9A84C', bg: 'linear-gradient(90deg, #6b4800, #1c1200)', desc: 'Star players.' },
+                { label: 'B', color: '#4caf78', bg: 'linear-gradient(90deg, #002d12, #000e05)', desc: 'Solid starters.' },
+                { label: 'C', color: '#5b8fd4', bg: 'linear-gradient(90deg, #0a1e3a, #020810)', desc: 'Quality rotation players.' },
+                { label: 'D', color: '#c47a35', bg: 'linear-gradient(90deg, #2e1200, #100600)', desc: 'Role players and specialists.' },
+                { label: 'E', color: '#666',    bg: 'linear-gradient(90deg, #181818, #0e0e0e)', desc: 'Bench depth.' },
+                { label: 'F', color: '#444',    bg: '#0a0a0a',                                   desc: 'Deep bench / minimal impact.' },
               ].map(t => (
                 <div key={t.label} style={{ display: 'flex', alignItems: 'center', gap: 10, background: t.bg, border: `1px solid ${G.border}`, padding: '6px 10px' }}>
                   <div style={{ ...BEBAS, fontSize: 18, color: t.color, width: 18, flexShrink: 0, textAlign: 'center' }}>{t.label}</div>
@@ -737,10 +741,10 @@ function EraSelection({ onEraSelected, onRestart }: { onEraSelected: (era: Era) 
             <div>
               <div className="text-xs uppercase tracking-[0.4em] mb-2" style={{ color: G.grey }}>Simulation Era</div>
               <div style={{ position: 'relative', width: '100%', maxWidth: 680, margin: '0 auto' }}>
-                {/* Era banner image — place 2400×480px PNGs in /public/era-banners/<era>.png */}
+                {/* Era banner image — place 2400×480px WebPs in /public/era-banners/<era>.webp */}
                 <img
                   key={displayEra}
-                  src={`/era-banners/${displayEra}.png`}
+                  src={`/era-banners/${displayEra}.webp`}
                   alt=""
                   onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
                   style={{
