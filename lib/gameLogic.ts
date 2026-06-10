@@ -163,8 +163,15 @@ const PLAYER_ANCHORS: Record<string, AnchorType> = {
   'Kevin Garnett':   'def',
 }
 
+// Era-specific anchor overrides — "name:era" takes priority over PLAYER_ANCHORS.
+const ERA_PLAYER_ANCHORS: Record<string, AnchorType> = {
+  'Carmelo Anthony:00s': 'off',
+  'Carmelo Anthony:10s': 'off',
+}
+
 export function applyAnchors(player: Player): Player {
-  const anchor = PLAYER_ANCHORS[player.full_name]
+  const eraKey = player.era ? `${player.full_name}:${player.era}` : null
+  const anchor = (eraKey && ERA_PLAYER_ANCHORS[eraKey]) ?? PLAYER_ANCHORS[player.full_name]
   if (!anchor) return player
   return { ...player, defAnchor: anchor === 'def', offAnchor: anchor === 'off' }
 }
