@@ -324,7 +324,7 @@ export function genOppTeamStats(avgOppScore: number, era: Era, teamSTL?: number,
   const cn = (r: number) => (Math.random() - 0.5) * r
   const pn = () => randn() * 0.018
   return {
-    REB:     Math.max(28, +(b.reb * scale + cn(5)).toFixed(1)),
+    REB:     Math.min(75, Math.max(28, +(b.reb * scale + cn(5)).toFixed(1))),
     AST:     Math.max(10, +(b.ast * scale + cn(4)).toFixed(1)),
     STL:     b.stl != null ? Math.max(4,  +(b.stl + cn(1.5)).toFixed(1)) : null,
     BLK:     b.blk != null ? Math.max(2,  +(b.blk + cn(1.0)).toFixed(1)) : null,
