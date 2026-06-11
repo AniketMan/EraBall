@@ -900,6 +900,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
   const [devPlayerSearch, setDevPlayerSearch] = useState('')
 
   const filledCount = slots.filter(s => s.player !== null).length
+  const visiblePoolRef = useRef<Player[]>([])
 
   // All team abbreviations for the animation flythrough display
   const allTeams = useMemo(() => {
@@ -1017,7 +1018,19 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && pendingSlotIdx !== null && selectedPlayer) confirmPick()
+      if (e.key === 'Enter' && pendingSlotIdx !== null && selectedPlayer) { confirmPick(); return }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        const pool = visiblePoolRef.current
+        if (pool.length === 0) return
+        e.preventDefault()
+        const cur = selectedPlayer ? pool.findIndex(p => p.person_id === selectedPlayer.person_id) : -1
+        const next = e.key === 'ArrowDown' ? Math.min(cur + 1, pool.length - 1) : Math.max(cur - 1, 0)
+        const p = pool[next]
+        if (p) {
+          setSelectedPlayer(p); setHighlightEmpty(true); setPendingSlotIdx(null)
+          requestAnimationFrame(() => document.getElementById(`player-row-${p.person_id}`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }))
+        }
+      }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
@@ -1310,26 +1323,26 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
                   <GoldLabel>{rosterPool.length} available</GoldLabel>
                 </div>
                 <div className="roster-scroll" style={{ border: `1px solid ${G.border}`, maxHeight: 220, overflowY: 'auto', overflowX: 'hidden' }}>
-                  {[...rosterPool].sort((a, b) => {
-                    if (sortBy === 'SPECIAL') {
-                      const isSpecial = (p: Player) =>
-                        p.greatest_75_flag === 'Y' || (p.rings ?? 0) > 0 || p.defAnchor || p.offAnchor || !!p.flexPositions
-                      const aS = isSpecial(a) ? 1 : 0
-                      const bS = isSpecial(b) ? 1 : 0
-                      if (bS !== aS) return bS - aS
-                      return playerBaseRating(b, b.era as Era) - playerBaseRating(a, a.era as Era)
-                    }
-                    if (sortBy === 'TS') return calcTS(b) - calcTS(a)
-                    return (b[sortBy] ?? 0) - (a[sortBy] ?? 0)
-                  }).filter(p => {
-                    if (sortBy !== 'SPECIAL') return true
-                    return p.greatest_75_flag === 'Y' || (p.rings ?? 0) > 0 || p.defAnchor || p.offAnchor || !!p.flexPositions
-                  }).map(p => {
+                  {(() => {
+                    const isSpecial = (p: Player) =>
+                      p.greatest_75_flag === 'Y' || (p.rings ?? 0) > 0 || p.defAnchor || p.offAnchor || !!p.flexPositions
+                    const sorted = [...rosterPool].sort((a, b) => {
+                      if (sortBy === 'SPECIAL') {
+                        const aS = isSpecial(a) ? 1 : 0; const bS = isSpecial(b) ? 1 : 0
+                        if (bS !== aS) return bS - aS
+                        return playerBaseRating(b, b.era as Era) - playerBaseRating(a, a.era as Era)
+                      }
+                      if (sortBy === 'TS') return calcTS(b) - calcTS(a)
+                      return (b[sortBy] ?? 0) - (a[sortBy] ?? 0)
+                    }).filter(p => sortBy !== 'SPECIAL' || isSpecial(p))
+                    visiblePoolRef.current = sorted
+                    return sorted.map(p => {
                     const ts = (calcTS(p) * 100).toFixed(1)
                     const isSel = selectedPlayer?.person_id === p.person_id
                     return (
                       <button
                         key={p.person_id}
+                        id={`player-row-${p.person_id}`}
                         onClick={() => { setSelectedPlayer(p); setHighlightEmpty(true); setPendingSlotIdx(null) }}
                         className={`w-full flex items-center gap-3 px-3 text-left roster-row${isSel ? ' roster-row--selected' : ''}`}
                         style={{
@@ -1361,7 +1374,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
                         </div>
                       </button>
                     )
-                  })}
+                  })})()}
                   {sortBy === 'SPECIAL' && !rosterPool.some(p =>
                     p.greatest_75_flag === 'Y' || (p.rings ?? 0) > 0 || p.defAnchor || p.offAnchor || !!p.flexPositions
                   ) && (
