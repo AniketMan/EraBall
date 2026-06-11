@@ -1273,7 +1273,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
                 </div>
                 <Btn
                   onClick={spin}
-                  disabled={spinning || (rosterPool.length > 0 && respinUsed)}
+                  disabled={spinning || filledCount === 9 || (rosterPool.length > 0 && respinUsed)}
                   variant="gold"
                   className={`w-full py-4 text-base${awaitingSpin ? ' spin-awaiting' : ''}`}
                 >
