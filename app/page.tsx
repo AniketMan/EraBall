@@ -678,7 +678,7 @@ function TopBar({ onRestart, right }: { onRestart: () => void; right?: React.Rea
 }
 
 // ─── Phase 1: Era Selection ───────────────────────────────────────────────────
-function EraSelection({ onEraSelected, onRestart }: { onEraSelected: (era: Era) => void; onRestart: () => void }) {
+function EraSelection({ onEraSelected, onSandboxSelected, onRestart }: { onEraSelected: (era: Era) => void; onSandboxSelected: (era: Era) => void; onRestart: () => void }) {
   const [spinning, setSpinning] = useState(false)
   const [era, setEra] = useState<Era | null>(null)
   const [showHelp, setShowHelp] = useState(() => {
@@ -856,6 +856,14 @@ function EraSelection({ onEraSelected, onRestart }: { onEraSelected: (era: Era) 
               Begin Draft
             </Btn>
           )}
+          {era && !spinning && (
+            <>
+              <span className="text-xs uppercase tracking-widest" style={{ color: G.greyDark }}>or play</span>
+              <Btn onClick={() => onSandboxSelected(era)} variant="ghost" className="w-48 py-3 text-sm">
+                Sandbox
+              </Btn>
+            </>
+          )}
         </div>
       </div>
 
@@ -871,8 +879,8 @@ function EraSelection({ onEraSelected, onRestart }: { onEraSelected: (era: Era) 
 }
 
 // ─── Phase 2: Draft ───────────────────────────────────────────────────────────
-function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
-  simEra: Era; players: Player[]; onDraftComplete: (slots: CourtSlot[]) => void; onRestart: () => void
+function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandbox }: {
+  simEra: Era; players: Player[]; onDraftComplete: (slots: CourtSlot[]) => void; onRestart: () => void; startInSandbox?: boolean
 }) {
   const [slots, setSlots] = useState<CourtSlot[]>(emptySlots())
   const [spinning, setSpinning] = useState(false)
@@ -898,7 +906,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
   const [devTeam, setDevTeam] = useState(NBA_TEAMS[0])
   const [devEra, setDevEra] = useState<Era>(ALL_ERAS[6]) // default 10s
   const [devPlayerSearch, setDevPlayerSearch] = useState('')
-  const [sandboxMode, setSandboxMode] = useState(false)
+  const [sandboxMode, setSandboxMode] = useState(startInSandbox ?? false)
   const [sandboxTeam, setSandboxTeam] = useState(NBA_TEAMS[0])
   const [sandboxEra, setSandboxEra] = useState<Era>(ALL_ERAS[6])
   const [sandboxTeamSearch, setSandboxTeamSearch] = useState('')
@@ -1171,16 +1179,6 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
             <span className="mx-3" style={{ color: G.border }}>|</span>
             Picks: <span style={{ color: filledCount === 9 ? G.gold : G.white }}>{filledCount}/9</span>
           </span>
-          <button
-            onClick={() => { setSandboxMode(s => !s); if (devMode) setDevMode(false) }}
-            className={`text-xs uppercase tracking-widest px-2 py-1 dev-btn${sandboxMode ? ' dev-btn--active' : ''}`}
-            style={{
-              color: sandboxMode ? G.black : G.greyDark,
-              background: sandboxMode ? G.gold : 'transparent',
-              border: `1px solid ${sandboxMode ? G.gold : G.border}`,
-            }}
-            title="Sandbox mode — pick any team / era"
-          >Sandbox</button>
           {isLocalhost && <button
             onClick={() => { setDevMode(d => !d); if (sandboxMode) setSandboxMode(false) }}
             className={`text-xs uppercase tracking-widest px-2 py-1 dev-btn${devMode ? ' dev-btn--active' : ''}`}
@@ -3173,6 +3171,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
 export default function Home() {
   const [phase, setPhase] = useState<GamePhase>('era-select')
   const [simEra, setSimEra] = useState<Era>('90s')
+  const [startSandbox, setStartSandbox] = useState(false)
   const [players, setPlayers] = useState<Player[]>([])
   const [coaches, setCoaches] = useState<Coach[]>([])
   const [slots, setSlots] = useState<CourtSlot[]>(emptySlots())
@@ -3208,8 +3207,8 @@ export default function Home() {
 
   return (
     <>
-      {phase === 'era-select' && <EraSelection onEraSelected={era => { setSimEra(era); setPhase('draft') }} onRestart={restart} />}
-      {phase === 'draft' && <DraftScreen simEra={simEra} players={players} onDraftComplete={s => { setSlots(s); setPhase('coach-draft') }} onRestart={restart} />}
+      {phase === 'era-select' && <EraSelection onEraSelected={era => { setSimEra(era); setStartSandbox(false); setPhase('draft') }} onSandboxSelected={era => { setSimEra(era); setStartSandbox(true); setPhase('draft') }} onRestart={restart} />}
+      {phase === 'draft' && <DraftScreen simEra={simEra} players={players} onDraftComplete={s => { setSlots(s); setPhase('coach-draft') }} onRestart={restart} startInSandbox={startSandbox} />}
       {phase === 'coach-draft' && <CoachDraftScreen coaches={coaches} onCoachSelected={c => { setCoach(c); setPhase('simulation') }} onRestart={restart} />}
       {phase === 'simulation' && coach && <SimulationScreen slots={slots} coach={coach} simEra={simEra} onRestart={restart} />}
 
