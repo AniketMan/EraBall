@@ -177,6 +177,7 @@ const PLAYER_ANCHORS: Record<string, AnchorType> = {
   'Joel Embiid':             'off',
   'Kevin Durant':            'off',
   'Oscar Robertson':         'off',
+  'Shaquille O\'Neal':       'off',
   // Offensive Anchors — T2
   'Rajon Rondo':             'off',
   'Tony Parker':             'off',
