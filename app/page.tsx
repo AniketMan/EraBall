@@ -891,8 +891,8 @@ function EraSelection({ onEraSelected, onSandboxSelected, onRestart }: { onEraSe
 }
 
 // ─── Phase 2: Draft ───────────────────────────────────────────────────────────
-function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandbox }: {
-  simEra: Era; players: Player[]; onDraftComplete: (slots: CourtSlot[]) => void; onRestart: () => void; startInSandbox?: boolean
+function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandbox, greyscaleBtn }: {
+  simEra: Era; players: Player[]; onDraftComplete: (slots: CourtSlot[]) => void; onRestart: () => void; startInSandbox?: boolean; greyscaleBtn?: React.ReactNode
 }) {
   const [slots, setSlots] = useState<CourtSlot[]>(emptySlots())
   const [spinning, setSpinning] = useState(false)
@@ -1215,6 +1215,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
             }}
             title="Developer mode — pick team/era directly"
           >DEV</button>}
+          {greyscaleBtn}
         </div>
       } />
 
@@ -1697,8 +1698,8 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
 }
 
 // ─── Phase 3: Coach Draft ─────────────────────────────────────────────────────
-function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxMode }: {
-  coaches: Coach[]; onCoachSelected: (coach: Coach) => void; onRestart: () => void; sandboxMode?: boolean
+function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxMode, greyscaleBtn }: {
+  coaches: Coach[]; onCoachSelected: (coach: Coach) => void; onRestart: () => void; sandboxMode?: boolean; greyscaleBtn?: React.ReactNode
 }) {
   const [spinning, setSpinning] = useState(false)
   const [coach, setCoach] = useState<Coach | null>(null)
@@ -1742,7 +1743,7 @@ function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxMode }: 
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: G.black }}>
-      <TopBar onRestart={onRestart} />
+      <TopBar onRestart={onRestart} right={greyscaleBtn ? <div className="flex items-center gap-4">{greyscaleBtn}</div> : undefined} />
 
       <div className="flex-1 flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-md">
@@ -2453,8 +2454,8 @@ function SeasonAwardsPanel({ awards }: { awards: AwardEntry[] }) {
 }
 
 // ─── Phase 4: Simulation ──────────────────────────────────────────────────────
-function SimulationScreen({ slots, coach, simEra, onRestart }: {
-  slots: CourtSlot[]; coach: Coach; simEra: Era; onRestart: () => void
+function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn }: {
+  slots: CourtSlot[]; coach: Coach; simEra: Era; onRestart: () => void; greyscaleBtn?: React.ReactNode
 }) {
   const seasonGames = ERA_SEASON_GAMES[simEra]
 
@@ -2701,11 +2702,14 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
   return (
     <div className="min-h-screen" style={{ background: G.black }}>
       <TopBar onRestart={onRestart} right={
-        <span>
-          Era: <span style={{ color: G.white }}>{eraLabel(simEra)}</span>
-          <span className="mx-3" style={{ color: G.border }}>|</span>
-          Coach: <span style={{ color: G.white }}>{coach.name}</span>
-        </span>
+        <div className="flex items-center gap-4">
+          <span>
+            Era: <span style={{ color: G.white }}>{eraLabel(simEra)}</span>
+            <span className="mx-3" style={{ color: G.border }}>|</span>
+            Coach: <span style={{ color: G.white }}>{coach.name}</span>
+          </span>
+          {greyscaleBtn}
+        </div>
       } />
 
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
@@ -3260,6 +3264,7 @@ export default function Home() {
   const [phase, setPhase] = useState<GamePhase>('era-select')
   const [simEra, setSimEra] = useState<Era>('90s')
   const [startSandbox, setStartSandbox] = useState(false)
+  const [greyscale, setGreyscale] = useState(false)
   const [players, setPlayers] = useState<Player[]>([])
   const [coaches, setCoaches] = useState<Coach[]>([])
   const [slots, setSlots] = useState<CourtSlot[]>(emptySlots())
@@ -3291,14 +3296,33 @@ export default function Home() {
     setPhase('era-select')
     setSlots(emptySlots())
     setCoach(null)
+    setGreyscale(false)
   }
 
+  const greyscaleBtn = simEra === '50s' && phase !== 'era-select' ? (
+    <button
+      onClick={() => setGreyscale(g => !g)}
+      className="text-xs uppercase tracking-widest px-2 py-1"
+      style={{
+        background: greyscale ? G.white : 'transparent',
+        color: greyscale ? G.black : G.greyDark,
+        border: `1px solid ${greyscale ? G.white : G.border}`,
+        cursor: 'pointer',
+        letterSpacing: '0.15em',
+        transition: 'all 0.15s ease',
+      }}
+      title="Toggle 50s era black & white theme"
+    >
+      {greyscale ? 'Color' : 'B&W'}
+    </button>
+  ) : null
+
   return (
-    <>
+    <div style={{ filter: greyscale ? 'grayscale(1)' : 'none', minHeight: '100vh' }}>
       {phase === 'era-select' && <EraSelection onEraSelected={era => { setSimEra(era); setStartSandbox(false); setPhase('draft') }} onSandboxSelected={era => { setSimEra(era); setStartSandbox(true); setPhase('draft') }} onRestart={restart} />}
-      {phase === 'draft' && <DraftScreen simEra={simEra} players={players} onDraftComplete={s => { setSlots(s); setPhase('coach-draft') }} onRestart={restart} startInSandbox={startSandbox} />}
-      {phase === 'coach-draft' && <CoachDraftScreen coaches={coaches} onCoachSelected={c => { setCoach(c); setPhase('simulation') }} onRestart={restart} sandboxMode={startSandbox} />}
-      {phase === 'simulation' && coach && <SimulationScreen slots={slots} coach={coach} simEra={simEra} onRestart={restart} />}
+      {phase === 'draft' && <DraftScreen simEra={simEra} players={players} onDraftComplete={s => { setSlots(s); setPhase('coach-draft') }} onRestart={restart} startInSandbox={startSandbox} greyscaleBtn={greyscaleBtn} />}
+      {phase === 'coach-draft' && <CoachDraftScreen coaches={coaches} onCoachSelected={c => { setCoach(c); setPhase('simulation') }} onRestart={restart} sandboxMode={startSandbox} greyscaleBtn={greyscaleBtn} />}
+      {phase === 'simulation' && coach && <SimulationScreen slots={slots} coach={coach} simEra={simEra} onRestart={restart} greyscaleBtn={greyscaleBtn} />}
 
       {/* Desktop: fixed bottom-right */}
       <div
@@ -3376,6 +3400,6 @@ export default function Home() {
         @media (min-width: 641px) { .suggestions-btn-mobile { display: none; } }
         @media (max-width: 640px)  { .suggestions-btn-desktop { display: none !important; } }
       `}</style>
-    </>
+    </div>
   )
 }
