@@ -863,7 +863,7 @@ function EraSelection({ onEraSelected, onSandboxSelected, onRestart }: { onEraSe
             How to Play
           </button>
           {era && !spinning && (
-            <Btn onClick={() => onEraSelected(era)} variant="gold" className="w-48 py-4 text-base begin-draft-pulse">
+            <Btn onClick={() => onEraSelected(era)} variant="gold" className="w-48 py-4 text-base" style={{ animation: 'begin-draft-pulse 2s ease-in-out infinite' }}>
               Begin Draft
             </Btn>
           )}
