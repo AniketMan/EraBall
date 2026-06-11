@@ -965,6 +965,11 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
     return combos
   }, [players])
 
+  const sandboxValidEras = useMemo(
+    () => new Set(validCombos.filter(c => c.team === sandboxTeam).map(c => c.era)),
+    [validCombos, sandboxTeam]
+  )
+
   const spin = useCallback(() => {
     if (rosterPool.length > 0) { setSpinsThisRound(prev => prev + 1); setRespinUsed(true) }
     setSpinning(true)
@@ -1229,11 +1234,19 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                     <div className="text-xs uppercase tracking-widest mb-1" style={{ color: G.grey }}>Team</div>
                     <select
                       value={sandboxTeam}
-                      onChange={e => setSandboxTeam(e.target.value)}
+                      onChange={e => {
+                        const team = e.target.value
+                        setSandboxTeam(team)
+                        const validEras = new Set(validCombos.filter(c => c.team === team).map(c => c.era))
+                        if (!validEras.has(sandboxEra)) {
+                          const first = ALL_ERAS.find(era => validEras.has(era))
+                          if (first) setSandboxEra(first)
+                        }
+                      }}
                       className="w-full px-3 py-2 text-sm font-semibold"
                       style={{ background: G.surface2, border: `1px solid ${G.border}`, color: G.white, outline: 'none' }}
                     >
-                      {NBA_TEAMS.map(t => <option key={t} value={t}>{t}</option>)}
+                      {allTeams.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
                     <input
                       type="text"
@@ -1241,7 +1254,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                       onChange={e => {
                         const val = e.target.value.toUpperCase()
                         setSandboxTeamSearch(val)
-                        const match = NBA_TEAMS.find(t => t.startsWith(val))
+                        const match = allTeams.find(t => t.startsWith(val))
                         if (match) setSandboxTeam(match)
                       }}
                       placeholder="Type to jump to team..."
@@ -1257,7 +1270,12 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                       className="w-full px-3 py-2 text-sm font-semibold"
                       style={{ background: G.surface2, border: `1px solid ${G.border}`, color: G.gold, outline: 'none' }}
                     >
-                      {ALL_ERAS.map(e => <option key={e} value={e}>{e}</option>)}
+                      {ALL_ERAS.map(era => (
+                        <option key={era} value={era} disabled={!sandboxValidEras.has(era)}
+                          style={{ color: sandboxValidEras.has(era) ? undefined : G.greyDark }}>
+                          {era}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <Btn onClick={loadSandboxRoster} variant="outline" className="w-full py-3">
