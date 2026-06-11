@@ -1683,8 +1683,8 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
 }
 
 // ─── Phase 3: Coach Draft ─────────────────────────────────────────────────────
-function CoachDraftScreen({ coaches, onCoachSelected, onRestart }: {
-  coaches: Coach[]; onCoachSelected: (coach: Coach) => void; onRestart: () => void
+function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxMode }: {
+  coaches: Coach[]; onCoachSelected: (coach: Coach) => void; onRestart: () => void; sandboxMode?: boolean
 }) {
   const [spinning, setSpinning] = useState(false)
   const [coach, setCoach] = useState<Coach | null>(null)
@@ -1695,6 +1695,7 @@ function CoachDraftScreen({ coaches, onCoachSelected, onRestart }: {
   const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   const [devMode, setDevMode] = useState(false)
   const [devSearch, setDevSearch] = useState('')
+  const [sandboxSearch, setSandboxSearch] = useState('')
 
   const spin = () => {
     setSpinning(true)
@@ -1744,6 +1745,35 @@ function CoachDraftScreen({ coaches, onCoachSelected, onRestart }: {
           <Btn onClick={spin} variant="gold" className="w-full py-4 text-base mb-4">
             Spin Coach
           </Btn>
+        )}
+
+        {sandboxMode && !spinning && (
+          <div className="mb-4 relative">
+            <div className="text-xs uppercase tracking-widest mb-1" style={{ color: G.greyDark }}>or search a coach</div>
+            <input
+              type="text"
+              placeholder="Coach name..."
+              value={sandboxSearch}
+              onChange={e => setSandboxSearch(e.target.value)}
+              style={{ width: '100%', background: G.surface, border: `1px solid ${G.border}`, color: G.white, padding: '8px 12px', fontSize: 13, outline: 'none' }}
+            />
+            {sandboxSearch.length > 1 && (
+              <div style={{ background: G.surface, border: `1px solid ${G.border}`, borderTop: 'none', maxHeight: 220, overflowY: 'auto' }}>
+                {coaches.filter(c => c.name.toLowerCase().includes(sandboxSearch.toLowerCase())).slice(0, 12).map(c => (
+                  <div
+                    key={`${c.name}-${c.from}`}
+                    onClick={() => { setCoach(c); setDisplayName(c.name); setSandboxSearch('') }}
+                    style={{ padding: '8px 12px', cursor: 'pointer', fontSize: 13, color: G.white, borderBottom: `1px solid ${G.border}` }}
+                    onMouseEnter={e => (e.currentTarget.style.background = G.surface2)}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    {c.name.replace('*', '')}{c.name.endsWith('*') ? ' ★' : ''}
+                    <span style={{ color: G.greyDark, marginLeft: 8, fontSize: 11 }}>Off:{c.offGrade} Def:{c.defGrade} Ovr:{c.overallGrade}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
         {(spinning || displayName) && (
@@ -3252,7 +3282,7 @@ export default function Home() {
     <>
       {phase === 'era-select' && <EraSelection onEraSelected={era => { setSimEra(era); setStartSandbox(false); setPhase('draft') }} onSandboxSelected={era => { setSimEra(era); setStartSandbox(true); setPhase('draft') }} onRestart={restart} />}
       {phase === 'draft' && <DraftScreen simEra={simEra} players={players} onDraftComplete={s => { setSlots(s); setPhase('coach-draft') }} onRestart={restart} startInSandbox={startSandbox} />}
-      {phase === 'coach-draft' && <CoachDraftScreen coaches={coaches} onCoachSelected={c => { setCoach(c); setPhase('simulation') }} onRestart={restart} />}
+      {phase === 'coach-draft' && <CoachDraftScreen coaches={coaches} onCoachSelected={c => { setCoach(c); setPhase('simulation') }} onRestart={restart} sandboxMode={startSandbox} />}
       {phase === 'simulation' && coach && <SimulationScreen slots={slots} coach={coach} simEra={simEra} onRestart={restart} />}
 
       {/* Desktop: fixed bottom-right */}
