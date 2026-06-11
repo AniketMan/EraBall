@@ -901,6 +901,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
   const [sandboxMode, setSandboxMode] = useState(false)
   const [sandboxTeam, setSandboxTeam] = useState(NBA_TEAMS[0])
   const [sandboxEra, setSandboxEra] = useState<Era>(ALL_ERAS[6])
+  const [sandboxTeamSearch, setSandboxTeamSearch] = useState('')
 
   const filledCount = slots.filter(s => s.player !== null).length
   const visiblePoolRef = useRef<Player[]>([])
@@ -1217,6 +1218,19 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
                     >
                       {NBA_TEAMS.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
+                    <input
+                      type="text"
+                      value={sandboxTeamSearch}
+                      onChange={e => {
+                        const val = e.target.value.toUpperCase()
+                        setSandboxTeamSearch(val)
+                        const match = NBA_TEAMS.find(t => t.startsWith(val))
+                        if (match) setSandboxTeam(match)
+                      }}
+                      placeholder="Type to jump to team..."
+                      className="w-full px-3 py-2 text-sm mt-1"
+                      style={{ background: G.surface2, border: `1px solid ${G.border}`, color: G.white, outline: 'none' }}
+                    />
                   </div>
                   <div>
                     <div className="text-xs uppercase tracking-widest mb-1" style={{ color: G.grey }}>Era</div>
