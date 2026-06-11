@@ -182,6 +182,8 @@ const PLAYER_ANCHORS: Record<string, AnchorType> = {
   'Jayson Tatum':            'off',
   'Kyrie Irving':            'off',
   'Klay Thompson':           'off',
+  'Kobe Bryant':             'off',
+  'Dwyane Wade':             'off',
 }
 
 // Era-specific anchor overrides — "name:era" takes priority over PLAYER_ANCHORS.
@@ -212,6 +214,8 @@ const PLAYER_ANCHOR_TIERS: Record<string, 2> = {
   'Kyrie Irving':        2,
   'Carmelo Anthony':     2,
   'Klay Thompson':       2,
+  'Kobe Bryant':         2,
+  'Dwyane Wade':         2,
 }
 
 export function applyAnchors(player: Player): Player {
