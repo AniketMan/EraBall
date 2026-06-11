@@ -176,11 +176,18 @@ const ERA_PLAYER_ANCHORS: Record<string, AnchorType> = {
   'Carmelo Anthony:10s': 'off',
 }
 
+// Tier 2 anchor overrides — players listed here get half the anchor bonus (+6 def / +4 off).
+// All anchors not listed here default to Tier 1.
+const PLAYER_ANCHOR_TIERS: Record<string, 2> = {
+  // Add T2 players here e.g.: 'Player Name': 2
+}
+
 export function applyAnchors(player: Player): Player {
   const eraKey = player.era ? `${player.full_name}:${player.era}` : null
   const anchor = (eraKey && ERA_PLAYER_ANCHORS[eraKey]) ?? PLAYER_ANCHORS[player.full_name]
   if (!anchor) return player
-  return { ...player, defAnchor: anchor === 'def', offAnchor: anchor === 'off' }
+  const tier: 1 | 2 = PLAYER_ANCHOR_TIERS[player.full_name] ?? 1
+  return { ...player, defAnchor: anchor === 'def', offAnchor: anchor === 'off', anchorTier: tier }
 }
 
 function playoffRingBoost(rings: number): number {
@@ -379,7 +386,8 @@ export function playerBaseRating(player: Player, simEra?: Era): number {
   const threePtBonus = (!simEra || PRE_THREE_PT_ERAS.includes(simEra))
     ? 0
     : (ratingPlayer.FG3M ?? 0) * 1.5
-  const anchorBonus = player.defAnchor ? 12 : player.offAnchor ? 8 : 0
+  const t1 = (player.anchorTier ?? 1) === 1
+  const anchorBonus = player.defAnchor ? (t1 ? 12 : 6) : player.offAnchor ? (t1 ? 8 : 4) : 0
   const top75Bonus = player.greatest_75_flag === 'Y' ? 3 : 0
   return (
     (ratingPlayer.PTS ?? 0)     * 1.0 +

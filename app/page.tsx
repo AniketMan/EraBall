@@ -309,14 +309,14 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra }: { player: Pl
             {player.defAnchor && (
               <TagTooltip tip="A defensive anchor who makes a larger impact outside of their stats.">
                 <span className="text-xs uppercase tracking-wide font-bold" style={{ color: '#4A9ECC' }}>
-                  Defensive Anchor
+                  Defensive Anchor <span style={{ opacity: 0.7 }}>T{player.anchorTier ?? 1}</span>
                 </span>
               </TagTooltip>
             )}
             {player.offAnchor && (
               <TagTooltip tip="An offensive engine who elevates the team's scoring and/or ball movement.">
                 <span className="text-xs uppercase tracking-wide font-bold" style={{ color: G.gold }}>
-                  Offensive Anchor
+                  Offensive Anchor <span style={{ opacity: 0.7 }}>T{player.anchorTier ?? 1}</span>
                 </span>
               </TagTooltip>
             )}

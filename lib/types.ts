@@ -39,6 +39,7 @@ export interface Player {
   rings?: number
   defAnchor?: boolean
   offAnchor?: boolean
+  anchorTier?: 1 | 2
   eraTeam?: string  // set by withEraStats to reflect which team's era stats are loaded
 }
 
