@@ -3302,18 +3302,26 @@ export default function Home() {
   const greyscaleBtn = simEra === '50s' && phase !== 'era-select' ? (
     <button
       onClick={() => setGreyscale(g => !g)}
-      className="text-xs uppercase tracking-widest px-2 py-1"
+      className="flex items-center gap-1.5 text-xs uppercase tracking-widest px-2 py-1"
       style={{
-        background: greyscale ? G.white : 'transparent',
-        color: greyscale ? G.black : G.greyDark,
-        border: `1px solid ${greyscale ? G.white : G.border}`,
+        background: 'transparent',
+        color: greyscale ? G.white : G.greyDark,
+        border: `1px solid ${greyscale ? G.grey : G.border}`,
         cursor: 'pointer',
         letterSpacing: '0.15em',
         transition: 'all 0.15s ease',
       }}
       title="Toggle 50s era black & white theme"
     >
-      Era Color Theme
+      Era Theme
+      <span style={{
+        fontSize: 9, fontWeight: 700, letterSpacing: '0.1em',
+        color: greyscale ? G.black : G.greyDark,
+        background: greyscale ? G.white : G.border,
+        padding: '1px 4px',
+        borderRadius: 2,
+        transition: 'all 0.15s ease',
+      }}>{greyscale ? 'ON' : 'OFF'}</span>
     </button>
   ) : null
 
