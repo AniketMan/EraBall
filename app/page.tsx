@@ -202,7 +202,7 @@ function Btn({ children, onClick, disabled, variant = 'gold', className = '', st
 }
 
 // ─── Player headshot ──────────────────────────────────────────────────────────
-function PlayerHeadshot({ personId, size, initial }: { personId: string; size: number; initial?: string }) {
+function PlayerHeadshot({ personId, size, initial, lazy }: { personId: string; size: number; initial?: string; lazy?: boolean }) {
   const [failed, setFailed] = useState(false)
   const wrap: React.CSSProperties = {
     width: size,
@@ -226,6 +226,7 @@ function PlayerHeadshot({ personId, size, initial }: { personId: string; size: n
       <img
         src={`/api/headshot?id=${personId}`}
         alt=""
+        loading={lazy ? 'lazy' : 'eager'}
         onError={() => setFailed(true)}
         style={{
           position: 'absolute',
@@ -1482,7 +1483,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                         onMouseEnter={e => { if (!isSel) { e.currentTarget.style.paddingTop = '14px'; e.currentTarget.style.paddingBottom = '14px'; } }}
                         onMouseLeave={e => { e.currentTarget.style.paddingTop = '10px'; e.currentTarget.style.paddingBottom = '10px'; }}
                       >
-                        <PlayerHeadshot personId={p.person_id} size={36} initial={p.position?.[0]} />
+                        <PlayerHeadshot personId={p.person_id} size={36} initial={p.position?.[0]} lazy />
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-semibold text-white truncate">{p.full_name}</div>
                           <div className="text-xs" style={{ color: G.grey }}>{p.position}</div>
