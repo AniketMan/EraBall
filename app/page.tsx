@@ -901,6 +901,8 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
   const [sandboxMode, setSandboxMode] = useState(false)
   const [sandboxTeam, setSandboxTeam] = useState(NBA_TEAMS[0])
   const [sandboxEra, setSandboxEra] = useState<Era>(ALL_ERAS[6])
+  const [sandboxTeamSearch, setSandboxTeamSearch] = useState(NBA_TEAMS[0])
+  const [sandboxTeamOpen, setSandboxTeamOpen] = useState(false)
 
   const filledCount = slots.filter(s => s.player !== null).length
   const visiblePoolRef = useRef<Player[]>([])
@@ -1207,16 +1209,34 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
                   <span className="text-xs" style={{ color: G.greyDark }}>— pick any team / era</span>
                 </div>
                 <div className="p-3 space-y-3">
-                  <div>
+                  <div style={{ position: 'relative' }}>
                     <div className="text-xs uppercase tracking-widest mb-1" style={{ color: G.grey }}>Team</div>
-                    <select
-                      value={sandboxTeam}
-                      onChange={e => setSandboxTeam(e.target.value)}
+                    <input
+                      type="text"
+                      value={sandboxTeamSearch}
+                      onChange={e => { setSandboxTeamSearch(e.target.value.toUpperCase()); setSandboxTeamOpen(true) }}
+                      onFocus={() => setSandboxTeamOpen(true)}
+                      onBlur={() => setTimeout(() => setSandboxTeamOpen(false), 120)}
+                      placeholder="Search team..."
                       className="w-full px-3 py-2 text-sm font-semibold"
-                      style={{ background: G.surface2, border: `1px solid ${G.border}`, color: G.white, outline: 'none' }}
-                    >
-                      {NBA_TEAMS.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
+                      style={{ background: G.surface2, border: `1px solid ${sandboxTeamOpen ? G.gold : G.border}`, color: G.white, outline: 'none' }}
+                    />
+                    {sandboxTeamOpen && (() => {
+                      const matches = NBA_TEAMS.filter(t => t.includes(sandboxTeamSearch))
+                      return matches.length > 0 ? (
+                        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: G.surface2, border: `1px solid ${G.gold}55`, borderTop: 'none', zIndex: 50, maxHeight: 180, overflowY: 'auto' }}>
+                          {matches.map(t => (
+                            <div
+                              key={t}
+                              onMouseDown={() => { setSandboxTeam(t); setSandboxTeamSearch(t); setSandboxTeamOpen(false) }}
+                              style={{ padding: '8px 12px', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: t === sandboxTeam ? G.gold : G.white, background: t === sandboxTeam ? `${G.gold}18` : 'transparent' }}
+                              onMouseEnter={e => { if (t !== sandboxTeam) e.currentTarget.style.background = G.surface }}
+                              onMouseLeave={e => { if (t !== sandboxTeam) e.currentTarget.style.background = 'transparent' }}
+                            >{t}</div>
+                          ))}
+                        </div>
+                      ) : null
+                    })()}
                   </div>
                   <div>
                     <div className="text-xs uppercase tracking-widest mb-1" style={{ color: G.grey }}>Era</div>
