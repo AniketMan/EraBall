@@ -154,14 +154,19 @@ const PLAYER_ANCHORS: Record<string, AnchorType> = {
   'James Harden':    'off',
   'Shai Gilgeous-Alexander': 'off',
   'Joel Embiid':             'off',
+  'Kevin Durant':            'off',
+  'Oscar Robertson':         'off',
   // Defensive Anchors (+12)
   'Tony Allen':      'def',
   'Scottie Pippen':  'def',
   'Kawhi Leonard':   'def',
   'Bill Russell':    'def',
   'Hakeem Olajuwon': 'def',
-  'Kevin Garnett':   'def',
-  'Dwight Howard':   'def',
+  'Kevin Garnett':       'def',
+  'Dwight Howard':       'def',
+  'Tim Duncan':          'def',
+  'Giannis Antetokounmpo': 'def',
+  'David Robinson':      'def',
 }
 
 // Era-specific anchor overrides — "name:era" takes priority over PLAYER_ANCHORS.
