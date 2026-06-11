@@ -1511,7 +1511,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart }: {
 
             {/* Tag key */}
             <div className="mt-5 flex flex-col gap-2 py-3 px-4" style={{ background: '#0d0d0d', border: `1px solid ${G.border}` }}>
-              <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
                 <div className="flex items-start gap-2">
                   <span className="text-xs font-bold uppercase tracking-wide shrink-0" style={{ color: G.gold }}>Champion</span>
                   <span className="text-xs leading-tight" style={{ color: G.greyDark }}>Elevates their game in the playoffs. The more championships, the bigger boost.</span>
