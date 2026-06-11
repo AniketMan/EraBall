@@ -3313,7 +3313,7 @@ export default function Home() {
       }}
       title="Toggle 50s era black & white theme"
     >
-      {greyscale ? 'Color' : 'B&W'}
+      Era Color Theme
     </button>
   ) : null
 
