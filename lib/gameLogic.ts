@@ -179,7 +179,10 @@ const ERA_PLAYER_ANCHORS: Record<string, AnchorType> = {
 // Tier 2 anchor overrides — players listed here get half the anchor bonus (+6 def / +4 off).
 // All anchors not listed here default to Tier 1.
 const PLAYER_ANCHOR_TIERS: Record<string, 2> = {
-  // Add T2 players here e.g.: 'Player Name': 2
+  'Aaron Gordon':  2,
+  'Marcus Smart':  2,
+  'Evan Mobley':   2,
+  'Rajon Rondo':   2,
 }
 
 export function applyAnchors(player: Player): Player {
