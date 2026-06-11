@@ -5,9 +5,9 @@ import { createPortal } from 'react-dom'
 import type { Player, Coach, CourtSlot, SlotPosition, Era, GamePhase, PlayerSeasonStats, PlayoffResult, PlayoffGame, PlayerRating } from '../lib/types'
 import ResultCard from './ResultCard'
 import {
-  ALL_ERAS, SLOT_POSITIONS, SLOT_MPG, calcFitPenalty, calcEraModifier, calcTeamRating,
+  ALL_ERAS, SLOT_POSITIONS, SLOT_MPG, ERA_SEASON_GAMES, calcFitPenalty, calcEraModifier, calcTeamRating,
   simulateSeason, simulatePlayoffs, calcTS, coachBonus, effectiveCoachBonus, coachChampBonus, playerMatchesEra, withEraStats, applyFlexTag, applyRings, applyAnchors,
-  firstRoundLabel, playerBaseRating, genOppTeamStats,
+  firstRoundLabel, playerBaseRating, genOppTeamStats, calcTeamDefTotals,
 } from '../lib/gameLogic'
 import type { OppTeamStats } from '../lib/gameLogic'
 
@@ -585,7 +585,7 @@ const HOW_TO_PLAY_STEPS = [
   },
   {
     title: 'Simulate the Season',
-    body: 'Your team plays an 82-game season. Win 41+ games to make the playoffs. Navigate an era accurate bracket to win the championship. Player performance will vary each run based on team spacing, coaching, playmaking, defense and role fit. The same stars won\'t always get the same result.',
+    body: 'Your team plays a regular season (72 games in the 50s/60s, 82 otherwise). Win 50%+ to make the playoffs. Navigate an era-accurate bracket to win the championship. Player performance will vary each run based on team spacing, coaching, playmaking, defense and role fit. The same stars won\'t always get the same result.',
   },
   {
     title: 'Awards & Stats',
@@ -681,7 +681,7 @@ function TopBar({ onRestart, right }: { onRestart: () => void; right?: React.Rea
 function EraSelection({ onEraSelected, onRestart }: { onEraSelected: (era: Era) => void; onRestart: () => void }) {
   const [spinning, setSpinning] = useState(false)
   const [era, setEra] = useState<Era | null>(null)
-  const [showHelp, setShowHelp] = useState(false)
+  const [showHelp, setShowHelp] = useState(true)
   const [displayEra, setDisplayEra] = useState<Era | null>(null)
   const [spinKey, setSpinKey] = useState(0)
   const [spinPhase, setSpinPhase] = useState<'fast' | 'slow' | 'land'>('fast')
@@ -2117,7 +2117,8 @@ function computeSeasonAwards(
   }
 
   // ── All-Star ──
-  const winPct = wins / 82
+  const seasonGames = seasonStats[0]?.GP ?? 82
+  const winPct = wins / seasonGames
   const badTeam = winPct <= 0.35
   const ppgFloor = (s: PlayerSeasonStats) => {
     if (!s.slot.startsWith('B')) {
@@ -2247,6 +2248,8 @@ function SeasonAwardsPanel({ awards }: { awards: AwardEntry[] }) {
 function SimulationScreen({ slots, coach, simEra, onRestart }: {
   slots: CourtSlot[]; coach: Coach; simEra: Era; onRestart: () => void
 }) {
+  const seasonGames = ERA_SEASON_GAMES[simEra]
+
   // ── Regular season ──
   const [simStarted, setSimStarted] = useState(false)
   const [games, setGames] = useState<boolean[]>([])
@@ -2363,11 +2366,12 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
     setSeasonStats(stats)
     setAvgTeamScore(ats)
     setAvgOppScore(aos)
-    setSeasonOppStats(genOppTeamStats(aos, simEra))
+    const { stl: teamSTL, blk: teamBLK } = calcTeamDefTotals(pr)
+    setSeasonOppStats(genOppTeamStats(aos, simEra, teamSTL, teamBLK))
     let idx = 0
     intervalRef.current = setInterval(() => {
       setGames(allGames.slice(0, ++idx))
-      if (idx >= 82) { clearInterval(intervalRef.current!); setDone(true) }
+      if (idx >= seasonGames) { clearInterval(intervalRef.current!); setDone(true) }
     }, 50)
   }
 
@@ -2378,7 +2382,8 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
     const result = simulatePlayoffs(simRaw, pr, wins, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'))
     setPlayoffResult(result)
     const poAvgOpp = result.allGames.reduce((s, g) => s + g.oppScore, 0) / result.allGames.length
-    setPlayoffOppStats(genOppTeamStats(poAvgOpp, simEra))
+    const { stl: poTeamSTL, blk: poTeamBLK } = calcTeamDefTotals(pr)
+    setPlayoffOppStats(genOppTeamStats(poAvgOpp, simEra, poTeamSTL, poTeamBLK))
     setTimeout(() => setPlayoffRevealIndex(0), 400)
   }
 
@@ -2399,14 +2404,16 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
       setPlayoffDone(true)
       return
     }
-    const delay = playoffRevealIndex === 0 ? 900 : 2200
+    const delay = playoffRevealIndex === 0 ? 500 : 600
     const timer = setTimeout(() => setPlayoffRevealIndex(i => i + 1), delay)
     return () => clearTimeout(timer)
   }, [playoffRevealIndex, playoffStarted, playoffResult])
 
+
   const wins = games.filter(Boolean).length
   const losses = games.length - wins
-  const madePlayoffs = wins >= 41
+  const playoffThreshold = Math.ceil(seasonGames / 2)
+  const madePlayoffs = wins >= playoffThreshold
 
   const SHARE_MSG = `I just simulated my all-time NBA lineup on EraBall — ${wins}-${losses} record. Think you can build a better team? 🏀`
 
@@ -2446,7 +2453,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
     window.location.href = `sms:?body=${encodeURIComponent(`${SHARE_MSG} ${SITE_URL}`)}`
   }
 
-  const verdict = wins === 82 ? 'Perfect Season' : wins === 0 ? 'Winless Season' : wins >= 60 ? 'Championship Contender' : wins >= 50 ? 'Playoff Team' : wins >= 41 ? '.500 Season' : 'Lottery Bound'
+  const verdict = wins === seasonGames ? 'Perfect Season' : wins === 0 ? 'Winless Season' : wins >= Math.round(seasonGames * 0.73) ? 'Championship Contender' : wins >= Math.round(seasonGames * 0.61) ? 'Playoff Team' : wins >= playoffThreshold ? '.500 Season' : 'Lottery Bound'
 
   const dispRating = (r: number) => Math.round(r + 15)
 
@@ -2456,7 +2463,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
   const ROUND_NAMES = ['First Round', 'Semifinals', 'Conference Finals', 'NBA Finals']
 
   // Derive playoff display state from reveal index
-  const revealedGames = playoffResult ? playoffResult.allGames.slice(0, playoffRevealIndex) : []
+  const revealedGames = (playoffResult && playoffRevealIndex >= 0) ? playoffResult.allGames.slice(0, playoffRevealIndex) : []
   const currentGame = playoffRevealIndex > 0 && playoffResult ? playoffResult.allGames[playoffRevealIndex - 1] : null
   const liveRounds = ROUND_NAMES.map((name, ri) => {
     const rGames = revealedGames.filter(g => g.roundIndex === ri)
@@ -2550,11 +2557,11 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
               {done ? (
                 <>
                   <div className="text-xs uppercase tracking-[0.3em] mb-3" style={{ color: G.grey }}>Regular Season</div>
-                  <div style={{ ...BEBAS, fontSize: 'clamp(64px, 14vw, 120px)', lineHeight: 1, color: wins === 82 ? G.gold : wins === 0 ? '#CC3333' : G.white, letterSpacing: '0.02em' }}>
+                  <div style={{ ...BEBAS, fontSize: 'clamp(64px, 14vw, 120px)', lineHeight: 1, color: wins === seasonGames ? G.gold : wins === 0 ? '#CC3333' : G.white, letterSpacing: '0.02em' }}>
                     {wins}–{losses}
                   </div>
 
-                  {wins === 82 ? (
+                  {wins === seasonGames ? (
                     <div className="mt-4 px-6">
                       <div style={{ background: 'rgba(201,168,76,0.10)', border: `2px solid ${G.gold}`, padding: '14px 28px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginBottom: 6 }}>
@@ -2563,7 +2570,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
                           <div style={{ height: 1, flex: 1, background: `linear-gradient(to left, transparent, ${G.gold})` }} />
                         </div>
                         <div className="text-xs uppercase tracking-[0.3em] text-center" style={{ color: G.goldDim }}>
-                          82–0 · The greatest team ever assembled
+                          {seasonGames}–0 · The greatest team ever assembled
                         </div>
                       </div>
                     </div>
@@ -2576,7 +2583,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
                           <div style={{ height: 1, flex: 1, background: 'linear-gradient(to left, transparent, #CC3333)' }} />
                         </div>
                         <div className="text-xs uppercase tracking-[0.3em] text-center" style={{ color: '#774444' }}>
-                          0–82 · Not a single win all season
+                          0–{seasonGames} · Not a single win all season
                         </div>
                       </div>
                     </div>
@@ -2584,14 +2591,14 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
                     <>
                       <div className="mt-2 text-xs uppercase tracking-[0.3em]" style={{ color: G.gold }}>{verdict}</div>
                       <div className="mt-1 text-xs" style={{ color: G.grey }}>
-                        {(wins / 82 * 100).toFixed(1)}% win rate
+                        {(wins / seasonGames * 100).toFixed(1)}% win rate
                       </div>
                     </>
                   )}
                 </>
               ) : (
                 <>
-                  <div className="text-xs uppercase tracking-[0.3em] mb-3" style={{ color: G.grey }}>Game {games.length} of 82</div>
+                  <div className="text-xs uppercase tracking-[0.3em] mb-3" style={{ color: G.grey }}>Game {games.length} of {seasonGames}</div>
                   <div style={{ ...BEBAS, fontSize: 80, lineHeight: 1, color: G.white }}>
                     {wins}–{losses}
                   </div>
@@ -2604,7 +2611,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
                   <div key={i} title={`Game ${i + 1}: ${win ? 'W' : 'L'}`}
                     style={{ width: 12, height: 12, background: win ? G.gold : G.greyDark, flexShrink: 0 }} />
                 ))}
-                {Array.from({ length: 82 - games.length }).map((_, i) => (
+                {Array.from({ length: seasonGames - games.length }).map((_, i) => (
                   <div key={`e-${i}`} style={{ width: 12, height: 12, background: G.border, flexShrink: 0 }} />
                 ))}
               </div>
@@ -2622,7 +2629,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
             stats={seasonStats}
             simEra={simEra}
             title="Regular Season Stats"
-            subtitle="Era-adjusted, minutes-scaled per-game averages across 82 games"
+            subtitle={`Era-adjusted, minutes-scaled per-game averages across ${seasonGames} games`}
             teamActualPPG={avgTeamScore ?? undefined}
             teamActualOppPPG={avgOppScore ?? undefined}
             oppStats={seasonOppStats}
@@ -2732,58 +2739,54 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
             )}
 
 
-            {/* Series history — all completed + current round */}
+            {/* Series history — horizontal game cards per round */}
             {visibleRounds.length > 0 && (
               <div style={{ background: G.surface, border: `1px solid ${G.border}` }}>
-                <div className="p-5 space-y-4">
-                  {visibleRounds.map(({ name, rGames, w, l, complete, advanced }) => (
-                    <div key={name}>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <div className="text-xs uppercase tracking-[0.15em] font-semibold" style={{
-                            color: complete ? (advanced ? G.gold : G.red) : G.white
-                          }}>
-                            {name}
-                          </div>
-                          {name === 'First Round' && (
-                            <div style={{ fontSize: 9, color: G.greyDark, textTransform: 'uppercase', letterSpacing: '0.15em' }}>
-                              {firstRoundLabel(simEra)}
-                            </div>
-                          )}
-                        </div>
-                        <div className="text-xs" style={{ color: complete ? (advanced ? G.gold : G.red) : G.grey }}>
-                          {w}–{l}{complete ? (advanced ? ' · Advanced' : ' · Eliminated') : ''}
-                        </div>
+                {visibleRounds.map(({ name, rGames, w, l, complete, advanced }, ri) => (
+                  <div key={name} style={{ borderBottom: ri < visibleRounds.length - 1 ? `1px solid ${G.border}` : 'none' }}>
+                    {/* Round header */}
+                    <div className="flex items-center justify-between px-4 py-2" style={{ borderBottom: `1px solid ${G.border}` }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.18em', color: complete ? (advanced ? G.gold : G.red) : G.white }}>
+                        {name === 'First Round' ? firstRoundLabel(simEra) : name}
                       </div>
-                      <div className="flex gap-1.5 flex-wrap">
-                        {rGames.map((g, gi) => (
-                          <div key={gi} onClick={() => setSelectedGame({ game: g, roundName: name, gameNum: gi + 1 })} style={{
-                            width: 62,
-                            background: G.black,
-                            border: `1px solid ${g.win ? G.goldDim : G.border}`,
-                            overflow: 'hidden',
-                            flexShrink: 0,
-                            cursor: 'pointer',
-                          }}>
-                            <div style={{ height: 3, background: g.win ? G.gold : G.red }} />
-                            <div style={{ padding: '3px 5px' }}>
-                              <div style={{ fontSize: 7, color: G.greyDark, lineHeight: 1 }}>G{gi + 1}</div>
-                              <div style={{ fontSize: 9, color: g.win ? G.white : G.grey, fontWeight: 600, lineHeight: 1.2 }}>
-                                {g.teamScore}–{g.oppScore}
-                              </div>
-                              <div style={{ fontSize: 7, color: G.gold, lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {g.leaders.pts.name} {g.leaders.pts.val}
-                              </div>
-                              {g.special && (
-                                <div style={{ fontSize: 6, color: G.goldDim, lineHeight: 1.2 }}>★ special</div>
-                              )}
-                            </div>
-                          </div>
-                        ))}
+                      <div style={{ fontSize: 10, letterSpacing: '0.12em', color: complete ? (advanced ? G.gold : G.red) : G.grey }}>
+                        {w}–{l}{complete ? (advanced ? ' · ADV' : ' · ELIM') : ''}
                       </div>
                     </div>
-                  ))}
-                </div>
+                    {/* Horizontal game cards */}
+                    <div className="flex gap-2 p-3 overflow-x-auto">
+                      {rGames.map((g, gi) => (
+                        <div key={gi}
+                          onClick={() => setSelectedGame({ game: g, roundName: name, gameNum: gi + 1 })}
+                          className={`playoff-game-card ${g.win ? 'playoff-game-card--win' : 'playoff-game-card--loss'}`}
+                          style={{ flexShrink: 0, width: 100, background: G.black, cursor: 'pointer', overflow: 'hidden' }}
+                        >
+                          {/* Colored top bar */}
+                          <div style={{ height: 3, background: g.win ? G.gold : G.red }} />
+                          <div style={{ padding: '6px 8px' }}>
+                            {/* G# + W/L */}
+                            <div className="flex items-center justify-between mb-1">
+                              <div style={{ fontSize: 8, color: G.greyDark, letterSpacing: '0.12em' }}>G{gi + 1}</div>
+                              <div style={{ fontSize: 9, fontWeight: 700, color: g.win ? G.gold : G.red }}>{g.win ? 'W' : 'L'}</div>
+                            </div>
+                            {/* Score */}
+                            <div style={{ ...BEBAS, fontSize: 16, lineHeight: 1, color: g.win ? G.white : G.grey, letterSpacing: '0.04em', marginBottom: 5 }}>
+                              {g.teamScore}–{g.oppScore}
+                            </div>
+                            {/* PTS leader */}
+                            <div style={{ fontSize: 9, color: G.gold, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {g.leaders.pts.name.split(' ').slice(-1)[0]} <span style={{ color: G.white, fontWeight: 600 }}>{g.leaders.pts.val}</span>
+                            </div>
+                            {/* Special */}
+                            {g.special && (
+                              <div style={{ fontSize: 8, color: G.goldDim, marginTop: 2 }}>★ special</div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
 
@@ -2798,8 +2801,9 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
 
             {/* Final result banner */}
             {playoffDone && playoffResult?.champion && (
-              <div className="text-center py-8" style={{ background: G.surface, border: `1px solid ${G.gold}` }}>
-                <div style={{ ...BEBAS, fontSize: 'clamp(48px, 10vw, 80px)', lineHeight: 1, color: G.gold, letterSpacing: '0.05em' }}>
+              <div className="text-center py-10 relative overflow-hidden" style={{ background: G.surface, border: `1px solid ${G.gold}` }}>
+                <div className="card-sheen-beam" />
+                <div style={{ ...BEBAS, fontSize: 'clamp(48px, 10vw, 80px)', lineHeight: 1, color: G.gold, letterSpacing: '0.06em', position: 'relative', zIndex: 1 }}>
                   NBA Champions
                 </div>
               </div>
@@ -2962,7 +2966,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
               )}
               {/* Close */}
               <div style={{ borderTop: `1px solid ${G.border}`, padding: '8px 16px', textAlign: 'center' }}>
-                <button onClick={() => setSelectedGame(null)} style={{ fontSize: 10, color: G.grey, textTransform: 'uppercase', letterSpacing: '0.2em', background: 'none', border: 'none', cursor: 'pointer' }}>
+                <button onClick={() => setSelectedGame(null)} className="modal-close" style={{ fontSize: 10, color: G.grey, textTransform: 'uppercase', letterSpacing: '0.2em', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 12px' }}>
                   Close
                 </button>
               </div>

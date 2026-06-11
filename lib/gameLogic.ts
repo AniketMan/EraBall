@@ -192,10 +192,10 @@ const ERA_OPP_BASELINE: Record<Era, number> = {
   '80s': 107, '90s': 98, '00s': 97, '10s': 108, '20s': 114,
 }
 
-// Era-appropriate score caps
+// Era-appropriate score caps (elite teams in 50s/60s historically hit 120-130 PPG)
 const ERA_SCORE_CAP: Record<Era, number> = {
-  '50s': 112, '60s': 128, '70s': 122,
-  '80s': 133, '90s': 124, '00s': 122, '10s': 138, '20s': 145,
+  '50s': 130, '60s': 140, '70s': 130,
+  '80s': 136, '90s': 124, '00s': 122, '10s': 138, '20s': 145,
 }
 const ERA_SCORE_FLOOR: Record<Era, number> = {
   '50s': 72, '60s': 80, '70s': 80,
@@ -205,6 +205,11 @@ const ERA_SCORE_FLOOR: Record<Era, number> = {
 const ERA_DECADE_START: Record<Era, number> = {
   '50s': 1950, '60s': 1960, '70s': 1970, '80s': 1980,
   '90s': 1990, '00s': 2000, '10s': 2010, '20s': 2020,
+}
+
+export const ERA_SEASON_GAMES: Record<Era, number> = {
+  '50s': 72, '60s': 72,
+  '70s': 82, '80s': 82, '90s': 82, '00s': 82, '10s': 82, '20s': 82,
 }
 
 // Assigned minutes per slot (5 × 35 + 25 + 15 + 13 + 12 = 240 total)
@@ -261,7 +266,18 @@ export interface OppTeamStats {
   FG_PCT: number; FG3_PCT: number | null; FT_PCT: number; TS_PCT: number
 }
 
-export function genOppTeamStats(avgOppScore: number, era: Era): OppTeamStats {
+export function calcTeamDefTotals(playerRatings: PlayerRating[]): { stl: number; blk: number } {
+  let stl = 0, blk = 0
+  for (const pr of playerRatings) {
+    const isStarter = STARTER_SLOTS.includes(pr.slot)
+    const minScale = SLOT_MPG[pr.slot] / (isStarter ? STARTER_BASELINE_MPG : BENCH_BASELINE_MPG)
+    stl += imputeSTL(pr.player) * minScale
+    blk += imputeBLK(pr.player) * minScale
+  }
+  return { stl, blk }
+}
+
+export function genOppTeamStats(avgOppScore: number, era: Era, teamSTL?: number, teamBLK?: number): OppTeamStats {
   type B = { ppg: number; reb: number; ast: number; stl: number | null; blk: number | null; tov: number; fg: number; fg3: number | null; ft: number; ts: number }
   const BL: Record<Era, B> = {
     '50s': { ppg: 79,  reb: 65, ast: 14, stl: null, blk: null, tov: 18, fg: 0.372, fg3: null,  ft: 0.675, ts: 0.480 },
@@ -282,7 +298,13 @@ export function genOppTeamStats(avgOppScore: number, era: Era): OppTeamStats {
     AST:     Math.max(10, +(b.ast * scale + cn(4)).toFixed(1)),
     STL:     b.stl != null ? Math.max(4,  +(b.stl + cn(1.5)).toFixed(1)) : null,
     BLK:     b.blk != null ? Math.max(2,  +(b.blk + cn(1.0)).toFixed(1)) : null,
-    TOV:     Math.max(8,  +(b.tov * scale + cn(3)).toFixed(1)),
+    TOV:     (() => {
+      const defTOVAdjust = b.stl != null
+        ? (teamSTL != null ? (teamSTL - b.stl) * 1.0 : 0)
+          + (teamBLK != null ? (teamBLK - (b.blk ?? 5.1)) * 0.3 : 0)
+        : 0
+      return Math.max(8, +(b.tov * scale + cn(3) + defTOVAdjust).toFixed(1))
+    })(),
     FG_PCT:  Math.min(0.58, Math.max(0.35, b.fg + pn())),
     FG3_PCT: b.fg3 != null ? Math.min(0.48, Math.max(0.22, b.fg3 + pn())) : null,
     FT_PCT:  Math.min(0.88, Math.max(0.58, b.ft + pn())),
@@ -587,23 +609,26 @@ function generateGameScore(
   const scoreFloor = ERA_SCORE_FLOOR[simEra]
   const oppBase    = ERA_OPP_BASELINE[simEra]
 
-  const adjTeamScore = expectedTeamScore * rebFactor * astFactor * (1 + coachOffBonus * 0.5)
-  let teamScore = Math.round(Math.min(scoreCap, Math.max(scoreFloor, adjTeamScore + randn() * 7)))
+  const rawAdjTeamScore = expectedTeamScore * rebFactor * astFactor * (1 + coachOffBonus * 0.5)
+  // Clamp distribution center at (cap - 15) so elite teams still get natural variance
+  // instead of piling up at the ceiling every game
+  const adjTeamScore = Math.min(rawAdjTeamScore, scoreCap - 15)
+  let teamScore = Math.round(Math.min(scoreCap, Math.max(scoreFloor, adjTeamScore + randn() * 10)))
 
   // rebFactor inverted at half weight for defensive rebound effect on opp possessions
   const rebDefEffect = 1.0 + (1.0 - rebFactor) * 0.5
   const oppBaseline = oppBase * playerDefFactor * rebDefEffect * (1 - coachDefBonus * 0.5)
-  let oppScore = Math.round(Math.min(scoreCap - 5, Math.max(scoreFloor - 4, oppBaseline + randn() * 7)))
+  let oppScore = Math.round(Math.min(scoreCap - 5, Math.max(scoreFloor - 4, oppBaseline + randn() * 10)))
 
   if (win && teamScore <= oppScore) {
-    teamScore = oppScore + Math.max(1, Math.round(Math.abs(randn()) * 4 + 1))
+    teamScore = oppScore + 2 + Math.round(Math.abs(randn()) * 7)
   } else if (!win && oppScore <= teamScore) {
-    oppScore = teamScore + Math.max(1, Math.round(Math.abs(randn()) * 4 + 1))
+    oppScore = teamScore + 2 + Math.round(Math.abs(randn()) * 7)
   }
 
   let ts = Math.min(scoreCap, teamScore)
-  let os = Math.min(scoreCap, oppScore)
-  // Tie-break after capping: basketball can't end in a tie
+  // Don't re-cap corrected oppScore — avoids the cap-tie-break → identical-loss-score loop
+  let os = win ? Math.min(scoreCap, oppScore) : oppScore
   if (ts === os) { if (win) ts += 1; else os += 1 }
   return { teamScore: ts, oppScore: os }
 }
@@ -686,11 +711,20 @@ export function simulateSeason(
   const defBonus = coachDefBonus ?? coachBonus(coachDefGrade)
   const offBonus = coachOffBonus ?? coachBonus(coachOffGrade)
 
-  for (let i = 0; i < 82; i++) {
+  // Blend reb/ast/spacing into win probability at half their score-gen weight
+  const rebWinFactor     = 1.0 + (rebFactor - 1.0) * 0.5                                          // ±3% on team roll
+  const astWinFactor     = 1.0 + (astFactor - 1.0) * 0.5                                          // ±2.5% on team roll
+  const rebOppFactor     = 1.0 - (rebFactor - 1.0) * 0.25                                         // ±1.5% on opp roll (def boards)
+  const shooterCount     = entries.filter(e => (e.pr.player.FG3_PCT ?? 0) >= 0.36).length
+  const spacingWinFactor = Math.max(0.97, Math.min(1.04, 1.0 + (shooterCount - 2) * 0.006))       // ±3% on team roll
+
+  const seasonGames = ERA_SEASON_GAMES[simEra]
+
+  for (let i = 0; i < seasonGames; i++) {
     const oppBase   = OPP_BASELINE * playerDefFactor * (1 - defBonus)
     const oppRating = oppBase + randn() * OPP_SPREAD
-    const teamRoll  = rawRating * (1 + offBonus) + randn() * GAME_NOISE
-    const oppRoll   = oppRating + randn() * GAME_NOISE
+    const teamRoll  = rawRating * (1 + offBonus) * rebWinFactor * astWinFactor * spacingWinFactor + randn() * GAME_NOISE
+    const oppRoll   = oppRating * rebOppFactor + randn() * GAME_NOISE
     const win       = teamRoll > oppRoll
     games.push(win)
     if (win) wins++
@@ -699,8 +733,8 @@ export function simulateSeason(
     totalOppScore += oppScore
   }
 
-  const avgTeamScore = totalTeamScore / 82
-  const avgOppScore = totalOppScore / 82
+  const avgTeamScore = totalTeamScore / seasonGames
+  const avgOppScore = totalOppScore / seasonGames
 
   // Weights: era_stat × eraMod × minScale × fitPenalty — proportional share per player
   const weights = entries.map(({ pr, minScale }) => {
@@ -725,8 +759,7 @@ export function simulateSeason(
   const totalVarPTS = varPTSWeights.reduce((a, b) => a + b, 0)
 
   // ── Team context efficiency modifiers ──────────────────────────────────
-  // Spacing: # of real shooters (FG3_PCT ≥ 36%) vs baseline of 2
-  const shooterCount  = entries.filter(e => (e.pr.player.FG3_PCT ?? 0) >= 0.36).length
+  // spacingMod reuses shooterCount computed above for the win condition
   const spacingMod    = (shooterCount - 2) * 0.006        // ±0.6% per shooter vs baseline
   // Playmaking: top AST on team lifts shot quality for everyone
   const topAST        = Math.max(...entries.map(e => e.pr.player.AST ?? 0))
@@ -742,7 +775,7 @@ export function simulateSeason(
     return {
       player:  pr.player,
       slot:    pr.slot,
-      GP:      82,
+      GP:      seasonGames,
       MPG:     assignedMPG,
       PTS:     totalVarPTS > 0 ? (varPTSWeights[i] / totalVarPTS) * avgTeamScore : 0,
       REB:     w.REB * v,
@@ -759,7 +792,7 @@ export function simulateSeason(
     }
   })
 
-  return { wins, losses: 82 - wins, games, seasonStats, avgTeamScore, avgOppScore }
+  return { wins, losses: seasonGames - wins, games, seasonStats, avgTeamScore, avgOppScore }
 }
 
 export const ALL_ERAS: Era[] = ['50s', '60s', '70s', '80s', '90s', '00s', '10s', '20s']
@@ -819,6 +852,12 @@ export function simulatePlayoffs(
   const defBonus = coachDefBonus ?? coachBonus(coachDefGrade)
   const offBonus = coachOffBonus ?? coachBonus(coachOffGrade)
 
+  const rebWinFactor     = 1.0 + (rebFactor - 1.0) * 0.5
+  const astWinFactor     = 1.0 + (astFactor - 1.0) * 0.5
+  const rebOppFactor     = 1.0 - (rebFactor - 1.0) * 0.25
+  const shooterCount     = entries.filter(e => (e.pr.player.FG3_PCT ?? 0) >= 0.36).length
+  const spacingWinFactor = Math.max(0.97, Math.min(1.04, 1.0 + (shooterCount - 2) * 0.006))
+
   // Ring-boosted effective team rating for playoff win determination
   const totalAdjusted = entries.reduce((s, e) => s + e.pr.adjusted, 0)
   const avgRingBoost = totalAdjusted > 0
@@ -864,7 +903,7 @@ export function simulatePlayoffs(
       const specialBoost = specialTrigger ? 2 + Math.random() * 4 : 0
 
       const oppRating = oppMean * playerDefFactor * (1 - defBonus) + randn() * OPP_SPREAD
-      const win = effectiveRawRating * (1 + offBonus) * roundDefFactor + specialBoost + randn() * GAME_NOISE > oppRating + randn() * GAME_NOISE
+      const win = effectiveRawRating * (1 + offBonus) * roundDefFactor * rebWinFactor * astWinFactor * spacingWinFactor + specialBoost + randn() * GAME_NOISE > oppRating * rebOppFactor + randn() * GAME_NOISE
       const { teamScore, oppScore } = generateGameScore(expectedTeamScore, playerDefFactor, rebFactor, astFactor, defBonus, offBonus, win, simEra)
 
       // Per-game individual stat lines (high variance — 60–140% of expected)

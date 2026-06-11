@@ -31,6 +31,16 @@
 }
 
 
+@keyframes playoff-game-enter {
+  0%   { opacity: 0; transform: translateY(12px) scale(0.98); }
+  60%  { opacity: 1; transform: translateY(-3px) scale(1.004); }
+  100% { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+.playoff-game-enter {
+  animation: playoff-game-enter 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 @keyframes spin-pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(201, 168, 76, 0); }
   50%       { box-shadow: 0 0 20px 5px rgba(201, 168, 76, 0.5); }
@@ -282,6 +292,19 @@ body {
 .card-amethyst-sparkles span:nth-child(8)  { top: 65%; left: 92%; animation-delay: 0.5s; }
 .card-amethyst-sparkles span:nth-child(9)  { top: 22%; left: 92%; animation-delay: 1.7s; }
 .card-amethyst-sparkles span:nth-child(10) { top: 90%; left: 55%; animation-delay: 1.3s; }
+
+/* ── Playoff game card ───────────────────────────────────────────────────── */
+
+.playoff-game-card {
+  transition: box-shadow 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+}
+.playoff-game-card--win  { border: 1px solid rgba(201, 168, 76, 0.35); }
+.playoff-game-card--loss { border: 1px solid #1e1e1e; }
+.playoff-game-card:hover {
+  border-color: rgba(201, 168, 76, 0.75) !important;
+  box-shadow: 0 0 0 1px rgba(201, 168, 76, 0.25), 0 4px 18px rgba(201, 168, 76, 0.18);
+  background: #111111 !important;
+}
 
 /* ── Modal close button ──────────────────────────────────────────────────── */
 
