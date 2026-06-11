@@ -2534,7 +2534,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart }: {
                     <td className="py-2 px-3 text-white font-medium">{player.full_name}</td>
                     <td className="py-2 px-3 text-right" style={{ color: G.grey }}>{slot}</td>
                     <td className="py-2 px-3 text-right" style={{ color: G.grey }}>{dispRating(base)}</td>
-                    <td className="py-2 px-3 text-right" style={{ color: eraMod < 1 ? G.red : G.grey }}>{(eraMod * 100).toFixed(0)}%</td>
+                    <td className="py-2 px-3 text-right" style={{ color: eraMod >= 0.85 ? '#4ade80' : eraMod >= 0.70 ? '#facc15' : G.red }}>{(eraMod * 100).toFixed(0)}%</td>
                     <td className="py-2 px-3 text-right" style={{ color: fitPenalty === 0 ? G.grey : fitPenalty === 0.10 ? G.grey : G.red }}>
                       {fitPenalty === 0 ? '—' : `-${(fitPenalty * 100).toFixed(0)}%`}
                     </td>

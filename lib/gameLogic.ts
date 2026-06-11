@@ -167,6 +167,7 @@ const PLAYER_ANCHORS: Record<string, AnchorType> = {
   'Tim Duncan':          'def',
   'Giannis Antetokounmpo': 'def',
   'David Robinson':      'def',
+  'Evan Mobley':         'def',
 }
 
 // Era-specific anchor overrides — "name:era" takes priority over PLAYER_ANCHORS.
