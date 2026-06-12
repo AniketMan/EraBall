@@ -801,7 +801,7 @@ export function simulateSeason(
     const naturalMPG     = Math.min(38, Math.max(10, (pr.player.PTS ?? 0) * 1.6))
     const stretchMax     = Math.max(0, (assignedMPG - naturalMPG) / 28) * 0.06
     const stretch        = stretchMax > 0 ? -(stretchMax * Math.random()) : 0
-    return { fg: effNoise(0.035), ft: effNoise(0.030), fg3: effNoise(0.034), stretch }
+    return { fg: effNoise(0.035), ft: effNoise(0.030), fg3: effNoise(0.030), stretch }
   })
   // Weighted average FG delta → shifts expectedTeamScore (±3-4 wins impact)
   const totalMinWeight = entries.reduce((s, { minScale }) => s + minScale, 0)
@@ -1135,8 +1135,8 @@ export function simulatePlayoffs(
       FG_PCT:  Math.min(0.80, Math.max(0.20, (pr.player.FG_PCT ?? 0.45) + effBoost + fgCtx + effNoise(0.035))),
       FG3_PCT: PRE_THREE_PT_ERAS.includes(simEra) ? null
         : pr.player.FG3_PCT != null
-          ? Math.min(0.60, Math.max(0.15, pr.player.FG3_PCT + effBoost + fgCtx + effNoise(0.034)))
-          : (() => { const b = getEstimatedFG3PCT(pr.player, simEra); return b != null ? Math.min(0.55, Math.max(0.15, b + effBoost + fgCtx + effNoise(0.034))) : null })(),
+          ? Math.min(0.60, Math.max(0.15, pr.player.FG3_PCT + effBoost + fgCtx + effNoise(0.030)))
+          : (() => { const b = getEstimatedFG3PCT(pr.player, simEra); return b != null ? Math.min(0.55, Math.max(0.15, b + effBoost + fgCtx + effNoise(0.030))) : null })(),
       FT_PCT:  Math.min(0.99, Math.max(0.30, (pr.player.FT_PCT ?? 0.70) + effBoost + ftCtx + effNoise(0.035))),
     }
   })
@@ -1162,8 +1162,8 @@ export function simulatePlayoffs(
       FG_PCT:  Math.min(0.80, Math.max(0.20, (pr.player.FG_PCT ?? 0.45) + effBoost + fgCtx + effNoise(0.035))),
       FG3_PCT: PRE_THREE_PT_ERAS.includes(simEra) ? null
         : pr.player.FG3_PCT != null
-          ? Math.min(0.60, Math.max(0.15, pr.player.FG3_PCT + effBoost + fgCtx + effNoise(0.034)))
-          : (() => { const b = getEstimatedFG3PCT(pr.player, simEra); return b != null ? Math.min(0.55, Math.max(0.15, b + effBoost + fgCtx + effNoise(0.034))) : null })(),
+          ? Math.min(0.60, Math.max(0.15, pr.player.FG3_PCT + effBoost + fgCtx + effNoise(0.030)))
+          : (() => { const b = getEstimatedFG3PCT(pr.player, simEra); return b != null ? Math.min(0.55, Math.max(0.15, b + effBoost + fgCtx + effNoise(0.030))) : null })(),
       FT_PCT:  Math.min(0.99, Math.max(0.30, (pr.player.FT_PCT ?? 0.70) + effBoost + ftCtx + effNoise(0.035))),
     }
   })
