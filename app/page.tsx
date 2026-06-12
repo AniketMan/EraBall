@@ -7,7 +7,7 @@ import ResultCard from './ResultCard'
 import {
   ALL_ERAS, SLOT_POSITIONS, SLOT_MPG, ERA_SEASON_GAMES, calcFitPenalty, calcEraModifier, calcTeamRating,
   simulateSeason, simulatePlayoffs, calcTS, coachBonus, effectiveCoachBonus, coachChampBonus, playerMatchesEra, withEraStats, applyFlexTag, applyRings, applyAnchors,
-  firstRoundLabel, playerBaseRating, genOppTeamStats, calcTeamDefTotals,
+  firstRoundLabel, playerBaseRating, genOppTeamStats, calcTeamDefTotals, calcRebFactor,
 } from '../lib/gameLogic'
 import type { OppTeamStats } from '../lib/gameLogic'
 
@@ -2588,7 +2588,8 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn }: {
     setAvgTeamScore(ats)
     setAvgOppScore(aos)
     const { stl: teamSTL, blk: teamBLK } = calcTeamDefTotals(pr)
-    setSeasonOppStats(genOppTeamStats(aos, simEra, teamSTL, teamBLK))
+    const rebEntries = pr.map(r => ({ pr: r, minScale: SLOT_MPG[r.slot] / 35 }))
+    setSeasonOppStats(genOppTeamStats(aos, simEra, teamSTL, teamBLK, calcRebFactor(rebEntries)))
     let idx = 0
     intervalRef.current = setInterval(() => {
       setGames(allGames.slice(0, ++idx))
@@ -2604,7 +2605,8 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn }: {
     setPlayoffResult(result)
     const poAvgOpp = result.allGames.reduce((s, g) => s + g.oppScore, 0) / result.allGames.length
     const { stl: poTeamSTL, blk: poTeamBLK } = calcTeamDefTotals(pr)
-    setPlayoffOppStats(genOppTeamStats(poAvgOpp, simEra, poTeamSTL, poTeamBLK))
+    const poRebEntries = pr.map(r => ({ pr: r, minScale: SLOT_MPG[r.slot] / 35 }))
+    setPlayoffOppStats(genOppTeamStats(poAvgOpp, simEra, poTeamSTL, poTeamBLK, calcRebFactor(poRebEntries)))
     setTimeout(() => setPlayoffRevealIndex(0), 400)
   }
 
