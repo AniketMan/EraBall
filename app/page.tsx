@@ -2754,17 +2754,24 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
     if (!playoffResult || !playoffDone) return ''
     if (playoffResult.champion) return 'NBA Champions'
     const last = playoffResult.rounds[playoffResult.rounds.length - 1]
-    return last ? `eliminated in the ${last.name}` : ''
+    if (!last) return ''
+    const shortName: Record<string, string> = {
+      'First Round': 'First Round exit',
+      'Semifinals': 'Semifinals exit',
+      'Conference Finals': 'Conference Finals exit',
+      'NBA Finals': 'Finals exit',
+    }
+    return shortName[last.name] ?? `${last.name} exit`
   })()
 
-  const SHARE_MSG = `My all-time NBA lineup on EraBall: ${wins}-${losses}${playoffOutcome ? `, ${playoffOutcome}` : ''}. Think you can do better?`
+  const SHARE_MSG = `My NBA lineup I drafted on EraBall: ${wins}-${losses} record, ${playoffOutcome}. Think you can do better?`
 
   const handleShareTwitter = async () => {
     if (!shareImageUrl) return
     const blob = await (await fetch(shareImageUrl)).blob()
     const file = new File([blob], 'eraball-team.png', { type: 'image/png' })
 
-    // Mobile: native share sheet lets user pick Twitter and image is included
+    // Mobile: native share sheet lets user pick Twitter with image attached
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
         await navigator.share({ title: 'EraBall', text: SHARE_MSG, files: [file] })
@@ -2774,18 +2781,13 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
       }
     }
 
-    // Desktop: copy image to clipboard, open Twitter compose with pre-filled text
-    let copied = false
-    try {
-      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
-      copied = true
-    } catch {
-      handleDownload()
-    }
+    // Desktop: Twitter intent can't receive images via URL.
+    // Download the image so the user can attach it manually, then open the intent.
+    handleDownload()
     const tweetText = encodeURIComponent(`${SHARE_MSG}\n\n${SITE_URL}`)
-    window.open(`https://x.com/compose/tweet?text=${tweetText}`, '_blank')
-    setShareHint(copied ? 'Image copied to clipboard — paste it into your tweet' : 'Image downloaded — attach it to your tweet')
-    setTimeout(() => setShareHint(null), 7000)
+    window.open(`https://twitter.com/intent/tweet?text=${tweetText}`, '_blank')
+    setShareHint('Image downloaded — attach it to your tweet using the image icon')
+    setTimeout(() => setShareHint(null), 9000)
   }
 
   const handleShareWhatsApp = async () => {
