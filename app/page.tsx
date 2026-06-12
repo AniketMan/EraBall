@@ -2890,10 +2890,12 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
             <div className="text-center py-8" style={{ borderBottom: `1px solid ${G.border}` }}>
               {done ? (
                 <>
-                  <div className="flex items-center justify-center gap-3 mb-3">
-                    <div className="text-xs uppercase tracking-[0.3em]" style={{ color: G.grey }}>Regular Season</div>
-                    {sandboxMode && <div className="text-xs uppercase tracking-widest px-2 py-0.5" style={{ color: G.gold, border: `1px solid ${G.gold}44`, background: `${G.gold}0d` }}>Sandbox</div>}
-                  </div>
+                  {sandboxMode && (
+                    <div className="text-xs uppercase tracking-[0.25em] mb-3 py-1.5 mx-8" style={{ color: '#000', background: G.gold, letterSpacing: '0.25em', fontWeight: 700 }}>
+                      Sandbox Mode
+                    </div>
+                  )}
+                  <div className="text-xs uppercase tracking-[0.3em] mb-3" style={{ color: G.grey }}>Regular Season</div>
                   <div style={{ ...BEBAS, fontSize: 'clamp(64px, 14vw, 120px)', lineHeight: 1, color: wins === seasonGames ? G.gold : wins === 0 ? '#CC3333' : G.white, letterSpacing: '0.02em' }}>
                     {wins}–{losses}
                   </div>
