@@ -2316,7 +2316,7 @@ function computeSeasonAwards(
       awards.push({
         award: `All-NBA - ${pos}`,
         player: best.s,
-        justification: `${best.s.PTS.toFixed(1)} PPG - ${best.adj.toFixed(1)} rating`,
+        justification: `${best.s.PTS.toFixed(1)} PPG - ${best.s.REB.toFixed(1)} RPG - ${best.s.AST.toFixed(1)} APG`,
         gold: false,
       })
     }
@@ -2374,7 +2374,7 @@ function computeSeasonAwards(
       awards.push({
         award: 'All-Star',
         player: topScorer.s,
-        justification: `${topScorer.s.PTS.toFixed(1)} PPG - Team-high scorer on ${wins}-win team`,
+        justification: `${topScorer.s.PTS.toFixed(1)} PPG - ${topScorer.s.REB.toFixed(1)} RPG - ${topScorer.s.AST.toFixed(1)} APG`,
         gold: false,
       })
     }
@@ -2389,9 +2389,7 @@ function computeSeasonAwards(
         (s.PTS >= 19 && (s.AST >= 5 || s.STL >= 5 || s.BLK >= 5)) ||
         (s.PTS >= 18 && s.REB >= 10)
       if (qualifies) {
-        const just = s.REB >= 10 && s.PTS >= 18
-          ? `${s.PTS.toFixed(1)} PPG - ${s.REB.toFixed(1)} REB on ${wins}-win team`
-          : `${s.PTS.toFixed(1)} PPG - ${s.AST >= 5 ? s.AST.toFixed(1) + ' AST' : s.STL >= 5 ? s.STL.toFixed(1) + ' STL' : s.BLK.toFixed(1) + ' BLK'} on ${wins}-win team`
+        const just = `${s.PTS.toFixed(1)} PPG - ${s.REB.toFixed(1)} RPG - ${s.AST.toFixed(1)} APG`
         awards.push({ award: 'All-Star', player: s, justification: just, gold: false })
       }
     }
@@ -2426,7 +2424,7 @@ function computeSeasonAwards(
     awards.push({
       award: '6th Man of the Year',
       player: sixthMan.s,
-      justification: `${sixthMan.s.PTS.toFixed(1)} PPG - ${sixthMan.adj.toFixed(1)} rating`,
+      justification: `${sixthMan.s.PTS.toFixed(1)} PPG - ${sixthMan.s.REB.toFixed(1)} RPG - ${sixthMan.s.AST.toFixed(1)} APG`,
       gold: false,
     })
   }
