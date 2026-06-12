@@ -295,7 +295,7 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra }: { player: Pl
           <div className="flex flex-col items-end gap-1 ml-2 shrink-0">
             {player.greatest_75_flag === 'Y' && (
               <TagTooltip tip="Recognized as one of the 75 greatest NBA players of all time, a small boost in every game play play.">
-                <span className="text-xs px-1.5 py-0.5 uppercase tracking-wide" style={{ color: G.gold, border: `1px solid ${G.goldDim}`, background: `${G.gold}12` }}>
+                <span className="text-xs uppercase tracking-wide" style={{ color: G.gold }}>
                   75 Greatest
                 </span>
               </TagTooltip>
@@ -322,8 +322,8 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra }: { player: Pl
               </TagTooltip>
             )}
             {player.timeless && (
-              <TagTooltip tip="Transcendent skill set — minimal era penalties across all decades. 5% penalty only if 6+ eras from home era.">
-                <span className="text-xs px-1.5 py-0.5 uppercase tracking-wide font-bold" style={{ color: '#C084FC', border: `1px solid #7C3AED`, background: `#C084FC12` }}>
+              <TagTooltip tip="Transcendent skill set — minimal era penalties across all decades. Minor penalty only if 6+ eras from home era.">
+                <span className="text-xs uppercase tracking-wide font-bold" style={{ color: '#C084FC' }}>
                   Timeless
                 </span>
               </TagTooltip>
@@ -1682,7 +1682,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
               <div className="flex justify-center mt-1">
                 <div className="flex items-start gap-2">
                   <span className="text-xs font-bold uppercase tracking-wide shrink-0" style={{ color: '#C084FC' }}>Timeless</span>
-                  <span className="text-xs leading-tight" style={{ color: G.greyDark }}>Minimal era penalties across all decades. 5% penalty only if 6+ eras from home era.</span>
+                  <span className="text-xs leading-tight" style={{ color: G.greyDark }}>Minimal era penalties across all decades. Minor penalty only if 6+ eras from home era.</span>
                 </div>
               </div>
               <div className="text-xs mt-1 text-center" style={{ color: G.greyDark, opacity: 0.6, letterSpacing: '0.02em' }}>
