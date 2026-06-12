@@ -1622,7 +1622,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                           transition: 'color 0.1s, background 0.1s',
                         }}
                       >
-                        {s === 'TS' ? 'TS%' : s === 'SPECIAL' ? '★' : s}
+                        {s === 'TS' ? 'TS%' : s === 'SPECIAL' ? <><span className="hidden sm:inline">Notable</span><span className="sm:hidden">★</span></> : s}
                       </button>
                     ))}
                   </div>
