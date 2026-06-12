@@ -2266,7 +2266,21 @@ function computeSeasonAwards(
   }))
 
   // ── MVP ──
-  if (wins >= t.mvpWins) {
+  if (wins >= 78) {
+    // Historic season — best scoring starter wins MVP automatically
+    const starterSlots: SlotPosition[] = ['PG', 'SG', 'SF', 'PF', 'C']
+    const topScorer = rated
+      .filter(({ s }) => starterSlots.includes(s.slot))
+      .sort((a, b) => b.s.PTS - a.s.PTS)[0]
+    if (topScorer) {
+      awards.push({
+        award: 'League MVP',
+        player: topScorer.s,
+        justification: `${topScorer.s.PTS.toFixed(1)} PPG · ${topScorer.s.REB.toFixed(1)} RPG · ${topScorer.s.AST.toFixed(1)} APG`,
+        gold: true,
+      })
+    }
+  } else if (wins >= t.mvpWins) {
     const tdCandidate = rated.find(({ s }) =>
       (s.PTS > 20 && s.REB > 10 && s.AST > 10) || (s.PTS > 20 && s.AST > 10 && s.REB > 7)
     )
