@@ -259,6 +259,9 @@ const TIMELESS_PLAYERS = new Set([
   'Tim Duncan',
   'Nikola Jokic',
   'Michael Jordan',
+  'Rudy Gobert',
+  'Russell Westbrook',
+  'Larry Bird',
 ])
 
 export function applyTimeless(player: Player): Player {
