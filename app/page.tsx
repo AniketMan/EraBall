@@ -386,7 +386,7 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra }: { player: Pl
       </div>
       <div className="mt-2 text-xs text-center" style={{ color: G.greyDark }}>
         {(() => {
-          if (!activeEra) return `${player.from_year}–${player.to_year ?? 'present'}`
+          if (!activeEra && !player.eraTeam) return `${player.from_year}–${player.to_year ?? 'present'}`
           const seasons = Math.max(1, Math.ceil(player.GP / 82))
           return `${seasons} ${seasons === 1 ? 'season' : 'seasons'}`
         })()}
