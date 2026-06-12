@@ -923,6 +923,8 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
   const [sandboxEra, setSandboxEra] = useState<Era>(ALL_ERAS[6])
   const [sandboxTeamSearch, setSandboxTeamSearch] = useState('')
   const [sandboxTeamOpen, setSandboxTeamOpen] = useState(false)
+  const [sandboxPlayerMode, setSandboxPlayerMode] = useState(false)
+  const [sandboxPlayerSearch, setSandboxPlayerSearch] = useState('')
 
   const filledCount = slots.filter(s => s.player !== null).length
   const visiblePoolRef = useRef<Player[]>([])
@@ -1125,6 +1127,27 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
     })
   }
 
+  const loadPlayerVersions = () => {
+    const query = sandboxPlayerSearch.trim().toLowerCase()
+    if (!query) return
+    const match = players.find(p => p.full_name.toLowerCase().includes(query))
+    if (!match) { alert(`No player found matching "${sandboxPlayerSearch}"`); return }
+    const versions: Player[] = []
+    const seen = new Set<string>()
+    for (const key of Object.keys(match.stats_by_era ?? {})) {
+      const [era, team] = key.split(':') as [Era, string]
+      if (!era || !team || seen.has(key)) continue
+      seen.add(key)
+      versions.push(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(match, era, team))))))
+    }
+    if (versions.length === 0) { alert(`No era stats found for ${match.full_name}`); return }
+    versions.sort((a, b) => ALL_ERAS.indexOf(a.era as Era) - ALL_ERAS.indexOf(b.era as Era))
+    setLockedTeam(match.full_name); setLockedEra(null)
+    setSpinTeamDisplay(match.full_name); setSpinEraDisplay(versions[0].era as Era)
+    setRosterPool(versions)
+    setSelectedPlayer(null); setPendingSlotIdx(null); setHighlightEmpty(false); setAwaitingSpin(false)
+  }
+
   const fillBestNine = () => {
     const scored = players.map(p => ({
       p,
@@ -1228,11 +1251,47 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
             {sandboxMode ? (
               /* ── Sandbox mode: team/era picker for all users ── */
               <div style={{ border: `1px solid ${G.gold}33`, background: G.surface }}>
-                <div className="px-3 py-2 flex items-center gap-2" style={{ borderBottom: `1px solid ${G.border}`, background: `${G.gold}0a` }}>
-                  <span className="text-xs uppercase tracking-widest" style={{ color: G.gold }}>Sandbox</span>
-                  <span className="text-xs" style={{ color: G.greyDark }}>— pick any team / era</span>
+                <div className="px-3 py-2 flex items-center justify-between" style={{ borderBottom: `1px solid ${G.border}`, background: `${G.gold}0a` }}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs uppercase tracking-widest" style={{ color: G.gold }}>Sandbox</span>
+                    <span className="text-xs" style={{ color: G.greyDark }}>— {sandboxPlayerMode ? 'search by player' : 'pick any team / era'}</span>
+                  </div>
+                  <div className="flex" style={{ border: `1px solid ${G.border}` }}>
+                    {(['Team', 'Player'] as const).map(mode => (
+                      <button
+                        key={mode}
+                        onClick={() => setSandboxPlayerMode(mode === 'Player')}
+                        className="text-xs uppercase tracking-widest px-2 py-1"
+                        style={{
+                          background: (mode === 'Player') === sandboxPlayerMode ? `${G.gold}22` : 'transparent',
+                          color: (mode === 'Player') === sandboxPlayerMode ? G.gold : G.greyDark,
+                          border: 'none', cursor: 'pointer',
+                        }}
+                      >{mode}</button>
+                    ))}
+                  </div>
                 </div>
                 <div className="p-3 space-y-3">
+                  {sandboxPlayerMode ? (
+                    <>
+                      <div>
+                        <div className="text-xs uppercase tracking-widest mb-1" style={{ color: G.grey }}>Player Name</div>
+                        <input
+                          type="text"
+                          value={sandboxPlayerSearch}
+                          onChange={e => setSandboxPlayerSearch(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') loadPlayerVersions() }}
+                          placeholder="e.g. LeBron James"
+                          className="w-full px-3 py-2 text-sm"
+                          style={{ background: G.surface2, border: `1px solid ${G.border}`, color: G.white, outline: 'none' }}
+                        />
+                      </div>
+                      <Btn onClick={loadPlayerVersions} variant="outline" className="w-full py-3">
+                        Load Player
+                      </Btn>
+                    </>
+                  ) : (
+                  <>
                   <div className="relative">
                     <div className="text-xs uppercase tracking-widest mb-1" style={{ color: G.grey }}>Team</div>
                     <input
@@ -1296,6 +1355,8 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                   <Btn onClick={loadSandboxRoster} variant="outline" className="w-full py-3">
                     Load Roster
                   </Btn>
+                  </>
+                  )}
                 </div>
               </div>
             ) : devMode ? (
