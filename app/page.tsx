@@ -1544,11 +1544,9 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                       if (posFilter === 'C') return primary === 'center'
                       return false
                     }
-                    const sorted = [...rosterPool].sort((a, b) => {
-                      if (posFilter) {
-                        const aM = posMatch(a) ? 0 : 1; const bM = posMatch(b) ? 0 : 1
-                        if (aM !== bM) return aM - bM
-                      }
+                    const sorted = [...rosterPool]
+                    .filter(p => !posFilter || posMatch(p))
+                    .sort((a, b) => {
                       if (sortBy === 'SPECIAL') {
                         const aS = isSpecial(a) ? 1 : 0; const bS = isSpecial(b) ? 1 : 0
                         if (bS !== aS) return bS - aS
