@@ -1635,11 +1635,12 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                           transition: 'color 0.1s, background 0.1s',
                         }}
                       >
-                        {s === 'TS' ? 'TS%' : s === 'SPECIAL' ? <><span className="hidden sm:inline">Notable</span><span className="sm:hidden">★</span></> : s}
+                        {s === 'TS' ? 'TS%' : s === 'SPECIAL' ? <><span className="hidden sm:inline">Tagged</span><span className="sm:hidden">★</span></> : s}
                       </button>
                     ))}
                   </div>
                 </div>
+                <div className="sm:hidden px-2 pt-1 pb-0.5 text-xs" style={{ color: G.greyDark, opacity: 0.6 }}>★ = Tagged players</div>
               </div>
             )}
 
@@ -1769,6 +1770,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
 
             {/* Tag key */}
             <div className="mt-5 flex flex-col gap-2 py-3 px-4" style={{ background: '#0d0d0d', border: `1px solid ${G.border}` }}>
+              <div className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: G.greyDark }}>Player Tag Effects</div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
                 <div className="flex items-start gap-2">
                   <span className="text-xs font-bold uppercase tracking-wide shrink-0" style={{ color: G.gold }}>Champion</span>
