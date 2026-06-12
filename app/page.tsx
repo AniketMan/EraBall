@@ -289,7 +289,7 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra }: { player: Pl
           <div className="min-w-0">
             <div className="font-bold text-white text-base leading-tight truncate">{player.full_name}</div>
             <div className="text-xs mt-0.5 uppercase tracking-wide" style={{ color: G.grey }}>
-              {player.position} · {eraLabel(player.era)} · {player.eraTeam ?? (displayEra ? playerTeamForEra(player, displayEra) : player.team_abbreviation)}
+              {player.position} - {eraLabel(player.era)} - {player.eraTeam ?? (displayEra ? playerTeamForEra(player, displayEra) : player.team_abbreviation)}
             </div>
           </div>
           <div className="flex flex-col items-end gap-1 ml-2 shrink-0">
@@ -497,7 +497,7 @@ function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, acti
           <PlayerHeadshot personId={confirmed.person_id} size={52} initial={confirmed.position?.[0]} />
           <div className="w-full text-center min-w-0">
             <div className="font-semibold text-white leading-tight truncate" style={{ fontSize: 11 }}>{confirmed.full_name}</div>
-            <div style={{ color: G.grey, fontSize: 10 }} className="mt-0.5 truncate">{confirmed.position} · {eraLabel(confirmed.era)}</div>
+            <div style={{ color: G.grey, fontSize: 10 }} className="mt-0.5 truncate">{confirmed.position} - {eraLabel(confirmed.era)}</div>
             {/* Desktop: x.x ppg / x.x rpg / x.x apg */}
             <div className="hidden md:flex justify-center items-baseline gap-1 mt-1 flex-wrap" style={{ fontSize: 10 }}>
               <span style={{ color: G.gold, fontWeight: 700 }}>{confirmed.PTS?.toFixed(1)}</span>
@@ -527,15 +527,15 @@ function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, acti
           <PlayerHeadshot personId={pendingPlayer.person_id} size={52} initial={pendingPlayer.position?.[0]} />
           <div className="w-full text-center min-w-0">
             <div className="font-semibold text-white leading-tight truncate" style={{ fontSize: 11 }}>{pendingPlayer.full_name}</div>
-            <div style={{ color: G.grey, fontSize: 10 }} className="mt-0.5">{pendingPlayer.position} · {eraLabel(pendingPlayer.era)}</div>
+            <div style={{ color: G.grey, fontSize: 10 }} className="mt-0.5">{pendingPlayer.position} - {eraLabel(pendingPlayer.era)}</div>
             {pendingFitLabel && <div className="mt-1" style={{ fontSize: 10, color: fitLabelColor(pendingFitLabel) }}>{pendingFitLabel}</div>}
             {simEra && (() => { const mod = calcEraModifier(pendingPlayer, simEra); return (
               <div className="mt-0.5" style={{ fontSize: 9, color: mod >= 1.0 ? G.gold : mod >= 0.75 ? G.grey : G.red, letterSpacing: '0.05em' }}>
                 Era Fit {Math.round(mod * 100)}%
               </div>
             ) })()}
-            <div style={{ fontSize: 9, color: G.goldDim, letterSpacing: '0.08em', textTransform: 'uppercase' }} className="mt-1 sm:hidden">Pending · Tap to lock {slot.position}</div>
-            <div style={{ fontSize: 9, color: G.goldDim, letterSpacing: '0.08em', textTransform: 'uppercase' }} className="mt-1 hidden sm:block">Pending · Click to lock {slot.position}</div>
+            <div style={{ fontSize: 9, color: G.goldDim, letterSpacing: '0.08em', textTransform: 'uppercase' }} className="mt-1 sm:hidden">Pending - Tap to lock {slot.position}</div>
+            <div style={{ fontSize: 9, color: G.goldDim, letterSpacing: '0.08em', textTransform: 'uppercase' }} className="mt-1 hidden sm:block">Pending - Click to lock {slot.position}</div>
           </div>
         </div>
       ) : (
@@ -555,14 +555,14 @@ const ERA_YEARS: Record<Era, string> = {
 }
 
 const ERA_DESC: Record<Era, { style: string; note: string }> = {
-  '50s': { style: 'Slow, physical, half-court basketball. No 3-point line, and very low scoring. Big men ruled the paint.', note: 'Pre-3pt · Modern shooters lose value here' },
-  '60s': { style: 'Dominant big men, intense defense. Bill Russell era. Athleticism beginning to shape the game.', note: 'Pre-3pt · Modern shooters lose value here' },
-  '70s': { style: 'ABA Merger. Brutal physical defense. Kareem\'s sky hook.', note: 'Pre-3pt · Modern shooters lose value here' },
-  '80s': { style: '3-point line introduced in the league. Magic vs Bird.', note: '3pt era begins · Pre-3pt bigs take a cut' },
-  '90s': { style: 'All time Defenses, Lower scoring. Hand-checking allowed. The Jordan era.', note: 'Defense Era · Most eras cross over cleanly' },
-  '00s': { style: 'Post-Jordan transition. the Shaq and Kobe Era. Rising international talent. Introduction of the 4 round, best of 7 Playoffs. ', note: 'Bridge era · Minimal penalties most directions' },
-  '10s': { style: '3-point volume surges. Steph vs Lebron. Rise of Positionless basketball.', note: 'Near-modern · Very low era penalties' },
-  '20s': { style: 'Peak spacing, pace, and 3-point volume. Versatility is everything. Old-school bigs and pre-3pt era (50s/60s/70s) players struggle most here.', note: 'Current era · 2020s players at full strength' },
+  '50s': { style: 'Slow, physical, half-court basketball. No 3-point line, and very low scoring. Big men ruled the paint.', note: 'Pre-3pt - Modern shooters lose value here' },
+  '60s': { style: 'Dominant big men, intense defense. Bill Russell era. Athleticism beginning to shape the game.', note: 'Pre-3pt - Modern shooters lose value here' },
+  '70s': { style: 'ABA Merger. Brutal physical defense. Kareem\'s sky hook.', note: 'Pre-3pt - Modern shooters lose value here' },
+  '80s': { style: '3-point line introduced in the league. Magic vs Bird.', note: '3pt era begins - Pre-3pt bigs take a cut' },
+  '90s': { style: 'All time Defenses, Lower scoring. Hand-checking allowed. The Jordan era.', note: 'Defense Era - Most eras cross over cleanly' },
+  '00s': { style: 'Post-Jordan transition. the Shaq and Kobe Era. Rising international talent. Introduction of the 4 round, best of 7 Playoffs. ', note: 'Bridge era - Minimal penalties most directions' },
+  '10s': { style: '3-point volume surges. Steph vs Lebron. Rise of Positionless basketball.', note: 'Near-modern - Very low era penalties' },
+  '20s': { style: 'Peak spacing, pace, and 3-point volume. Versatility is everything. Old-school bigs and pre-3pt era (50s/60s/70s) players struggle most here.', note: 'Current era - 2020s players at full strength' },
 }
 
 // ─── How To Play modal ────────────────────────────────────────────────────────
@@ -577,7 +577,7 @@ const HOW_TO_PLAY_STEPS = [
   },
   {
     title: 'Fill 9 Spots',
-    body: '5 starters (PG · SG · SF · PF · C) and 4 bench players. Starters play 35 minutes per game, and carry more weight in the simulation. Bench players contribute at a reduced rate.',
+    body: '5 starters (PG - SG - SF - PF - C) and 4 bench players. Starters play 35 minutes per game, and carry more weight in the simulation. Bench players contribute at a reduced rate.',
   },
   {
     title: 'Positional Fit',
@@ -807,7 +807,7 @@ function EraSelection({ onEraSelected, onSandboxSelected, onRestart }: { onEraSe
                     {ERA_DESC[era].note}
                   </div>
                   <div className="mt-3 text-xs" style={{ color: G.greyDark, letterSpacing: '0.04em' }}>
-                    Players perform best in their home era · drafting across decades applies a rating penalty
+                    Players perform best in their home era - drafting across decades applies a rating penalty
                   </div>
                 </>
               )}
@@ -1107,7 +1107,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
         const eraTeams = p.all_teams_by_era?.[sandboxEra] as string[] | undefined
         return eraTeams ? eraTeams.includes(sandboxTeam) : playerTeamForEra(p, sandboxEra) === sandboxTeam
       })
-      if (pool.length === 0) { alert(`No players found for ${sandboxTeam} · ${sandboxEra}`); return ids }
+      if (pool.length === 0) { alert(`No players found for ${sandboxTeam} - ${sandboxEra}`); return ids }
       const sorted = pool.map(p => applyAnchors(applyRings(applyFlexTag(withEraStats(p, sandboxEra, sandboxTeam)))))
         .sort((a, b) => (b.PTS ?? 0) - (a.PTS ?? 0))
       setLockedTeam(sandboxTeam); setLockedEra(sandboxEra)
@@ -1367,7 +1367,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                               onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                             >
                               {p.full_name}
-                              <span style={{ color: G.greyDark, marginLeft: 8, fontSize: 11 }}>{p.position} · {eraLabel(p.era as Era)} · {p.team_abbreviation}</span>
+                              <span style={{ color: G.greyDark, marginLeft: 8, fontSize: 11 }}>{p.position} - {eraLabel(p.era as Era)} - {p.team_abbreviation}</span>
                             </div>
                           ))}
                       </div>
@@ -1442,7 +1442,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
             {rosterPool.length > 0 && !awaitingSpin && (
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <GoldLabel>{lockedTeam} · {lockedEra ? eraLabel(lockedEra) : ''}</GoldLabel>
+                  <GoldLabel>{lockedTeam} - {lockedEra ? eraLabel(lockedEra) : ''}</GoldLabel>
                   <GoldLabel>{rosterPool.length} available</GoldLabel>
                 </div>
                 <div className="roster-scroll" style={{ border: `1px solid ${G.border}`, maxHeight: 220, overflowY: 'auto', overflowX: 'hidden' }}>
@@ -1531,8 +1531,8 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
             {/* Hint: roster visible but no player selected yet */}
             {rosterPool.length > 0 && !selectedPlayer && !awaitingSpin && (
               <div className="text-center text-xs" style={{ color: G.greyDark, letterSpacing: '0.04em' }}>
-                <span className="md:hidden">Select a player · then tap a slot to place</span>
-                <span className="hidden md:inline">Select a player · then click a slot to place</span>
+                <span className="md:hidden">Select a player - then tap a slot to place</span>
+                <span className="hidden md:inline">Select a player - then click a slot to place</span>
               </div>
             )}
 
@@ -1596,13 +1596,13 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
             {/* Empty-court onboarding hint */}
             {filledCount === 0 && rosterPool.length === 0 && !spinning && !awaitingSpin && (
               <div className="text-center text-xs mb-3" style={{ color: G.greyDark, opacity: 0.55, letterSpacing: '0.04em' }}>
-                Spin a team roster · select players · fill all 9 slots
+                Spin a team roster - select players - fill all 9 slots
               </div>
             )}
 
             <div className="mb-4 text-center">
               <div className="text-xs uppercase tracking-[0.2em]" style={{ color: G.greyDark }}>Starting Five</div>
-              <div className="text-xs mt-0.5" style={{ color: G.greyDark, opacity: 0.6, letterSpacing: '0.04em' }}>Starters · 35 min each</div>
+              <div className="text-xs mt-0.5" style={{ color: G.greyDark, opacity: 0.6, letterSpacing: '0.04em' }}>Starters - 35 min each</div>
             </div>
             <div className="mb-4 space-y-1.5">
               <div className="grid grid-cols-3 gap-1.5">
@@ -1825,7 +1825,7 @@ function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxMode, gr
                       </>)}
                     </div>
                     <div className="text-xs mt-1" style={{ color: G.grey }}>
-                      {coach.from}–{coach.to} · {coach.regW}W–{coach.regL}L ({(coach.regWLPct * 100).toFixed(1)}%)
+                      {coach.from}–{coach.to} - {coach.regW}W–{coach.regL}L ({(coach.regWLPct * 100).toFixed(1)}%)
                     </div>
                     <div className="flex flex-wrap gap-x-3 mt-1.5" style={{ fontSize: 11, color: G.greyDark }}>
                       <span style={{ color: G.grey }}>{coach.playoffG > 0 ? `${(coach.playoffWLPct * 100).toFixed(1)}% playoffs` : 'No playoffs'}</span>
@@ -1882,12 +1882,12 @@ function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxMode, gr
               <div className="text-xs uppercase tracking-widest mb-1" style={{ color: G.greyDark }}>Test Presets</div>
               <div className="flex flex-col gap-1">
                 {([
-                  { label: 'F Off · A Def', off: 'F', def: 'A', ovr: 'C' },
-                  { label: 'C Off · C Def', off: 'C', def: 'C', ovr: 'C' },
-                  { label: 'A Off · F Def', off: 'A', def: 'F', ovr: 'C' },
-                  { label: 'D Off · D Def', off: 'D', def: 'D', ovr: 'D' },
-                  { label: 'B Off · B Def', off: 'B', def: 'B', ovr: 'B' },
-                  { label: 'F Off · F Def', off: 'F', def: 'F', ovr: 'F' },
+                  { label: 'F Off - A Def', off: 'F', def: 'A', ovr: 'C' },
+                  { label: 'C Off - C Def', off: 'C', def: 'C', ovr: 'C' },
+                  { label: 'A Off - F Def', off: 'A', def: 'F', ovr: 'C' },
+                  { label: 'D Off - D Def', off: 'D', def: 'D', ovr: 'D' },
+                  { label: 'B Off - B Def', off: 'B', def: 'B', ovr: 'B' },
+                  { label: 'F Off - F Def', off: 'F', def: 'F', ovr: 'F' },
                 ] as { label: string; off: Coach['offGrade']; def: Coach['defGrade']; ovr: Coach['overallGrade'] }[]).map(preset => {
                   const testCoach: Coach = {
                     name: `Test Coach (${preset.label})`, from: 2000, to: 2020, years: 20,
@@ -2272,7 +2272,7 @@ function computeSeasonAwards(
       awards.push({
         award: 'League MVP',
         player: topScorer.s,
-        justification: `${topScorer.s.PTS.toFixed(1)} PPG · ${topScorer.s.REB.toFixed(1)} RPG · ${topScorer.s.AST.toFixed(1)} APG`,
+        justification: `${topScorer.s.PTS.toFixed(1)} PPG - ${topScorer.s.REB.toFixed(1)} RPG - ${topScorer.s.AST.toFixed(1)} APG`,
         gold: true,
       })
     }
@@ -2287,7 +2287,7 @@ function computeSeasonAwards(
       awards.push({
         award: 'League MVP',
         player: mvpCandidate.s,
-        justification: `${mvpCandidate.s.PTS.toFixed(1)} PPG · ${mvpCandidate.s.REB.toFixed(1)} RPG · ${mvpCandidate.s.AST.toFixed(1)} APG`,
+        justification: `${mvpCandidate.s.PTS.toFixed(1)} PPG - ${mvpCandidate.s.REB.toFixed(1)} RPG - ${mvpCandidate.s.AST.toFixed(1)} APG`,
         gold: true,
       })
     }
@@ -2301,9 +2301,9 @@ function computeSeasonAwards(
       .sort((a, b) => b.adj - a.adj)[0]
     if (best) {
       awards.push({
-        award: `All-NBA · ${pos}`,
+        award: `All-NBA - ${pos}`,
         player: best.s,
-        justification: `${best.s.PTS.toFixed(1)} PPG · ${best.adj.toFixed(1)} rating`,
+        justification: `${best.s.PTS.toFixed(1)} PPG - ${best.adj.toFixed(1)} rating`,
         gold: false,
       })
     }
@@ -2328,7 +2328,7 @@ function computeSeasonAwards(
     if (badTeam && s.PTS < 30 && s.REB < 20 && s.AST < 18) continue
     // Must hit statistical thresholds
     if (s.REB >= 18) {
-      awards.push({ award: 'All-Star', player: s, justification: `${s.PTS.toFixed(1)} PPG · ${s.REB.toFixed(1)} REB`, gold: false })
+      awards.push({ award: 'All-Star', player: s, justification: `${s.PTS.toFixed(1)} PPG - ${s.REB.toFixed(1)} REB`, gold: false })
       continue
     }
     if (s.PTS <= ppgFloor(s)) continue
@@ -2340,7 +2340,7 @@ function computeSeasonAwards(
     awards.push({
       award: 'All-Star',
       player: s,
-      justification: `${s.PTS.toFixed(1)} PPG · ${s.REB.toFixed(1)} REB · ${s.AST.toFixed(1)} AST`,
+      justification: `${s.PTS.toFixed(1)} PPG - ${s.REB.toFixed(1)} REB - ${s.AST.toFixed(1)} AST`,
       gold: false,
     })
   }
@@ -2361,7 +2361,7 @@ function computeSeasonAwards(
       awards.push({
         award: 'All-Star',
         player: topScorer.s,
-        justification: `${topScorer.s.PTS.toFixed(1)} PPG · Team-high scorer on ${wins}-win team`,
+        justification: `${topScorer.s.PTS.toFixed(1)} PPG - Team-high scorer on ${wins}-win team`,
         gold: false,
       })
     }
@@ -2377,8 +2377,8 @@ function computeSeasonAwards(
         (s.PTS >= 18 && s.REB >= 10)
       if (qualifies) {
         const just = s.REB >= 10 && s.PTS >= 18
-          ? `${s.PTS.toFixed(1)} PPG · ${s.REB.toFixed(1)} REB on ${wins}-win team`
-          : `${s.PTS.toFixed(1)} PPG · ${s.AST >= 5 ? s.AST.toFixed(1) + ' AST' : s.STL >= 5 ? s.STL.toFixed(1) + ' STL' : s.BLK.toFixed(1) + ' BLK'} on ${wins}-win team`
+          ? `${s.PTS.toFixed(1)} PPG - ${s.REB.toFixed(1)} REB on ${wins}-win team`
+          : `${s.PTS.toFixed(1)} PPG - ${s.AST >= 5 ? s.AST.toFixed(1) + ' AST' : s.STL >= 5 ? s.STL.toFixed(1) + ' STL' : s.BLK.toFixed(1) + ' BLK'} on ${wins}-win team`
         awards.push({ award: 'All-Star', player: s, justification: just, gold: false })
       }
     }
@@ -2400,8 +2400,8 @@ function computeSeasonAwards(
       award: 'Defensive POY',
       player: dpoy.s,
       justification: isBigManPath
-        ? `${dpoy.s.BLK.toFixed(1)} BLK · ${dpoy.s.REB.toFixed(1)} REB · ${dpoy.s.STL.toFixed(1)} STL`
-        : `${dpoy.s.STL.toFixed(1)} STL · ${dpoy.s.BLK.toFixed(1)} BLK`,
+        ? `${dpoy.s.BLK.toFixed(1)} BLK - ${dpoy.s.REB.toFixed(1)} REB - ${dpoy.s.STL.toFixed(1)} STL`
+        : `${dpoy.s.STL.toFixed(1)} STL - ${dpoy.s.BLK.toFixed(1)} BLK`,
       gold: false,
     })
   }
@@ -2413,7 +2413,7 @@ function computeSeasonAwards(
     awards.push({
       award: '6th Man of the Year',
       player: sixthMan.s,
-      justification: `${sixthMan.s.PTS.toFixed(1)} PPG · ${sixthMan.adj.toFixed(1)} rating`,
+      justification: `${sixthMan.s.PTS.toFixed(1)} PPG - ${sixthMan.adj.toFixed(1)} rating`,
       gold: false,
     })
   }
@@ -2731,7 +2731,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn }: {
             <div className="flex items-center gap-4">
               <span style={{ ...BEBAS, fontSize: 28, color: G.gold }}>{dispRating(tr)}</span>
               <span className="text-xs" style={{ color: G.grey }}>
-                Off {coach.offGuru ? '+6%' : gradeBonus(coach.offGrade)} · Def {coach.defGuru ? '+6%' : gradeBonus(coach.defGrade)}
+                Off {coach.offGuru ? '+6%' : gradeBonus(coach.offGrade)} - Def {coach.defGuru ? '+6%' : gradeBonus(coach.defGrade)}
                 {coach.champ > 0 && <span style={{ color: G.goldDim, marginLeft: 6 }}>+{(coachChampBonus(coach) * 100).toFixed(1)}% coach titles</span>}
               </span>
             </div>
@@ -2792,7 +2792,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn }: {
                           <div style={{ height: 1, flex: 1, background: `linear-gradient(to left, transparent, ${G.gold})` }} />
                         </div>
                         <div className="text-xs uppercase tracking-[0.3em] text-center" style={{ color: G.goldDim }}>
-                          {seasonGames}–0 · The greatest team ever assembled
+                          {seasonGames}–0 - The greatest team ever assembled
                         </div>
                       </div>
                     </div>
@@ -2805,7 +2805,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn }: {
                           <div style={{ height: 1, flex: 1, background: 'linear-gradient(to left, transparent, #CC3333)' }} />
                         </div>
                         <div className="text-xs uppercase tracking-[0.3em] text-center" style={{ color: '#774444' }}>
-                          0–{seasonGames} · Not a single win all season
+                          0–{seasonGames} - Not a single win all season
                         </div>
                       </div>
                     </div>
@@ -2875,9 +2875,9 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn }: {
         {done && madePlayoffs && !playoffStarted && (
           <div className="text-center py-4 space-y-3">
             <div style={{ fontSize: 11, color: G.grey, textTransform: 'uppercase', letterSpacing: '0.2em' }}>
-              First Round · <span style={{ color: G.goldDim }}>{firstRoundLabel(simEra)}</span>
+              First Round - <span style={{ color: G.goldDim }}>{firstRoundLabel(simEra)}</span>
               <span style={{ color: G.border, margin: '0 8px' }}>·</span>
-              All Other Rounds · <span style={{ color: G.goldDim }}>Best of 7</span>
+              All Other Rounds - <span style={{ color: G.goldDim }}>Best of 7</span>
             </div>
             <Btn onClick={startPlayoffs} variant="gold" className="px-16 py-4 text-base">
               Simulate Playoffs
@@ -2949,7 +2949,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn }: {
                     color: seriesW > seriesL ? G.gold : seriesW < seriesL ? G.red : G.grey
                   }}>
                     Series {seriesW}–{seriesL}
-                    {seriesOver ? (seriesW === 4 ? ' · Advanced' : ' · Eliminated') : ''}
+                    {seriesOver ? (seriesW === 4 ? ' - Advanced' : ' - Eliminated') : ''}
                   </div>
                 </div>
               </div>
@@ -2972,7 +2972,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn }: {
                         {name === 'First Round' ? firstRoundLabel(simEra) : name}
                       </div>
                       <div style={{ fontSize: 10, letterSpacing: '0.12em', color: complete ? (advanced ? G.gold : G.red) : G.grey }}>
-                        {w}–{l}{complete ? (advanced ? ' · ADV' : ' · ELIM') : ''}
+                        {w}–{l}{complete ? (advanced ? ' - ADV' : ' - ELIM') : ''}
                       </div>
                     </div>
                     {/* Horizontal game cards */}
@@ -3039,7 +3039,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn }: {
             stats={playoffResult.playoffStats}
             simEra={simEra}
             title="Playoff Stats"
-            subtitle={`Era-adjusted, minutes-scaled per-game averages · ${playoffResult.allGames.length} games`}
+            subtitle={`Era-adjusted, minutes-scaled per-game averages - ${playoffResult.allGames.length} games`}
             teamActualPPG={playoffResult.allGames.reduce((sum, g) => sum + g.teamScore, 0) / playoffResult.allGames.length}
             teamActualOppPPG={playoffResult.allGames.reduce((sum, g) => sum + g.oppScore, 0) / playoffResult.allGames.length}
             oppStats={playoffOppStats}
@@ -3163,7 +3163,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn }: {
                   <span style={{ ...BEBAS, fontSize: 24, color: G.greyDark }}>–</span>
                   <span style={{ ...BEBAS, fontSize: 52, color: G.greyDark, lineHeight: 1 }}>{g.oppScore}</span>
                 </div>
-                <div style={{ fontSize: 9, color: G.greyDark, letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: 4 }}>Your Team · Opponent</div>
+                <div style={{ fontSize: 9, color: G.greyDark, letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: 4 }}>Your Team -Opponent</div>
               </div>
               {/* Leaders */}
               <div style={{ borderTop: `1px solid ${G.border}`, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}>
@@ -3181,7 +3181,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn }: {
                   <div style={{ fontSize: 8, color: G.goldDim, textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 4 }}>★ Special Performance</div>
                   <div style={{ fontSize: 13, color: G.gold, fontWeight: 700 }}>{g.special.playerName}</div>
                   <div style={{ fontSize: 10, color: G.grey, marginTop: 2 }}>
-                    {g.special.pts} PTS · {g.special.reb} REB · {g.special.ast} AST
+                    {g.special.pts} PTS -{g.special.reb} REB -{g.special.ast} AST
                   </div>
                   <div style={{ fontSize: 9, color: G.goldDim, marginTop: 3, fontStyle: 'italic' }}>{g.special.label}</div>
                 </div>
