@@ -847,7 +847,9 @@ export function simulateSeason(
   const astWinFactor     = 1.0 + (astFactor - 1.0) * 0.5                                          // ±2.5% on team roll
   const rebOppFactor     = 1.0 - (rebFactor - 1.0) * 0.40                                         // ±1.5% on opp roll (def boards)
   const shooterCount     = entries.filter(e => (e.pr.player.FG3_PCT ?? 0) >= 0.36).length
-  const spacingWinFactor = Math.max(0.97, Math.min(1.04, 1.0 + (shooterCount - 2) * 0.006))       // ±3% on team roll
+  const spacingPerShooter = simEra === '20s' || simEra === '10s' ? 0.015 : simEra === '00s' ? 0.010 : 0.006
+  const spacingCap        = simEra === '20s' || simEra === '10s' ? 0.08  : simEra === '00s' ? 0.05  : 0.03
+  const spacingWinFactor = Math.max(1 - spacingCap, Math.min(1 + spacingCap, 1.0 + (shooterCount - 2) * spacingPerShooter))
 
   // Scoring win factor: ties win probability to offensive output vs era baseline.
   // Mainly lifts out-of-era teams whose scoring exceeds what their raw rating predicts
@@ -900,7 +902,7 @@ export function simulateSeason(
 
   // ── Team context efficiency modifiers ──────────────────────────────────
   // spacingMod reuses shooterCount computed above for the win condition
-  const spacingMod    = (shooterCount - 2) * 0.006        // ±0.6% per shooter vs baseline
+  const spacingMod    = (shooterCount - 2) * spacingPerShooter
   // Playmaking: top AST on team lifts shot quality for everyone
   const topAST        = Math.max(...entries.map(e => e.pr.player.AST ?? 0))
   const playmakingMod = Math.min(0.018, Math.max(-0.012, (topAST - 5) * 0.003))
@@ -996,7 +998,9 @@ export function simulatePlayoffs(
   const astWinFactor     = 1.0 + (astFactor - 1.0) * 0.5
   const rebOppFactor     = 1.0 - (rebFactor - 1.0) * 0.40
   const shooterCount     = entries.filter(e => (e.pr.player.FG3_PCT ?? 0) >= 0.36).length
-  const spacingWinFactor = Math.max(0.97, Math.min(1.04, 1.0 + (shooterCount - 2) * 0.006))
+  const spacingPerShooterPO = simEra === '20s' || simEra === '10s' ? 0.015 : simEra === '00s' ? 0.010 : 0.006
+  const spacingCapPO        = simEra === '20s' || simEra === '10s' ? 0.08  : simEra === '00s' ? 0.05  : 0.03
+  const spacingWinFactor = Math.max(1 - spacingCapPO, Math.min(1 + spacingCapPO, 1.0 + (shooterCount - 2) * spacingPerShooterPO))
 
   // Ring-boosted effective team rating for playoff win determination
   const totalAdjusted = entries.reduce((s, e) => s + e.pr.adjusted, 0)
