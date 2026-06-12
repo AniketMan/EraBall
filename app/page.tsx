@@ -3229,6 +3229,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
             coach={coach}
             teamRating={tr}
             headshots={headshots}
+            sandboxMode={sandboxMode}
             playoffOutcome={
               madePlayoffs && playoffDone && playoffResult
                 ? {

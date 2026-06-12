@@ -51,6 +51,7 @@ interface ResultCardProps {
   playerAwards?: Record<string, string[]>   // person_id → short award labels
   finalsMVPId?: string | null
   finalsMVPStats?: PlayerSeasonStats | null
+  sandboxMode?: boolean
 }
 
 function eliminationLabel(round: string | undefined): string {
@@ -154,7 +155,7 @@ function StatRow({ lbl, val, lead }: { lbl: string; val: string; lead: boolean }
 }
 
 const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
-  function ResultCard({ simEra, wins, losses, seasonStats, coach, teamRating, headshots, playoffOutcome, playerAwards = {}, finalsMVPId, finalsMVPStats }, ref) {
+  function ResultCard({ simEra, wins, losses, seasonStats, coach, teamRating, headshots, playoffOutcome, playerAwards = {}, finalsMVPId, finalsMVPStats, sandboxMode }, ref) {
     const starters = seasonStats.filter(s => !s.slot.startsWith('B'))
     const bench    = seasonStats.filter(s =>  s.slot.startsWith('B'))
 
@@ -203,14 +204,32 @@ const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
             paddingBottom: 20,
           }}>
             {/* Logo */}
-            <div style={{
-              fontFamily: BEBAS,
-              fontSize: 64,
-              color: C.gold,
-              letterSpacing: '0.3em',
-              lineHeight: 1,
-            }}>
-              ERA BALL
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 16 }}>
+              <div style={{
+                fontFamily: BEBAS,
+                fontSize: 64,
+                color: C.gold,
+                letterSpacing: '0.3em',
+                lineHeight: 1,
+              }}>
+                ERA BALL
+              </div>
+              {sandboxMode && (
+                <div style={{
+                  fontFamily: INTER,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: '0.25em',
+                  textTransform: 'uppercase',
+                  color: C.gold,
+                  border: `1px solid ${C.goldBorder}`,
+                  background: C.goldFaint,
+                  padding: '4px 10px',
+                  marginBottom: 10,
+                }}>
+                  Sandbox
+                </div>
+              )}
             </div>
 
             {/* Record — right-aligned, prominent */}
