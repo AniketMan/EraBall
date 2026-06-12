@@ -440,7 +440,7 @@ function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, acti
 
   return (
     <div
-      className={`relative overflow-hidden cursor-pointer court-slot${confirmed ? ' court-slot--filled' : ''}`}
+      className={`relative overflow-hidden cursor-pointer select-none court-slot${confirmed ? ' court-slot--filled' : ''}`}
       style={{
         minHeight: 140,
         background: isPending ? `${G.gold}0a` : confirmed ? tierBg(confirmed) : G.black,
