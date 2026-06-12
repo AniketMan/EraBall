@@ -214,44 +214,42 @@ const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
               }}>
                 ERA BALL
               </div>
-              {sandboxMode && (
-                <div style={{
-                  fontFamily: INTER,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: '0.25em',
-                  textTransform: 'uppercase',
-                  color: C.gold,
-                  border: `1px solid ${C.goldBorder}`,
-                  background: C.goldFaint,
-                  padding: '4px 10px',
-                  marginBottom: 10,
-                }}>
-                  Sandbox
-                </div>
-              )}
             </div>
 
             {/* Record — right-aligned, prominent */}
-            <div style={{ textAlign: 'right' }}>
-              <div style={{
-                fontFamily: INTER,
-                fontSize: 11,
-                color: C.grey,
-                letterSpacing: '0.28em',
-                textTransform: 'uppercase',
-                marginBottom: -10,
-              }}>
-                {simEra} Era · {verdict}
-              </div>
-              <div style={{
-                fontFamily: BEBAS,
-                fontSize: 68,
-                color: C.white,
-                letterSpacing: '0.04em',
-                lineHeight: 1,
-              }}>
-                {wins}–{losses}
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 28 }}>
+              {sandboxMode && (
+                <div style={{
+                  fontFamily: BEBAS,
+                  fontSize: 36,
+                  color: C.gold,
+                  letterSpacing: '0.18em',
+                  lineHeight: 1,
+                  marginBottom: 4,
+                }}>
+                  Sandbox Mode
+                </div>
+              )}
+              <div style={{ textAlign: 'right' }}>
+                <div style={{
+                  fontFamily: INTER,
+                  fontSize: 11,
+                  color: C.grey,
+                  letterSpacing: '0.28em',
+                  textTransform: 'uppercase',
+                  marginBottom: -10,
+                }}>
+                  {simEra} Era · {verdict}
+                </div>
+                <div style={{
+                  fontFamily: BEBAS,
+                  fontSize: 68,
+                  color: C.white,
+                  letterSpacing: '0.04em',
+                  lineHeight: 1,
+                }}>
+                  {wins}–{losses}
+                </div>
               </div>
             </div>
           </div>
