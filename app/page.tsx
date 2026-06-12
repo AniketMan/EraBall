@@ -1275,6 +1275,13 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                     ))}
                   </div>
                 </div>
+                {filledCount === 9 && (
+                  <div className="p-3">
+                    <Btn onClick={() => onDraftComplete(slots)} variant="gold" className="w-full py-4 text-base">
+                      Draft Coach
+                    </Btn>
+                  </div>
+                )}
                 <div className="p-3 space-y-3">
                   {sandboxPlayerMode ? (
                     <>
