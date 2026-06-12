@@ -757,8 +757,8 @@ function calcPlayerDefFactor(entries: { pr: PlayerRating; minScale: number }[]):
 function calcRebFactor(entries: { pr: PlayerRating; minScale: number }[]): number {
   const rebIndex = entries.reduce((s, { pr, minScale }) =>
     s + (pr.player.REB ?? 0) * pr.eraMod * minScale, 0)
-  const raw = 1.0 + (rebIndex - LEAGUE_AVG_REB_INDEX) / LEAGUE_AVG_REB_INDEX * 0.06
-  return Math.max(0.94, Math.min(1.06, raw))
+  const raw = 1.0 + (rebIndex - LEAGUE_AVG_REB_INDEX) / LEAGUE_AVG_REB_INDEX * 0.09
+  return Math.max(0.91, Math.min(1.09, raw))
 }
 
 // High AST → better shot quality → scoring efficiency boost (offense only)
@@ -818,7 +818,7 @@ export function simulateSeason(
   // Blend reb/ast/spacing into win probability at half their score-gen weight
   const rebWinFactor     = 1.0 + (rebFactor - 1.0) * 0.5                                          // ±3% on team roll
   const astWinFactor     = 1.0 + (astFactor - 1.0) * 0.5                                          // ±2.5% on team roll
-  const rebOppFactor     = 1.0 - (rebFactor - 1.0) * 0.25                                         // ±1.5% on opp roll (def boards)
+  const rebOppFactor     = 1.0 - (rebFactor - 1.0) * 0.40                                         // ±1.5% on opp roll (def boards)
   const shooterCount     = entries.filter(e => (e.pr.player.FG3_PCT ?? 0) >= 0.36).length
   const spacingWinFactor = Math.max(0.97, Math.min(1.04, 1.0 + (shooterCount - 2) * 0.006))       // ±3% on team roll
 
@@ -958,7 +958,7 @@ export function simulatePlayoffs(
 
   const rebWinFactor     = 1.0 + (rebFactor - 1.0) * 0.5
   const astWinFactor     = 1.0 + (astFactor - 1.0) * 0.5
-  const rebOppFactor     = 1.0 - (rebFactor - 1.0) * 0.25
+  const rebOppFactor     = 1.0 - (rebFactor - 1.0) * 0.40
   const shooterCount     = entries.filter(e => (e.pr.player.FG3_PCT ?? 0) >= 0.36).length
   const spacingWinFactor = Math.max(0.97, Math.min(1.04, 1.0 + (shooterCount - 2) * 0.006))
 
