@@ -249,6 +249,23 @@ export function applyAnchors(player: Player): Player {
   return { ...player, defAnchor: anchor === 'def', offAnchor: anchor === 'off', anchorTier: tier }
 }
 
+const TIMELESS_PLAYERS = new Set([
+  'LeBron James',
+  'Oscar Robertson',
+  'Magic Johnson',
+  'Kareem Abdul-Jabbar',
+  'Kevin Durant',
+  'Giannis Antetokounmpo',
+  'Tim Duncan',
+  'Nikola Jokic',
+  'Michael Jordan',
+])
+
+export function applyTimeless(player: Player): Player {
+  if (!TIMELESS_PLAYERS.has(player.full_name)) return player
+  return { ...player, timeless: true }
+}
+
 function playoffRingBoost(rings: number): number {
   if (rings >= 9)  return 0.13
   if (rings >= 6)  return 0.10
@@ -543,6 +560,7 @@ export function calcEraModifier(player: Player, simEra: Era): number {
   const playerIdx = ERA_ORDER.indexOf(player.era)
   const simIdx = ERA_ORDER.indexOf(simEra)
   const dist = Math.abs(playerIdx - simIdx)
+  if (player.timeless) return dist >= 6 ? 0.95 : 1.0
   const table = playerIdx > simIdx ? ERA_MOD_BACKWARD : ERA_MOD_FORWARD
   let mod = table[Math.min(dist, table.length - 1)]
   // Extra penalty for modern players (10s/20s) in the 50s/60s — style gap is too severe

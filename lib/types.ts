@@ -40,6 +40,7 @@ export interface Player {
   defAnchor?: boolean
   offAnchor?: boolean
   anchorTier?: 1 | 2
+  timeless?: boolean
   eraTeam?: string  // set by withEraStats to reflect which team's era stats are loaded
 }
 

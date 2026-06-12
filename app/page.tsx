@@ -6,7 +6,7 @@ import type { Player, Coach, CourtSlot, SlotPosition, Era, GamePhase, PlayerSeas
 import ResultCard from './ResultCard'
 import {
   ALL_ERAS, SLOT_POSITIONS, SLOT_MPG, ERA_SEASON_GAMES, calcFitPenalty, calcEraModifier, calcTeamRating,
-  simulateSeason, simulatePlayoffs, calcTS, coachBonus, effectiveCoachBonus, coachChampBonus, playerMatchesEra, withEraStats, applyFlexTag, applyRings, applyAnchors,
+  simulateSeason, simulatePlayoffs, calcTS, coachBonus, effectiveCoachBonus, coachChampBonus, playerMatchesEra, withEraStats, applyFlexTag, applyRings, applyAnchors, applyTimeless,
   firstRoundLabel, playerBaseRating, genOppTeamStats, calcTeamDefTotals, calcRebFactor,
 } from '../lib/gameLogic'
 import type { OppTeamStats } from '../lib/gameLogic'
@@ -318,6 +318,13 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra }: { player: Pl
               <TagTooltip tip={(player.anchorTier ?? 1) === 1 ? "Elite offensive engine — major boost to team scoring and ball movement." : "Strong offensive contributor — elevates the team's offense. T1 anchors carry a larger boost."}>
                 <span className="text-xs uppercase tracking-wide font-bold" style={{ color: G.gold }}>
                   Offensive Anchor <span style={{ opacity: 0.7 }}>T{player.anchorTier ?? 1}</span>
+                </span>
+              </TagTooltip>
+            )}
+            {player.timeless && (
+              <TagTooltip tip="Transcendent skill set — minimal era penalties across all decades. 5% penalty only if 6+ eras from home era.">
+                <span className="text-xs px-1.5 py-0.5 uppercase tracking-wide font-bold" style={{ color: '#C084FC', border: `1px solid #7C3AED`, background: `#C084FC12` }}>
+                  Timeless
                 </span>
               </TagTooltip>
             )}
@@ -1008,7 +1015,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
             return ids
           }
           setLockedTeam(team); setLockedEra(era)
-          setRosterPool([...pool].map(p => applyAnchors(applyRings(applyFlexTag(withEraStats(p, era, team))))).sort((a, b) => (b.PTS ?? 0) - (a.PTS ?? 0)))
+          setRosterPool([...pool].map(p => applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, era, team)))))).sort((a, b) => (b.PTS ?? 0) - (a.PTS ?? 0)))
           setSpinning(false)
           return ids
         })
@@ -1090,7 +1097,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
         const team = isAll
           ? ((p.all_teams_by_era?.[devEra] as string[] | undefined)?.[0] ?? p.team_abbreviation)
           : devTeam
-        return applyAnchors(applyRings(applyFlexTag(withEraStats(p, devEra, team))))
+        return applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, devEra, team)))))
       }).sort((a, b) => (b.PTS ?? 0) - (a.PTS ?? 0))
       setLockedTeam(devTeam); setLockedEra(devEra)
       setSpinTeamDisplay(isAll ? devEra : devTeam); setSpinEraDisplay(devEra)
@@ -1108,7 +1115,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
         return eraTeams ? eraTeams.includes(sandboxTeam) : playerTeamForEra(p, sandboxEra) === sandboxTeam
       })
       if (pool.length === 0) { alert(`No players found for ${sandboxTeam} - ${sandboxEra}`); return ids }
-      const sorted = pool.map(p => applyAnchors(applyRings(applyFlexTag(withEraStats(p, sandboxEra, sandboxTeam)))))
+      const sorted = pool.map(p => applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, sandboxEra, sandboxTeam))))))
         .sort((a, b) => (b.PTS ?? 0) - (a.PTS ?? 0))
       setLockedTeam(sandboxTeam); setLockedEra(sandboxEra)
       setSpinTeamDisplay(sandboxTeam); setSpinEraDisplay(sandboxEra)
@@ -1126,7 +1133,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
     const top9 = scored
       .sort((a, b) => b.score - a.score)
       .slice(0, 9)
-      .map(({ p }) => applyRings(applyFlexTag(withEraStats(p, p.era as Era, p.team_abbreviation))))
+      .map(({ p }) => applyTimeless(applyRings(applyFlexTag(withEraStats(p, p.era as Era, p.team_abbreviation)))))
     const newSlots = SLOT_POSITIONS.map((pos, i) => {
       const { penalty, label } = calcFitPenalty(top9[i], pos)
       return { position: pos, player: top9[i], fitPenalty: penalty, fitLabel: label }
@@ -1141,7 +1148,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
     const shuffled = [...players].sort(() => Math.random() - 0.5)
     const picks = shuffled.slice(0, 9)
     const newSlots = SLOT_POSITIONS.map((pos, i) => {
-      const player = applyRings(applyFlexTag(withEraStats(picks[i], picks[i].era as Era, picks[i].team_abbreviation)))
+      const player = applyTimeless(applyRings(applyFlexTag(withEraStats(picks[i], picks[i].era as Era, picks[i].team_abbreviation))))
       const { penalty, label } = calcFitPenalty(player, pos)
       return { position: pos, player, fitPenalty: penalty, fitLabel: label }
     })
@@ -1173,7 +1180,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
         return teamsForEra?.includes(team)
       })
       if (!match) continue
-      const tagged = applyRings(applyFlexTag(withEraStats(match, era, team)))
+      const tagged = applyTimeless(applyRings(applyFlexTag(withEraStats(match, era, team))))
       const slotIdx = SLOT_POSITIONS.indexOf(slot)
       const { penalty, label } = calcFitPenalty(tagged, slot)
       newSlots[slotIdx] = { position: slot, player: tagged, fitPenalty: penalty, fitLabel: label }
@@ -1353,7 +1360,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                             <div
                               key={p.person_id}
                               onClick={() => {
-                                const tagged = applyRings(applyFlexTag(withEraStats(p, p.era as Era, p.team_abbreviation)))
+                                const tagged = applyTimeless(applyRings(applyFlexTag(withEraStats(p, p.era as Era, p.team_abbreviation))))
                                 setLockedTeam(p.team_abbreviation)
                                 setLockedEra(p.era as Era)
                                 setSpinTeamDisplay(p.team_abbreviation)
@@ -1448,7 +1455,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                 <div className="roster-scroll" style={{ border: `1px solid ${G.border}`, maxHeight: 220, overflowY: 'auto', overflowX: 'hidden' }}>
                   {(() => {
                     const isSpecial = (p: Player) =>
-                      p.greatest_75_flag === 'Y' || (p.rings ?? 0) > 0 || p.defAnchor || p.offAnchor || !!p.flexPositions
+                      p.greatest_75_flag === 'Y' || (p.rings ?? 0) > 0 || p.defAnchor || p.offAnchor || !!p.flexPositions || !!p.timeless
                     const sorted = [...rosterPool].sort((a, b) => {
                       if (sortBy === 'SPECIAL') {
                         const aS = isSpecial(a) ? 1 : 0; const bS = isSpecial(b) ? 1 : 0
@@ -1499,7 +1506,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                     )
                   })})()}
                   {sortBy === 'SPECIAL' && !rosterPool.some(p =>
-                    p.greatest_75_flag === 'Y' || (p.rings ?? 0) > 0 || p.defAnchor || p.offAnchor || !!p.flexPositions
+                    p.greatest_75_flag === 'Y' || (p.rings ?? 0) > 0 || p.defAnchor || p.offAnchor || !!p.flexPositions || !!p.timeless
                   ) && (
                     <div className="text-center py-6 text-xs uppercase tracking-widest" style={{ color: G.greyDark }}>
                       No players with special tags
