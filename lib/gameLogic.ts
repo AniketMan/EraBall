@@ -24,9 +24,11 @@ const FLEX_PLAYERS: Record<string, SlotPosition[]> = {
 // Hard positional constraints: 0 penalty only at listed slots.
 // These players do NOT carry a flex tag — they are strictly these positions.
 const POSITION_LOCK: Record<string, SlotPosition[]> = {
-  'Tracy McGrady':  ['SG', 'SF'],
-  'Peyton Watson':  ['SF', 'PF'],
-  'Joel Embiid':    ['PF', 'C'],
+  'Tracy McGrady':       ['SG', 'SF'],
+  'Peyton Watson':       ['SF', 'PF'],
+  'Joel Embiid':         ['PF', 'C'],
+  'LaMarcus Aldridge':   ['PF', 'C'],
+  'Tim Duncan':          ['PF', 'C'],
 }
 
 export function applyFlexTag(player: Player): Player {
