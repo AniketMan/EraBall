@@ -2237,7 +2237,7 @@ export interface AwardThresholds {
 }
 
 export const DEFAULT_THRESHOLDS: AwardThresholds = {
-  mvpWins: 55, mvpBase: 55, mvpPPG: 24,
+  mvpWins: 50, mvpBase: 55, mvpPPG: 24,
   allNBAAdj: 50, allNBAPPG: 24,
   allStarAdj: 48, allStarGPPG: 20, allStarFPPG: 20, allStarCPPG: 18,
   dpoyBase: 50, dpoySTL: 1.5, dpoyBLK: 1.5,
@@ -2267,10 +2267,10 @@ function computeSeasonAwards(
 
   // ── MVP ──
   if (wins >= 78) {
-    // Historic season — best scoring starter wins MVP automatically
+    // Historic season — highest-scoring starter above 22 PPG wins MVP automatically
     const starterSlots: SlotPosition[] = ['PG', 'SG', 'SF', 'PF', 'C']
     const topScorer = rated
-      .filter(({ s }) => starterSlots.includes(s.slot))
+      .filter(({ s }) => starterSlots.includes(s.slot) && s.PTS > 22)
       .sort((a, b) => b.s.PTS - a.s.PTS)[0]
     if (topScorer) {
       awards.push({
