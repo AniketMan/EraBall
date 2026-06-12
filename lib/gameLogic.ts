@@ -264,6 +264,7 @@ const TIMELESS_PLAYERS = new Set([
   'Larry Bird',
   'Kobe Bryant',
   'Dwight Howard',
+  'Shaquille O\'Neal',
 ])
 
 export function applyTimeless(player: Player): Player {
