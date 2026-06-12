@@ -897,7 +897,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
   const [slots, setSlots] = useState<CourtSlot[]>(emptySlots())
   const [spinning, setSpinning] = useState(false)
   const [rosterPool, setRosterPool] = useState<Player[]>([])
-  const [sortBy, setSortBy] = useState<'SPECIAL' | 'PTS' | 'REB' | 'AST' | 'TS' | 'STL' | 'BLK'>('PTS')
+  const [sortBy, setSortBy] = useState<'SPECIAL' | 'PTS' | 'REB' | 'AST' | 'TS' | 'STL' | 'BLK' | 'POS'>('PTS')
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
   const [rosterCardPlayer, setRosterCardPlayer] = useState<Player | null>(null)
   const [pendingSlotIdx, setPendingSlotIdx] = useState<number | null>(null)
@@ -1520,6 +1520,8 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                   {(() => {
                     const isSpecial = (p: Player) =>
                       p.greatest_75_flag === 'Y' || (p.rings ?? 0) > 0 || p.defAnchor || p.offAnchor || !!p.flexPositions || !!p.timeless
+                    const POS_ORDER: Record<string, number> = { PG: 0, SG: 1, SF: 2, PF: 3, C: 4 }
+                    const posRank = (p: Player) => POS_ORDER[p.position?.split('-')[0] ?? ''] ?? 5
                     const sorted = [...rosterPool].sort((a, b) => {
                       if (sortBy === 'SPECIAL') {
                         const aS = isSpecial(a) ? 1 : 0; const bS = isSpecial(b) ? 1 : 0
@@ -1527,6 +1529,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                         return playerBaseRating(b, b.era as Era) - playerBaseRating(a, a.era as Era)
                       }
                       if (sortBy === 'TS') return calcTS(b) - calcTS(a)
+                      if (sortBy === 'POS') return posRank(a) - posRank(b)
                       return (b[sortBy] ?? 0) - (a[sortBy] ?? 0)
                     }).filter(p => sortBy !== 'SPECIAL' || isSpecial(p))
                     visiblePoolRef.current = sorted
@@ -1577,24 +1580,29 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                     </div>
                   )}
                 </div>
-                <div className="flex items-center justify-end gap-1 mt-1">
-                  <span className="hidden sm:inline text-xs uppercase tracking-widest mr-1" style={{ color: G.greyDark }}>Sort by:</span>
-                  {(['SPECIAL', 'PTS', 'REB', 'AST', 'TS', 'STL', 'BLK'] as const).map(s => (
-                    <button
-                      key={s}
-                      onClick={() => setSortBy(s)}
-                      className="text-xs uppercase tracking-widest px-2 py-0.5"
-                      style={{
-                        color: sortBy === s ? G.gold : G.greyDark,
-                        background: 'none',
-                        border: 'none',
-                        borderBottom: sortBy === s ? `1px solid ${G.gold}` : '1px solid transparent',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {s === 'TS' ? 'TS%' : s === 'SPECIAL' ? '★ Notable' : s}
-                    </button>
-                  ))}
+                <div className="flex items-center mt-2" style={{ borderTop: `1px solid ${G.border}`, overflow: 'hidden' }}>
+                  <span className="text-xs uppercase tracking-widest shrink-0 px-2" style={{ color: G.greyDark, borderRight: `1px solid ${G.border}`, paddingTop: 6, paddingBottom: 6 }}>Sort</span>
+                  <div className="flex overflow-x-auto" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
+                    {(['SPECIAL', 'PTS', 'REB', 'AST', 'TS', 'STL', 'BLK', 'POS'] as const).map(s => (
+                      <button
+                        key={s}
+                        onClick={() => setSortBy(s)}
+                        className="shrink-0 text-xs uppercase tracking-widest"
+                        style={{
+                          padding: '6px 10px',
+                          color: sortBy === s ? G.gold : G.greyDark,
+                          background: sortBy === s ? `${G.gold}12` : 'none',
+                          border: 'none',
+                          borderBottom: sortBy === s ? `2px solid ${G.gold}` : '2px solid transparent',
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                          transition: 'color 0.1s, background 0.1s',
+                        }}
+                      >
+                        {s === 'TS' ? 'TS%' : s === 'SPECIAL' ? '★' : s === 'POS' ? 'Pos' : s}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
