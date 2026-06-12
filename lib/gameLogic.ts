@@ -822,12 +822,21 @@ export function simulateSeason(
   const shooterCount     = entries.filter(e => (e.pr.player.FG3_PCT ?? 0) >= 0.36).length
   const spacingWinFactor = Math.max(0.97, Math.min(1.04, 1.0 + (shooterCount - 2) * 0.006))       // ±3% on team roll
 
+  // Scoring win factor: ties win probability to offensive output vs era baseline.
+  // Mainly lifts out-of-era teams whose scoring exceeds what their raw rating predicts
+  // (e.g. modern stars in the 50s score 114 PPG but were going .500 on rating alone).
+  // Blended at 25% so it nudges without dominating the rating-based signal.
+  const eraOppAvg        = ERA_OPP_BASELINE[simEra]
+  const expectedOppScore = eraOppAvg * playerDefFactor * (1 - defBonus * 0.5)
+  const scoringDiffRatio = expectedTeamScore / Math.max(1, expectedOppScore)
+  const scoringWinFactor = Math.max(0.93, Math.min(1.07, 1.0 + (scoringDiffRatio - 1.0) * 0.25)) // ±7% cap
+
   const seasonGames = ERA_SEASON_GAMES[simEra]
 
   for (let i = 0; i < seasonGames; i++) {
     const oppBase   = OPP_BASELINE * playerDefFactor * (1 - defBonus)
     const oppRating = oppBase + randn() * OPP_SPREAD
-    const teamRoll  = rawRating * (1 + offBonus) * rebWinFactor * astWinFactor * spacingWinFactor + randn() * GAME_NOISE
+    const teamRoll  = rawRating * (1 + offBonus) * rebWinFactor * astWinFactor * spacingWinFactor * scoringWinFactor + randn() * GAME_NOISE
     const oppRoll   = oppRating * rebOppFactor + randn() * GAME_NOISE
     const win       = teamRoll > oppRoll
     games.push(win)
@@ -973,6 +982,12 @@ export function simulatePlayoffs(
   const baseTeamScore = entries.reduce((s, e) => s + (e.pr.player.PTS ?? 0) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty), 0)
   const expectedTeamScore = Math.max(85, Math.min(138, baseTeamScore * (1 + avgRingBoost)))
 
+  // Scoring win factor — same logic as regular season (see simulateSeason)
+  const poEraOppAvg        = ERA_OPP_BASELINE[simEra]
+  const poExpectedOppScore = poEraOppAvg * playerDefFactor * (1 - defBonus * 0.5)
+  const poScoringDiffRatio = expectedTeamScore / Math.max(1, poExpectedOppScore)
+  const poScoringWinFactor = Math.max(0.93, Math.min(1.07, 1.0 + (poScoringDiffRatio - 1.0) * 0.25))
+
   // Per-player expected averages for game leader generation
   const expPTS = entries.map(e => (e.pr.player.PTS ?? 0) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty) * (1 + playoffRingBoost(e.pr.player.rings ?? 0)))
   const expREB = entries.map(e => (e.pr.player.REB ?? 0) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty) * (1 + playoffRingBoost(e.pr.player.rings ?? 0)))
@@ -1007,7 +1022,7 @@ export function simulatePlayoffs(
       const specialBoost = specialTrigger ? 2 + Math.random() * 4 : 0
 
       const oppRating = oppMean * playerDefFactor * (1 - defBonus) + randn() * OPP_SPREAD
-      const win = effectiveRawRating * (1 + offBonus) * roundDefFactor * rebWinFactor * astWinFactor * spacingWinFactor + specialBoost + randn() * GAME_NOISE > oppRating * rebOppFactor + randn() * GAME_NOISE
+      const win = effectiveRawRating * (1 + offBonus) * roundDefFactor * rebWinFactor * astWinFactor * spacingWinFactor * poScoringWinFactor + specialBoost + randn() * GAME_NOISE > oppRating * rebOppFactor + randn() * GAME_NOISE
       const { teamScore, oppScore } = generateGameScore(expectedTeamScore, playerDefFactor, rebFactor, astFactor, defBonus, offBonus, win, simEra)
 
       // Per-game individual stat lines (high variance — 60–140% of expected)
