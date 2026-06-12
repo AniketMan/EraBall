@@ -1538,10 +1538,10 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                     const isSpecial = (p: Player) =>
                       p.greatest_75_flag === 'Y' || (p.rings ?? 0) > 0 || p.defAnchor || p.offAnchor || !!p.flexPositions || !!p.timeless
                     const posMatch = (p: Player) => {
-                      const pos = p.position?.toLowerCase() ?? ''
-                      if (posFilter === 'G') return pos.includes('guard')
-                      if (posFilter === 'F') return pos.includes('forward')
-                      if (posFilter === 'C') return pos.includes('center')
+                      const primary = (p.position?.split('-')[0] ?? '').toLowerCase()
+                      if (posFilter === 'G') return primary === 'guard'
+                      if (posFilter === 'F') return primary === 'forward'
+                      if (posFilter === 'C') return primary === 'center'
                       return false
                     }
                     const sorted = [...rosterPool].sort((a, b) => {
