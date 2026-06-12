@@ -1142,10 +1142,13 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
     }
     if (versions.length === 0) { alert(`No era stats found for ${match.full_name}`); return }
     versions.sort((a, b) => ALL_ERAS.indexOf(a.era as Era) - ALL_ERAS.indexOf(b.era as Era))
-    setLockedTeam(match.full_name); setLockedEra(null)
-    setSpinTeamDisplay(match.full_name); setSpinEraDisplay(versions[0].era as Era)
-    setRosterPool(versions)
-    setSelectedPlayer(null); setPendingSlotIdx(null); setHighlightEmpty(false); setAwaitingSpin(false)
+    setDraftedIds(ids => {
+      setLockedTeam(match.full_name); setLockedEra(null)
+      setSpinTeamDisplay(match.full_name); setSpinEraDisplay(versions[0].era as Era)
+      setRosterPool(versions)
+      setSelectedPlayer(null); setPendingSlotIdx(null); setHighlightEmpty(false); setAwaitingSpin(false)
+      return ids
+    })
   }
 
   const fillBestNine = () => {
@@ -1529,10 +1532,10 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                     visiblePoolRef.current = sorted
                     return sorted.map(p => {
                     const ts = (calcTS(p) * 100).toFixed(1)
-                    const isSel = selectedPlayer?.person_id === p.person_id
+                    const isSel = selectedPlayer?.person_id === p.person_id && selectedPlayer?.era === p.era && selectedPlayer?.eraTeam === p.eraTeam
                     return (
                       <button
-                        key={p.person_id}
+                        key={`${p.person_id}-${p.era}-${p.eraTeam ?? ''}`}
                         id={`player-row-${p.person_id}`}
                         onClick={() => { setSelectedPlayer(p); setHighlightEmpty(true); setPendingSlotIdx(null) }}
                         className={`w-full flex items-center gap-3 px-3 text-left roster-row${isSel ? ' roster-row--selected' : ''}`}
