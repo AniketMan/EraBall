@@ -768,23 +768,19 @@ function EraSelection({ onEraSelected, onSandboxSelected, onRestart }: { onEraSe
             <div>
               <div className="text-xs uppercase tracking-[0.4em] mb-2" style={{ color: G.grey }}>Simulation Era</div>
               <div style={{ position: 'relative', width: '100%', maxWidth: 680, margin: '0 auto' }}>
-                {/* Era banner image — place 2400×480px WebPs in /public/era-banners/<era>.webp */}
-                {/* CSS mask fades all 4 edges — works on both desktop and mobile Safari */}
+                {/* Era banner image — overlay gradient divs replace CSS mask for universal browser support */}
                 <img
                   key={displayEra}
                   src={`/era-banners/${displayEra}.webp`}
                   alt=""
                   className="era-banner-img"
                   onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-                  style={{
-                    position: 'absolute', inset: 0, width: '100%', height: '100%',
-                    objectFit: 'cover', pointerEvents: 'none', zIndex: 0,
-                    maskImage: 'linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)',
-                    WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)',
-                    maskComposite: 'intersect' as React.CSSProperties['maskComposite'],
-                    WebkitMaskComposite: 'destination-in',
-                  }}
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none', zIndex: 0 }}
                 />
+                {/* Left/right fade */}
+                <div style={{ position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to right, #000 0%, transparent 18%, transparent 82%, #000 100%)' }} />
+                {/* Top/bottom fade */}
+                <div style={{ position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to bottom, #000 0%, transparent 20%, transparent 80%, #000 100%)' }} />
                 <div style={{ ...BEBAS, fontSize: 'clamp(80px, 18vw, 160px)', lineHeight: 0.9, color: spinning ? G.greyDark : G.white, letterSpacing: '0.02em', position: 'relative', zIndex: 2, padding: '24px 48px', textShadow: '0 2px 4px rgba(0,0,0,0.9), 0 4px 24px rgba(0,0,0,0.8), 0 0 60px rgba(0,0,0,0.6)' }}>
                   <span className="slot-reel-window">
                     <span
