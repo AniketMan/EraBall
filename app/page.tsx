@@ -1283,7 +1283,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                           onKeyDown={e => { if (e.key === 'Enter') loadPlayerVersions() }}
                           placeholder="e.g. LeBron James"
                           className="w-full px-3 py-2 text-sm"
-                          style={{ background: G.surface2, border: `1px solid ${G.border}`, color: G.white, outline: 'none' }}
+                          style={{ background: G.surface2, border: `1px solid ${G.border}`, color: G.white, outline: 'none', fontSize: 16 }}
                         />
                       </div>
                       <Btn onClick={loadPlayerVersions} variant="outline" className="w-full py-3">
@@ -1306,7 +1306,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                       }}
                       placeholder="Search team..."
                       className="w-full px-3 py-2 text-sm font-semibold"
-                      style={{ background: G.surface2, border: `1px solid ${G.border}`, color: G.white, outline: 'none' }}
+                      style={{ background: G.surface2, border: `1px solid ${G.border}`, color: G.white, outline: 'none', fontSize: 16 }}
                     />
                     {sandboxTeamOpen && (
                       <div className="roster-scroll" style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: G.surface2, border: `1px solid ${G.border}`, borderTop: 'none', maxHeight: 200, overflowY: 'auto', zIndex: 50 }}>
@@ -1342,7 +1342,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                       value={sandboxEra}
                       onChange={e => setSandboxEra(e.target.value as Era)}
                       className="w-full px-3 py-2 text-sm font-semibold"
-                      style={{ background: G.surface2, border: `1px solid ${G.border}`, color: G.gold, outline: 'none' }}
+                      style={{ background: G.surface2, border: `1px solid ${G.border}`, color: G.gold, outline: 'none', fontSize: 16 }}
                     >
                       {ALL_ERAS.map(era => (
                         <option key={era} value={era} disabled={!sandboxValidEras.has(era)}
