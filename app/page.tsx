@@ -295,42 +295,42 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra }: { player: Pl
           <div className="flex flex-col items-end gap-1 ml-2 shrink-0">
             {player.greatest_75_flag === 'Y' && (
               <TagTooltip tip="Recognized as one of the 75 greatest NBA players of all time, a small boost in every game play play.">
-                <span className="text-xs uppercase tracking-wide" style={{ color: G.gold }}>
+                <span className="text-xs uppercase tracking-wide inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: G.gold }}>
                   75 Greatest
                 </span>
               </TagTooltip>
             )}
             {(player.rings ?? 0) > 0 && (
               <TagTooltip tip="Champions perform better in the playoffs. The more championships, the better the playoff performer.">
-                <span className="text-xs uppercase tracking-wide" style={{ color: G.gold, letterSpacing: '0.08em' }}>
+                <span className="text-xs uppercase tracking-wide inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: G.gold, letterSpacing: '0.08em' }}>
                   {player.rings}× Champion
                 </span>
               </TagTooltip>
             )}
             {player.defAnchor && (
               <TagTooltip tip={(player.anchorTier ?? 1) === 1 ? "Elite defensive anchor — major impact beyond the stat sheet." : "Solid defensive anchor — meaningful impact beyond the stat sheet. T1 anchors carry a larger boost."}>
-                <span className="text-xs uppercase tracking-wide font-bold" style={{ color: '#4A9ECC' }}>
+                <span className="text-xs uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: '#4A9ECC' }}>
                   Defensive Anchor <span style={{ opacity: 0.7 }}>T{player.anchorTier ?? 1}</span>
                 </span>
               </TagTooltip>
             )}
             {player.offAnchor && (
               <TagTooltip tip={(player.anchorTier ?? 1) === 1 ? "Elite offensive engine — major boost to team scoring and ball movement." : "Strong offensive contributor — elevates the team's offense. T1 anchors carry a larger boost."}>
-                <span className="text-xs uppercase tracking-wide font-bold" style={{ color: G.gold }}>
+                <span className="text-xs uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: G.gold }}>
                   Offensive Anchor <span style={{ opacity: 0.7 }}>T{player.anchorTier ?? 1}</span>
                 </span>
               </TagTooltip>
             )}
             {player.timeless && (
               <TagTooltip tip="Transcendent skill set — minimal era penalties across all decades. Minor penalty only if 6+ eras from home era.">
-                <span className="text-xs uppercase tracking-wide font-bold" style={{ color: '#C084FC' }}>
+                <span className="text-xs uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: '#C084FC' }}>
                   Timeless
                 </span>
               </TagTooltip>
             )}
             {player.flexPositions && (
               <TagTooltip tip="Can play multiple positions outside of their natural position, without penalty..">
-                <span className="text-xs px-1.5 py-0.5 uppercase tracking-wide font-bold" style={{ color: '#4A9ECC', border: `1px solid #2A6E99`, background: `#4A9ECC18` }}>
+                <span className="text-xs px-1.5 py-0.5 uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: '#4A9ECC', border: `1px solid #2A6E99`, background: `#4A9ECC18` }}>
                   FLEX
                 </span>
               </TagTooltip>
