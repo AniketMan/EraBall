@@ -3427,6 +3427,13 @@ export default function Home() {
         </a>
       </div>
 
+      {/* Disclaimer */}
+      <div style={{ textAlign: 'center', padding: '12px 24px 28px', maxWidth: 640, margin: '0 auto' }}>
+        <p style={{ fontSize: 10, color: G.greyDark, opacity: 0.5, letterSpacing: '0.04em', lineHeight: 1.6, margin: 0 }}>
+          EraBall is an unofficial fan project and is not affiliated with, endorsed by, or licensed by the NBA or any of its teams. Player names and statistics are historical public record used for informational and entertainment purposes only.
+        </p>
+      </div>
+
       <style>{`
         @media (min-width: 641px) { .suggestions-btn-mobile { display: none; } }
         @media (max-width: 640px)  { .suggestions-btn-desktop { display: none !important; } }
