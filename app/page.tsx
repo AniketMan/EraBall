@@ -1479,14 +1479,20 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                     </div>
                   </div>
                 </div>
-                <Btn
-                  onClick={spin}
-                  disabled={spinning || filledCount === 9 || (rosterPool.length > 0 && respinUsed)}
-                  variant="gold"
-                  className={`w-full py-4 text-base${awaitingSpin ? ' spin-awaiting' : ''}`}
-                >
-                  {spinning ? 'Spinning...' : 'Spin'}
-                </Btn>
+                {filledCount === 9 ? (
+                  <Btn onClick={() => onDraftComplete(slots)} variant="gold" className="w-full py-4 text-base">
+                    Draft Coach
+                  </Btn>
+                ) : (
+                  <Btn
+                    onClick={spin}
+                    disabled={spinning || (rosterPool.length > 0 && respinUsed)}
+                    variant="gold"
+                    className={`w-full py-4 text-base${awaitingSpin ? ' spin-awaiting' : ''}`}
+                  >
+                    {spinning ? 'Spinning...' : 'Spin'}
+                  </Btn>
+                )}
                 {awaitingSpin && !spinning && (
                   <div className="text-center text-xs uppercase tracking-[0.2em]" style={{ color: G.goldDim }}>
                     Spin for your next pick
@@ -1787,13 +1793,6 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
           </div>
         </div>
 
-        {filledCount === 9 && (
-          <div className="mt-8 text-center">
-            <Btn onClick={() => onDraftComplete(slots)} variant="gold" className="px-16 py-4 text-base">
-              Draft Coach
-            </Btn>
-          </div>
-        )}
       </div>
     </div>
   )
