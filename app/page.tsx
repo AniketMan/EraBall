@@ -860,7 +860,6 @@ function EraSelection({ onEraSelected, onSandboxSelected, onRestart }: { onEraSe
               Begin Draft
             </Btn>
           )}
-          <span className="text-xs uppercase tracking-widest" style={{ color: G.greyDark }}>Draft across decades</span>
           <button
             onClick={() => setShowHelp(true)}
             className="text-xs uppercase tracking-widest"
