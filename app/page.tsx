@@ -2534,8 +2534,8 @@ function SeasonAwardsPanel({ awards }: { awards: AwardEntry[] }) {
 }
 
 // ─── Phase 4: Simulation ──────────────────────────────────────────────────────
-function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn }: {
-  slots: CourtSlot[]; coach: Coach; simEra: Era; onRestart: () => void; greyscaleBtn?: React.ReactNode
+function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandboxMode }: {
+  slots: CourtSlot[]; coach: Coach; simEra: Era; onRestart: () => void; greyscaleBtn?: React.ReactNode; sandboxMode?: boolean
 }) {
   const seasonGames = ERA_SEASON_GAMES[simEra]
 
@@ -2850,7 +2850,10 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn }: {
             <div className="text-center py-8" style={{ borderBottom: `1px solid ${G.border}` }}>
               {done ? (
                 <>
-                  <div className="text-xs uppercase tracking-[0.3em] mb-3" style={{ color: G.grey }}>Regular Season</div>
+                  <div className="flex items-center justify-center gap-3 mb-3">
+                    <div className="text-xs uppercase tracking-[0.3em]" style={{ color: G.grey }}>Regular Season</div>
+                    {sandboxMode && <div className="text-xs uppercase tracking-widest px-2 py-0.5" style={{ color: G.gold, border: `1px solid ${G.gold}44`, background: `${G.gold}0d` }}>Sandbox</div>}
+                  </div>
                   <div style={{ ...BEBAS, fontSize: 'clamp(64px, 14vw, 120px)', lineHeight: 1, color: wins === seasonGames ? G.gold : wins === 0 ? '#CC3333' : G.white, letterSpacing: '0.02em' }}>
                     {wins}–{losses}
                   </div>
@@ -3412,7 +3415,7 @@ export default function Home() {
       {phase === 'era-select' && <EraSelection onEraSelected={era => { setSimEra(era); setStartSandbox(false); setPhase('draft') }} onSandboxSelected={era => { setSimEra(era); setStartSandbox(true); setPhase('draft') }} onRestart={restart} />}
       {phase === 'draft' && <DraftScreen simEra={simEra} players={players} onDraftComplete={s => { setSlots(s); setPhase('coach-draft') }} onRestart={restart} startInSandbox={startSandbox} greyscaleBtn={greyscaleBtn} />}
       {phase === 'coach-draft' && <CoachDraftScreen coaches={coaches} onCoachSelected={c => { setCoach(c); setPhase('simulation') }} onRestart={restart} sandboxMode={startSandbox} greyscaleBtn={greyscaleBtn} />}
-      {phase === 'simulation' && coach && <SimulationScreen slots={slots} coach={coach} simEra={simEra} onRestart={restart} greyscaleBtn={greyscaleBtn} />}
+      {phase === 'simulation' && coach && <SimulationScreen slots={slots} coach={coach} simEra={simEra} onRestart={restart} greyscaleBtn={greyscaleBtn} sandboxMode={startSandbox} />}
 
       {/* Desktop: fixed bottom-right */}
       <div
