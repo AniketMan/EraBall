@@ -852,13 +852,14 @@ export function simulateSeason(
   const astWinFactor     = 1.0 + (astFactor - 1.0) * 0.5                                          // ±2.5% on team roll
   const rebOppFactor     = 1.0 - (rebFactor - 1.0) * 0.40                                         // ±1.5% on opp roll (def boards)
   const shooterCount      = entries.reduce((s, e) => s + ((e.pr.player.FG3_PCT ?? 0) >= 0.375 ? e.minScale : 0), 0)
-  const spacingBaseline   = simEra === '20s' ? 4 : simEra === '10s' || simEra === '90s' ? 3 : 2
-  const spacingDev        = shooterCount - spacingBaseline
-  // Asymmetric: penalty below baseline is steeper; bonus above baseline unchanged from original
+  const isPreThreePt      = simEra === '50s' || simEra === '60s' || simEra === '70s'
+  const spacingBaseline   = simEra === '20s' || simEra === '10s' ? 5 : simEra === '00s' ? 4 : simEra === '90s' ? 3 : simEra === '80s' ? 2 : 0
+  // Pre-3PT eras: having shooters hurts (anachronistic). Modern eras: below baseline hurts more than above helps.
+  const spacingDev        = isPreThreePt ? -shooterCount : shooterCount - spacingBaseline
   const spacingPerShooter = spacingDev < 0
-    ? (simEra === '20s' ? 0.050 : simEra === '10s' ? 0.050 : simEra === '00s' ? 0.050 : simEra === '90s' ? 0.025 : 0.006)
+    ? (isPreThreePt ? 0.035 : simEra === '20s' || simEra === '10s' ? 0.050 : simEra === '00s' ? 0.050 : simEra === '90s' ? 0.025 : 0.015)
     : (simEra === '20s' || simEra === '10s' ? 0.015 : simEra === '00s' ? 0.010 : 0.006)
-  const spacingCapNeg     = simEra === '20s' ? 0.25 : simEra === '10s' ? 0.20 : simEra === '00s' ? 0.14 : simEra === '90s' ? 0.10 : 0.03
+  const spacingCapNeg     = isPreThreePt ? 0.15 : simEra === '20s' ? 0.25 : simEra === '10s' ? 0.20 : simEra === '00s' ? 0.14 : simEra === '90s' ? 0.10 : 0.06
   const spacingCapPos     = simEra === '20s' || simEra === '10s' ? 0.08 : simEra === '00s' ? 0.05 : 0.03
   const spacingWinFactor  = Math.max(1 - spacingCapNeg, Math.min(1 + spacingCapPos, 1.0 + spacingDev * spacingPerShooter))
 
@@ -913,7 +914,7 @@ export function simulateSeason(
 
   // ── Team context efficiency modifiers ──────────────────────────────────
   // spacingMod reuses shooterCount computed above for the win condition
-  const spacingMod    = (shooterCount - spacingBaseline) * spacingPerShooter
+  const spacingMod    = spacingDev * spacingPerShooter
   // Playmaking: top AST on team lifts shot quality for everyone
   const topAST        = Math.max(...entries.map(e => e.pr.player.AST ?? 0))
   const playmakingMod = Math.min(0.018, Math.max(-0.012, (topAST - 5) * 0.003))
@@ -1009,12 +1010,13 @@ export function simulatePlayoffs(
   const astWinFactor     = 1.0 + (astFactor - 1.0) * 0.5
   const rebOppFactor     = 1.0 - (rebFactor - 1.0) * 0.40
   const shooterCount        = entries.reduce((s, e) => s + ((e.pr.player.FG3_PCT ?? 0) >= 0.375 ? e.minScale : 0), 0)
-  const spacingBaselinePO   = simEra === '20s' ? 4 : simEra === '10s' || simEra === '90s' ? 3 : 2
-  const spacingDevPO        = shooterCount - spacingBaselinePO
+  const isPreThreePtPO      = simEra === '50s' || simEra === '60s' || simEra === '70s'
+  const spacingBaselinePO   = simEra === '20s' || simEra === '10s' ? 5 : simEra === '00s' ? 4 : simEra === '90s' ? 3 : simEra === '80s' ? 2 : 0
+  const spacingDevPO        = isPreThreePtPO ? -shooterCount : shooterCount - spacingBaselinePO
   const spacingPerShooterPO = spacingDevPO < 0
-    ? (simEra === '20s' ? 0.050 : simEra === '10s' ? 0.050 : simEra === '00s' ? 0.050 : simEra === '90s' ? 0.025 : 0.006)
+    ? (isPreThreePtPO ? 0.035 : simEra === '20s' || simEra === '10s' ? 0.050 : simEra === '00s' ? 0.050 : simEra === '90s' ? 0.025 : 0.015)
     : (simEra === '20s' || simEra === '10s' ? 0.015 : simEra === '00s' ? 0.010 : 0.006)
-  const spacingCapNegPO     = simEra === '20s' ? 0.25 : simEra === '10s' ? 0.20 : simEra === '00s' ? 0.14 : simEra === '90s' ? 0.10 : 0.03
+  const spacingCapNegPO     = isPreThreePtPO ? 0.15 : simEra === '20s' ? 0.25 : simEra === '10s' ? 0.20 : simEra === '00s' ? 0.14 : simEra === '90s' ? 0.10 : 0.06
   const spacingCapPosPO     = simEra === '20s' || simEra === '10s' ? 0.08 : simEra === '00s' ? 0.05 : 0.03
   const spacingWinFactor    = Math.max(1 - spacingCapNegPO, Math.min(1 + spacingCapPosPO, 1.0 + spacingDevPO * spacingPerShooterPO))
 
