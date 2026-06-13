@@ -936,7 +936,7 @@ export function simulateSeason(
   const topAST        = Math.max(...entries.map(e => e.pr.player.AST ?? 0))
   const playmakingMod = Math.min(0.018, Math.max(-0.012, (topAST - 5) * 0.003))
   // Team quality: stronger teams create slightly better shots (neutral at rawRating ~40)
-  const teamQualityMod = (rawRating - 40) * 0.0008
+  const teamQualityMod = (rawRating - 70) * 0.0008
 
   const seasonStats: PlayerSeasonStats[] = entries.map(({ pr, assignedMPG }, i) => {
     const w = weights[i]
