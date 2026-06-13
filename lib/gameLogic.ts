@@ -832,7 +832,7 @@ export function simulateSeason(
   let totalTeamScore = 0
   let totalOppScore = 0
 
-  const OPP_BASELINE = 36
+  const OPP_BASELINE = 44
   const OPP_SPREAD   = 6
   const GAME_NOISE   = 6
 
@@ -996,10 +996,10 @@ export function firstRoundLabel(simEra: Era): string {
 // defFactor: how well the opponent defends — multiplied against effectiveTeamRating each round
 function playoffOppRating(round: number, teamWins: number): { offRating: number; defFactor: number } {
   const idx = round - 1
-  const offRating = teamWins >= 60 ? [37, 41, 44, 48][idx]
-                  : teamWins >= 53 ? [38, 42, 45, 49][idx]
-                  : teamWins >= 47 ? [40, 43, 46, 49][idx]
-                  :                  [42, 44, 47, 51][idx]
+  const offRating = teamWins >= 60 ? [39, 43, 47, 55][idx]
+                  : teamWins >= 53 ? [40, 44, 48, 56][idx]
+                  : teamWins >= 47 ? [42, 45, 49, 56][idx]
+                  :                  [44, 46, 50, 58][idx]
   // Later rounds face better defenses — mild progressive reduction to team's effective rating
   const defFactor = [1.00, 0.99, 0.97, 0.95][idx]
   return { offRating, defFactor }
