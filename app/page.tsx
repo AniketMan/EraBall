@@ -520,7 +520,7 @@ function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, acti
             <div className="flex md:hidden justify-center mt-1" style={{ fontSize: 11, color: G.gold, fontWeight: 700 }}>
               {Math.round(confirmed.PTS ?? 0)}<span style={{ color: G.greyDark }}>/</span>{Math.round(confirmed.REB ?? 0)}<span style={{ color: G.greyDark }}>/</span>{Math.round(confirmed.AST ?? 0)}
             </div>
-            {confirmed.FG3_PCT != null && (
+            {!!confirmed.FG3_PCT && (
               <div className="mt-0.5" style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', color: confirmed.FG3_PCT >= 0.40 ? G.gold : confirmed.FG3_PCT >= 0.37 ? '#C9A030' : confirmed.FG3_PCT >= 0.34 ? G.grey : G.red }}>
                 {(confirmed.FG3_PCT * 100).toFixed(1)}% 3PT
               </div>
