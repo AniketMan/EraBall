@@ -770,14 +770,19 @@ const LEAGUE_AVG_REB_INDEX = 38
 const LEAGUE_AVG_AST_INDEX = 22
 
 function calcPlayerDefFactor(entries: { pr: PlayerRating; minScale: number }[]): number {
-  const defIndex = entries.reduce((s, { pr, minScale }) => {
-    const stl = imputeSTL(pr.player)
-    const blk = imputeBLK(pr.player)
-    return s + (stl + blk * 0.7) * pr.eraMod * minScale
-  }, 0)
-  // Soft clamp: ±8% swing from league average — players matter but it stays grounded
-  const raw = 1.0 + (LEAGUE_AVG_DEF_INDEX - defIndex) / LEAGUE_AVG_DEF_INDEX * 0.08
-  return Math.max(0.93, Math.min(1.07, raw))
+  // Perimeter defense: STL-based, normalized ±6%
+  const stlIndex  = entries.reduce((s, { pr, minScale }) => s + imputeSTL(pr.player) * pr.eraMod * minScale, 0)
+  const stlFactor = Math.max(0.94, Math.min(1.06, 1.0 + (LEAGUE_AVG_DEF_INDEX - stlIndex) / LEAGUE_AVG_DEF_INDEX * 0.06))
+
+  // Rim protection: BLK-based, absolute threshold, asymmetric (penalty > bonus)
+  // BLK_BASELINE ≈ league-average weighted BLK across a 9-man roster
+  const blkScore    = entries.reduce((s, { pr, minScale }) => s + imputeBLK(pr.player) * pr.eraMod * minScale, 0)
+  const BLK_BASELINE = 5.0
+  const blkShortfall = BLK_BASELINE - blkScore  // positive = below average = bad defense
+  const blkRate      = blkShortfall > 0 ? 0.035 : 0.015
+  const rimFactor    = Math.max(0.86, Math.min(1.08, 1.0 + blkShortfall * blkRate))
+
+  return Math.max(0.82, Math.min(1.15, stlFactor * rimFactor))
 }
 
 // High REB → more team possessions (+score) and fewer opp second chances (−opp score)
