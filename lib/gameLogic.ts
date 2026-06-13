@@ -851,11 +851,12 @@ export function simulateSeason(
   const rebWinFactor     = 1.0 + (rebFactor - 1.0) * 0.5                                          // ±3% on team roll
   const astWinFactor     = 1.0 + (astFactor - 1.0) * 0.5                                          // ±2.5% on team roll
   const rebOppFactor     = 1.0 - (rebFactor - 1.0) * 0.40                                         // ±1.5% on opp roll (def boards)
-  const shooterCount      = entries.reduce((s, e) => s + ((e.pr.player.FG3_PCT ?? 0) >= 0.375 ? e.minScale : 0), 0)
+  const shooterCount           = entries.reduce((s, e) => s + ((e.pr.player.FG3_PCT ?? 0) >= 0.375 ? e.minScale : 0), 0)
+  const highVolumeShooterCount = entries.reduce((s, e) => s + ((e.pr.player.FG3M ?? 0) >= 2.9 ? e.minScale : 0), 0)
   const isPreThreePt      = simEra === '50s' || simEra === '60s' || simEra === '70s'
   const spacingBaseline   = simEra === '20s' || simEra === '10s' ? 5 : simEra === '00s' ? 4 : simEra === '90s' ? 3 : simEra === '80s' ? 2 : 0
-  // Pre-3PT eras: having shooters hurts (anachronistic). Modern eras: below baseline hurts more than above helps.
-  const spacingDev        = isPreThreePt ? -shooterCount : shooterCount - spacingBaseline
+  // Pre-3PT eras: high-volume shooters hurt (anachronistic). Modern eras: below baseline hurts more than above helps.
+  const spacingDev        = isPreThreePt ? -highVolumeShooterCount : shooterCount - spacingBaseline
   const spacingPerShooter = spacingDev < 0
     ? (isPreThreePt ? 0.035 : simEra === '20s' || simEra === '10s' ? 0.050 : simEra === '00s' ? 0.050 : simEra === '90s' ? 0.025 : 0.015)
     : (simEra === '20s' || simEra === '10s' ? 0.015 : simEra === '00s' ? 0.010 : 0.006)
@@ -1009,10 +1010,11 @@ export function simulatePlayoffs(
   const rebWinFactor     = 1.0 + (rebFactor - 1.0) * 0.5
   const astWinFactor     = 1.0 + (astFactor - 1.0) * 0.5
   const rebOppFactor     = 1.0 - (rebFactor - 1.0) * 0.40
-  const shooterCount        = entries.reduce((s, e) => s + ((e.pr.player.FG3_PCT ?? 0) >= 0.375 ? e.minScale : 0), 0)
+  const shooterCount             = entries.reduce((s, e) => s + ((e.pr.player.FG3_PCT ?? 0) >= 0.375 ? e.minScale : 0), 0)
+  const highVolumeShooterCountPO = entries.reduce((s, e) => s + ((e.pr.player.FG3M ?? 0) >= 2.9 ? e.minScale : 0), 0)
   const isPreThreePtPO      = simEra === '50s' || simEra === '60s' || simEra === '70s'
   const spacingBaselinePO   = simEra === '20s' || simEra === '10s' ? 5 : simEra === '00s' ? 4 : simEra === '90s' ? 3 : simEra === '80s' ? 2 : 0
-  const spacingDevPO        = isPreThreePtPO ? -shooterCount : shooterCount - spacingBaselinePO
+  const spacingDevPO        = isPreThreePtPO ? -highVolumeShooterCountPO : shooterCount - spacingBaselinePO
   const spacingPerShooterPO = spacingDevPO < 0
     ? (isPreThreePtPO ? 0.035 : simEra === '20s' || simEra === '10s' ? 0.050 : simEra === '00s' ? 0.050 : simEra === '90s' ? 0.025 : 0.015)
     : (simEra === '20s' || simEra === '10s' ? 0.015 : simEra === '00s' ? 0.010 : 0.006)
