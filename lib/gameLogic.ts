@@ -778,6 +778,14 @@ function blkSlotMod(slot: string): number {
   return 1.0  // PF, C, B1-B4 (bench already discounted by minScale)
 }
 
+// Guards/wings playing out of position contribute less to rebounding than bigs
+function rebSlotMod(slot: string): number {
+  if (slot === 'PG') return 0.40
+  if (slot === 'SG') return 0.55
+  if (slot === 'SF') return 0.85
+  return 1.0  // PF, C, B1-B4
+}
+
 function calcPlayerDefFactor(entries: { pr: PlayerRating; minScale: number }[]): number {
   // Perimeter defense: STL-based, normalized ±6%
   const stlIndex  = entries.reduce((s, { pr, minScale }) => s + imputeSTL(pr.player) * pr.eraMod * minScale, 0)
@@ -796,7 +804,7 @@ function calcPlayerDefFactor(entries: { pr: PlayerRating; minScale: number }[]):
 // High REB → more team possessions (+score) and fewer opp second chances (−opp score)
 export function calcRebFactor(entries: { pr: PlayerRating; minScale: number }[]): number {
   const rebIndex = entries.reduce((s, { pr, minScale }) =>
-    s + (pr.player.REB ?? 0) * pr.eraMod * minScale, 0)
+    s + (pr.player.REB ?? 0) * pr.eraMod * minScale * rebSlotMod(pr.slot), 0)
   const raw = 1.0 + (rebIndex - LEAGUE_AVG_REB_INDEX) / LEAGUE_AVG_REB_INDEX * 0.09
   return Math.max(0.91, Math.min(1.09, raw))
 }
@@ -945,10 +953,10 @@ export function simulateSeason(
       GP:      seasonGames,
       MPG:     assignedMPG,
       PTS:     totalVarPTS > 0 ? (varPTSWeights[i] / totalVarPTS) * avgTeamScore : 0,
-      REB:     w.REB * v,
+      REB:     w.REB * v * rebSlotMod(pr.slot),
       AST:     w.AST * v,
       STL:     w.STL * v,
-      BLK:     w.BLK * v,
+      BLK:     w.BLK * v * blkSlotMod(pr.slot),
       TOV:     w.TOV * v,
       FG_PCT:  Math.min(0.80, Math.max(0.20, (pr.player.FG_PCT ?? 0.45) + fgCtx)),
       FG3_PCT: PRE_THREE_PT_ERAS.includes(simEra) ? null
@@ -1057,7 +1065,7 @@ export function simulatePlayoffs(
 
   // Per-player expected averages for game leader generation
   const expPTS = entries.map(e => (e.pr.player.PTS ?? 0) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty) * (1 + playoffRingBoost(e.pr.player.rings ?? 0)))
-  const expREB = entries.map(e => (e.pr.player.REB ?? 0) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty) * (1 + playoffRingBoost(e.pr.player.rings ?? 0)))
+  const expREB = entries.map(e => (e.pr.player.REB ?? 0) * e.pr.eraMod * e.minScale * rebSlotMod(e.pr.slot) * (1 - e.pr.fitPenalty) * (1 + playoffRingBoost(e.pr.player.rings ?? 0)))
   const expAST = entries.map(e => (e.pr.player.AST ?? 0) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty) * (1 + playoffRingBoost(e.pr.player.rings ?? 0)))
   const totalExpPTS = expPTS.reduce((a, b) => a + b, 0)
 
@@ -1186,7 +1194,7 @@ export function simulatePlayoffs(
   // STL/BLK/TOV still from weights (not tracked per-game)
   const stlBlkTov = entries.map(({ pr, minScale }) => {
     const s = pr.eraMod * minScale * (1 - pr.fitPenalty)
-    return { STL: imputeSTL(pr.player) * s, BLK: imputeBLK(pr.player) * s, TOV: imputeTOV(pr.player) * s }
+    return { STL: imputeSTL(pr.player) * s, BLK: imputeBLK(pr.player) * s * blkSlotMod(pr.slot), TOV: imputeTOV(pr.player) * s }
   })
 
   // ── Team context for playoff efficiency ──────────────────────────────────
