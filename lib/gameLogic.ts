@@ -926,8 +926,11 @@ export function simulateSeason(
   const seasonStats: PlayerSeasonStats[] = entries.map(({ pr, assignedMPG }, i) => {
     const w = weights[i]
     const v = seasonVar[i]
-    const fgCtx = spacingMod + playmakingMod + teamQualityMod + preEff[i].fg + preEff[i].stretch
-    const ftCtx = preEff[i].ft + preEff[i].stretch * 0.4
+    const fgCtx  = spacingMod + playmakingMod + teamQualityMod + preEff[i].fg + preEff[i].stretch
+    // 3P% display excludes spacingMod — spacing now reduces PPG via generateGameScore;
+    // applying it here too makes shooters look like they can't shoot on bad-spacing teams
+    const fg3Ctx = playmakingMod + teamQualityMod + preEff[i].fg + preEff[i].stretch
+    const ftCtx  = preEff[i].ft + preEff[i].stretch * 0.4
     return {
       player:  pr.player,
       slot:    pr.slot,
@@ -942,8 +945,8 @@ export function simulateSeason(
       FG_PCT:  Math.min(0.80, Math.max(0.20, (pr.player.FG_PCT ?? 0.45) + fgCtx)),
       FG3_PCT: PRE_THREE_PT_ERAS.includes(simEra) ? null
         : pr.player.FG3_PCT != null
-          ? Math.min(0.60, Math.max(pr.player.FG3_PCT * 0.65, pr.player.FG3_PCT + fgCtx + preEff[i].fg3))
-          : (() => { const b = getEstimatedFG3PCT(pr.player, simEra); return b != null ? Math.min(0.55, Math.max(b * 0.65, b + fgCtx + preEff[i].fg3)) : null })(),
+          ? Math.min(0.60, Math.max(0.20, pr.player.FG3_PCT + fg3Ctx + preEff[i].fg3))
+          : (() => { const b = getEstimatedFG3PCT(pr.player, simEra); return b != null ? Math.min(0.55, Math.max(0.18, b + fg3Ctx + preEff[i].fg3)) : null })(),
       FT_PCT:  Math.min(0.99, Math.max(0.30, (pr.player.FT_PCT ?? 0.70) + ftCtx)),
     }
   })
@@ -1187,6 +1190,7 @@ export function simulatePlayoffs(
     const stretchMax     = Math.max(0, (assignedMPG - naturalMPG) / 28) * 0.06
     const stretchPenalty = stretchMax > 0 ? -(stretchMax * Math.random()) : 0
     const fgCtx  = pSpacingMod + pPlaymakingMod + pTeamQualityMod + stretchPenalty
+    const fg3Ctx = pPlaymakingMod + pTeamQualityMod + stretchPenalty
     const ftCtx  = stretchPenalty * 0.4
     return {
       player:  pr.player,
@@ -1202,8 +1206,8 @@ export function simulatePlayoffs(
       FG_PCT:  Math.min(0.80, Math.max(0.20, (pr.player.FG_PCT ?? 0.45) + effBoost + fgCtx + effNoise(0.035))),
       FG3_PCT: PRE_THREE_PT_ERAS.includes(simEra) ? null
         : pr.player.FG3_PCT != null
-          ? Math.min(0.60, Math.max(0.15, pr.player.FG3_PCT + effBoost + fgCtx + effNoise(0.030)))
-          : (() => { const b = getEstimatedFG3PCT(pr.player, simEra); return b != null ? Math.min(0.55, Math.max(0.15, b + effBoost + fgCtx + effNoise(0.030))) : null })(),
+          ? Math.min(0.60, Math.max(0.20, pr.player.FG3_PCT + effBoost + fg3Ctx + effNoise(0.030)))
+          : (() => { const b = getEstimatedFG3PCT(pr.player, simEra); return b != null ? Math.min(0.55, Math.max(0.18, b + effBoost + fg3Ctx + effNoise(0.030))) : null })(),
       FT_PCT:  Math.min(0.99, Math.max(0.30, (pr.player.FT_PCT ?? 0.70) + effBoost + ftCtx + effNoise(0.035))),
     }
   })
