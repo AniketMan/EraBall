@@ -851,9 +851,9 @@ export function simulateSeason(
   const spacingDev        = shooterCount - spacingBaseline
   // Asymmetric: penalty below baseline is steeper; bonus above baseline unchanged from original
   const spacingPerShooter = spacingDev < 0
-    ? (simEra === '20s' ? 0.025 : simEra === '10s' ? 0.020 : simEra === '00s' ? 0.015 : 0.006)
+    ? (simEra === '20s' ? 0.050 : simEra === '10s' ? 0.020 : simEra === '00s' ? 0.015 : 0.006)
     : (simEra === '20s' || simEra === '10s' ? 0.015 : simEra === '00s' ? 0.010 : 0.006)
-  const spacingCapNeg     = simEra === '20s' ? 0.14 : simEra === '10s' ? 0.12 : simEra === '00s' ? 0.08 : 0.03
+  const spacingCapNeg     = simEra === '20s' ? 0.25 : simEra === '10s' ? 0.12 : simEra === '00s' ? 0.08 : 0.03
   const spacingCapPos     = simEra === '20s' || simEra === '10s' ? 0.08 : simEra === '00s' ? 0.05 : 0.03
   const spacingWinFactor  = Math.max(1 - spacingCapNeg, Math.min(1 + spacingCapPos, 1.0 + spacingDev * spacingPerShooter))
 
@@ -1007,9 +1007,9 @@ export function simulatePlayoffs(
   const spacingBaselinePO   = simEra === '20s' ? 4 : simEra === '10s' ? 3 : 2
   const spacingDevPO        = shooterCount - spacingBaselinePO
   const spacingPerShooterPO = spacingDevPO < 0
-    ? (simEra === '20s' ? 0.025 : simEra === '10s' ? 0.020 : simEra === '00s' ? 0.015 : 0.006)
+    ? (simEra === '20s' ? 0.050 : simEra === '10s' ? 0.020 : simEra === '00s' ? 0.015 : 0.006)
     : (simEra === '20s' || simEra === '10s' ? 0.015 : simEra === '00s' ? 0.010 : 0.006)
-  const spacingCapNegPO     = simEra === '20s' ? 0.14 : simEra === '10s' ? 0.12 : simEra === '00s' ? 0.08 : 0.03
+  const spacingCapNegPO     = simEra === '20s' ? 0.25 : simEra === '10s' ? 0.12 : simEra === '00s' ? 0.08 : 0.03
   const spacingCapPosPO     = simEra === '20s' || simEra === '10s' ? 0.08 : simEra === '00s' ? 0.05 : 0.03
   const spacingWinFactor    = Math.max(1 - spacingCapNegPO, Math.min(1 + spacingCapPosPO, 1.0 + spacingDevPO * spacingPerShooterPO))
 
