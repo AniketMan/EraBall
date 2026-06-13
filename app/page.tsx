@@ -2593,6 +2593,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
   const [avgOppScore, setAvgOppScore] = useState<number | null>(null)
   const [seasonOppStats, setSeasonOppStats] = useState<OppTeamStats | null>(null)
   const [playoffOppStats, setPlayoffOppStats] = useState<OppTeamStats | null>(null)
+  const [teamAnalysis, setTeamAnalysis] = useState<{ spacingWinFactor: number; shooterCount: number; spacingBaseline: number; isPreThreePt: boolean; highVolumeShooterCount: number; rebFactor: number; blkScore: number } | null>(null)
 
   // ── Playoffs ──
   const [playoffStarted, setPlayoffStarted] = useState(false)
@@ -2694,10 +2695,11 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
 
   const startSim = () => {
     setSimStarted(true); setGames([]); setDone(false); setSeasonStats([])
-    const { games: allGames, seasonStats: stats, avgTeamScore: ats, avgOppScore: aos } = simulateSeason(simRaw, pr, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'))
+    const { games: allGames, seasonStats: stats, avgTeamScore: ats, avgOppScore: aos, teamAnalysis: ta } = simulateSeason(simRaw, pr, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'))
     setSeasonStats(stats)
     setAvgTeamScore(ats)
     setAvgOppScore(aos)
+    setTeamAnalysis(ta)
     const { stl: teamSTL, blk: teamBLK } = calcTeamDefTotals(pr)
     const rebEntries = pr.map(r => ({ pr: r, minScale: SLOT_MPG[r.slot] / 35 }))
     setSeasonOppStats(genOppTeamStats(aos, simEra, teamSTL, teamBLK, calcRebFactor(rebEntries)))
@@ -3228,6 +3230,59 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
             </div>
           </div>
         )}
+
+        {/* Team Analysis */}
+        {allDone && teamAnalysis && (() => {
+          const { spacingWinFactor, isPreThreePt, highVolumeShooterCount, rebFactor, blkScore } = teamAnalysis
+          const spacingPct = (spacingWinFactor - 1) * 100
+          const rebPct     = (rebFactor - 1) * 100
+          const BLK_BASELINE = 5.0
+
+          type Chip = { label: string; status: 'good' | 'bad' | 'neutral' }
+          const chips: Chip[] = []
+
+          // Spacing
+          if (isPreThreePt) {
+            chips.push(highVolumeShooterCount === 0
+              ? { label: 'Good Spacing', status: 'good' }
+              : { label: 'Anachronistic Shooters', status: 'bad' })
+          } else {
+            chips.push(spacingPct >= 0 ? { label: 'Elite Spacing', status: 'good' }
+              : spacingPct >= -4 ? { label: 'Good Spacing', status: 'good' }
+              : spacingPct >= -7 ? { label: 'Average Spacing', status: 'neutral' }
+              : spacingPct >= -12 ? { label: 'Poor Spacing', status: 'bad' }
+              : { label: 'No Spacing', status: 'bad' })
+          }
+
+          // Rim protection
+          chips.push(blkScore >= BLK_BASELINE * 1.5 ? { label: 'Elite Rim Protection', status: 'good' }
+            : blkScore >= BLK_BASELINE * 0.9 ? { label: 'Good Rim Protection', status: 'good' }
+            : blkScore >= BLK_BASELINE * 0.6 ? { label: 'Average Rim Protection', status: 'neutral' }
+            : blkScore >= BLK_BASELINE * 0.35 ? { label: 'Weak Rim Protection', status: 'bad' }
+            : { label: 'No Rim Protection', status: 'bad' })
+
+          // Rebounding
+          chips.push(rebPct > 5 ? { label: 'Rebounding Edge', status: 'good' }
+            : rebPct > 2 ? { label: 'Slight Reb. Edge', status: 'good' }
+            : rebPct < -5 ? { label: 'Rebounding Deficit', status: 'bad' }
+            : rebPct < -2 ? { label: 'Slight Reb. Deficit', status: 'bad' }
+            : { label: 'Average Rebounding', status: 'neutral' })
+
+          const chipColor = { good: '#4ade80', bad: G.red, neutral: G.greyDark }
+
+          return (
+            <div style={{ background: G.surface, border: `1px solid ${G.border}` }}>
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-5 py-3">
+                <div className="text-xs uppercase tracking-widest font-semibold text-white shrink-0">Team Analysis</div>
+                {chips.map(chip => (
+                  <div key={chip.label} className="text-xs font-semibold uppercase tracking-wide" style={{ color: chipColor[chip.status] }}>
+                    {chip.label}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })()}
 
         {/* Share + Play Again — bottom of page, after everything resolves */}
         {allDone && (

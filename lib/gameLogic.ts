@@ -770,14 +770,21 @@ const LEAGUE_AVG_DEF_INDEX = 10.5
 const LEAGUE_AVG_REB_INDEX = 38
 const LEAGUE_AVG_AST_INDEX = 22
 
+// Guards rarely protect the rim regardless of their natural BLK rate
+function blkSlotMod(slot: string): number {
+  if (slot === 'PG') return 0.40
+  if (slot === 'SG') return 0.50
+  if (slot === 'SF') return 0.80
+  return 1.0  // PF, C, B1-B4 (bench already discounted by minScale)
+}
+
 function calcPlayerDefFactor(entries: { pr: PlayerRating; minScale: number }[]): number {
   // Perimeter defense: STL-based, normalized ±6%
   const stlIndex  = entries.reduce((s, { pr, minScale }) => s + imputeSTL(pr.player) * pr.eraMod * minScale, 0)
   const stlFactor = Math.max(0.94, Math.min(1.06, 1.0 + (LEAGUE_AVG_DEF_INDEX - stlIndex) / LEAGUE_AVG_DEF_INDEX * 0.06))
 
-  // Rim protection: BLK-based, absolute threshold, asymmetric (penalty > bonus)
-  // BLK_BASELINE ≈ league-average weighted BLK across a 9-man roster
-  const blkScore    = entries.reduce((s, { pr, minScale }) => s + imputeBLK(pr.player) * pr.eraMod * minScale, 0)
+  // Rim protection: BLK-based, slot-discounted (guards get less credit even if naturally high BLK)
+  const blkScore    = entries.reduce((s, { pr, minScale }) => s + imputeBLK(pr.player) * pr.eraMod * minScale * blkSlotMod(pr.slot), 0)
   const BLK_BASELINE = 5.0
   const blkShortfall = BLK_BASELINE - blkScore  // positive = below average = bad defense
   const blkRate      = blkShortfall > 0 ? 0.035 : 0.015
@@ -811,7 +818,7 @@ export function simulateSeason(
   simEra: Era,
   coachDefBonus?: number,
   coachOffBonus?: number,
-): { wins: number; losses: number; games: boolean[]; seasonStats: PlayerSeasonStats[]; avgTeamScore: number; avgOppScore: number } {
+): { wins: number; losses: number; games: boolean[]; seasonStats: PlayerSeasonStats[]; avgTeamScore: number; avgOppScore: number; teamAnalysis: { spacingWinFactor: number; shooterCount: number; spacingBaseline: number; isPreThreePt: boolean; highVolumeShooterCount: number; rebFactor: number; blkScore: number } } {
   const games: boolean[] = []
   let wins = 0
   let totalTeamScore = 0
@@ -852,7 +859,8 @@ export function simulateSeason(
   const rebWinFactor     = 1.0 + (rebFactor - 1.0) * 0.5                                          // ±3% on team roll
   const astWinFactor     = 1.0 + (astFactor - 1.0) * 0.5                                          // ±2.5% on team roll
   const rebOppFactor     = 1.0 - (rebFactor - 1.0) * 0.25                                         // ±2.25% on opp roll (def boards)
-  const shooterCount           = entries.reduce((s, e) => s + ((e.pr.player.FG3_PCT ?? 0) >= 0.375 ? e.minScale : 0), 0)
+  // Tiered: 40%+ = elite (1.25×), 35–40% = solid (1.0×), below 35% = 0
+  const shooterCount           = entries.reduce((s, e) => { const f = e.pr.player.FG3_PCT ?? 0; return s + (f >= 0.40 ? e.minScale * 1.25 : f >= 0.35 ? e.minScale : 0) }, 0)
   const highVolumeShooterCount = entries.reduce((s, e) => s + ((e.pr.player.FG3M ?? 0) >= 2.9 ? e.minScale : 0), 0)
   const isPreThreePt      = simEra === '50s' || simEra === '60s' || simEra === '70s'
   const spacingBaseline   = simEra === '20s' || simEra === '10s' ? 5 : simEra === '00s' ? 4 : simEra === '90s' ? 3 : simEra === '80s' ? 2 : 0
@@ -951,7 +959,11 @@ export function simulateSeason(
     }
   })
 
-  return { wins, losses: seasonGames - wins, games, seasonStats, avgTeamScore, avgOppScore }
+  const blkScore = entries.reduce((s, { pr, minScale }) => s + imputeBLK(pr.player) * pr.eraMod * minScale * blkSlotMod(pr.slot), 0)
+  return {
+    wins, losses: seasonGames - wins, games, seasonStats, avgTeamScore, avgOppScore,
+    teamAnalysis: { spacingWinFactor, shooterCount, spacingBaseline, isPreThreePt, highVolumeShooterCount, rebFactor, blkScore },
+  }
 }
 
 export const ALL_ERAS: Era[] = ['50s', '60s', '70s', '80s', '90s', '00s', '10s', '20s']
@@ -1014,7 +1026,7 @@ export function simulatePlayoffs(
   const rebWinFactor     = 1.0 + (rebFactor - 1.0) * 0.5
   const astWinFactor     = 1.0 + (astFactor - 1.0) * 0.5
   const rebOppFactor     = 1.0 - (rebFactor - 1.0) * 0.25
-  const shooterCount             = entries.reduce((s, e) => s + ((e.pr.player.FG3_PCT ?? 0) >= 0.375 ? e.minScale : 0), 0)
+  const shooterCount             = entries.reduce((s, e) => { const f = e.pr.player.FG3_PCT ?? 0; return s + (f >= 0.40 ? e.minScale * 1.25 : f >= 0.35 ? e.minScale : 0) }, 0)
   const highVolumeShooterCountPO = entries.reduce((s, e) => s + ((e.pr.player.FG3M ?? 0) >= 2.9 ? e.minScale : 0), 0)
   const isPreThreePtPO      = simEra === '50s' || simEra === '60s' || simEra === '70s'
   const spacingBaselinePO   = simEra === '20s' || simEra === '10s' ? 5 : simEra === '00s' ? 4 : simEra === '90s' ? 3 : simEra === '80s' ? 2 : 0
