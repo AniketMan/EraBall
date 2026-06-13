@@ -520,6 +520,11 @@ function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, acti
             <div className="flex md:hidden justify-center mt-1" style={{ fontSize: 11, color: G.gold, fontWeight: 700 }}>
               {Math.round(confirmed.PTS ?? 0)}<span style={{ color: G.greyDark }}>/</span>{Math.round(confirmed.REB ?? 0)}<span style={{ color: G.greyDark }}>/</span>{Math.round(confirmed.AST ?? 0)}
             </div>
+            {confirmed.FG3_PCT != null && (
+              <div className="mt-0.5" style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', color: confirmed.FG3_PCT >= 0.40 ? G.gold : confirmed.FG3_PCT >= 0.37 ? '#C9A030' : confirmed.FG3_PCT >= 0.34 ? G.grey : G.red }}>
+                {(confirmed.FG3_PCT * 100).toFixed(1)}% 3PT
+              </div>
+            )}
             {slot.fitLabel && <div className="mt-1" style={{ fontSize: 10, color: fitLabelColor(slot.fitLabel) }}>{slot.fitLabel}</div>}
             {simEra && (() => { const mod = calcEraModifier(confirmed, simEra); return (
               <div className="mt-0.5" style={{ fontSize: 9, color: mod >= 1.0 ? G.gold : mod >= 0.75 ? G.grey : G.red, letterSpacing: '0.05em' }}>
