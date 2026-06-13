@@ -941,9 +941,9 @@ export function simulateSeason(
   const seasonStats: PlayerSeasonStats[] = entries.map(({ pr, assignedMPG }, i) => {
     const w = weights[i]
     const v = seasonVar[i]
-    // Both FG% and FG3% exclude spacingMod — spacing penalizes PPG via generateGameScore,
-    // not individual shot quality; including it here makes shooters look terrible on bad-spacing teams
-    const fgCtx  = playmakingMod + teamQualityMod + preEff[i].fg + preEff[i].stretch
+    // FG% includes a muted spacing signal (×0.25) so poor spacing shows in the stat sheet
+    // without tanking individual shooting lines; FG3% stays unaffected (shooter skill, not floor spacing)
+    const fgCtx  = spacingMod * 0.25 + playmakingMod + teamQualityMod + preEff[i].fg + preEff[i].stretch
     const fg3Ctx = playmakingMod + teamQualityMod + preEff[i].fg + preEff[i].stretch
     const ftCtx  = preEff[i].ft + preEff[i].stretch * 0.4
     return {
