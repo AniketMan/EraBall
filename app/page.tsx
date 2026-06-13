@@ -3513,8 +3513,11 @@ export default function Home() {
         if (buildId !== current) setUpdateAvailable(true)
       } catch {}
     }
+    check()
     const id = setInterval(check, 2 * 60 * 1000)
-    return () => clearInterval(id)
+    const onVisible = () => { if (document.visibilityState === 'visible') check() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => { clearInterval(id); document.removeEventListener('visibilitychange', onVisible) }
   }, [])
 
   if (loading) {
