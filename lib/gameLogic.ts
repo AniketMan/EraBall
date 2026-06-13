@@ -852,13 +852,13 @@ export function simulateSeason(
   const astWinFactor     = 1.0 + (astFactor - 1.0) * 0.5                                          // ±2.5% on team roll
   const rebOppFactor     = 1.0 - (rebFactor - 1.0) * 0.40                                         // ±1.5% on opp roll (def boards)
   const shooterCount      = entries.filter(e => (e.pr.player.FG3_PCT ?? 0) >= 0.375).length
-  const spacingBaseline   = simEra === '20s' ? 4 : simEra === '10s' ? 3 : 2
+  const spacingBaseline   = simEra === '20s' ? 4 : simEra === '10s' || simEra === '90s' ? 3 : 2
   const spacingDev        = shooterCount - spacingBaseline
   // Asymmetric: penalty below baseline is steeper; bonus above baseline unchanged from original
   const spacingPerShooter = spacingDev < 0
-    ? (simEra === '20s' ? 0.050 : simEra === '10s' ? 0.050 : simEra === '00s' ? 0.050 : 0.006)
+    ? (simEra === '20s' ? 0.050 : simEra === '10s' ? 0.050 : simEra === '00s' ? 0.050 : simEra === '90s' ? 0.025 : 0.006)
     : (simEra === '20s' || simEra === '10s' ? 0.015 : simEra === '00s' ? 0.010 : 0.006)
-  const spacingCapNeg     = simEra === '20s' ? 0.25 : simEra === '10s' ? 0.20 : simEra === '00s' ? 0.14 : 0.03
+  const spacingCapNeg     = simEra === '20s' ? 0.25 : simEra === '10s' ? 0.20 : simEra === '00s' ? 0.14 : simEra === '90s' ? 0.10 : 0.03
   const spacingCapPos     = simEra === '20s' || simEra === '10s' ? 0.08 : simEra === '00s' ? 0.05 : 0.03
   const spacingWinFactor  = Math.max(1 - spacingCapNeg, Math.min(1 + spacingCapPos, 1.0 + spacingDev * spacingPerShooter))
 
@@ -1009,12 +1009,12 @@ export function simulatePlayoffs(
   const astWinFactor     = 1.0 + (astFactor - 1.0) * 0.5
   const rebOppFactor     = 1.0 - (rebFactor - 1.0) * 0.40
   const shooterCount        = entries.filter(e => (e.pr.player.FG3_PCT ?? 0) >= 0.375).length
-  const spacingBaselinePO   = simEra === '20s' ? 4 : simEra === '10s' ? 3 : 2
+  const spacingBaselinePO   = simEra === '20s' ? 4 : simEra === '10s' || simEra === '90s' ? 3 : 2
   const spacingDevPO        = shooterCount - spacingBaselinePO
   const spacingPerShooterPO = spacingDevPO < 0
-    ? (simEra === '20s' ? 0.050 : simEra === '10s' ? 0.050 : simEra === '00s' ? 0.050 : 0.006)
+    ? (simEra === '20s' ? 0.050 : simEra === '10s' ? 0.050 : simEra === '00s' ? 0.050 : simEra === '90s' ? 0.025 : 0.006)
     : (simEra === '20s' || simEra === '10s' ? 0.015 : simEra === '00s' ? 0.010 : 0.006)
-  const spacingCapNegPO     = simEra === '20s' ? 0.25 : simEra === '10s' ? 0.20 : simEra === '00s' ? 0.14 : 0.03
+  const spacingCapNegPO     = simEra === '20s' ? 0.25 : simEra === '10s' ? 0.20 : simEra === '00s' ? 0.14 : simEra === '90s' ? 0.10 : 0.03
   const spacingCapPosPO     = simEra === '20s' || simEra === '10s' ? 0.08 : simEra === '00s' ? 0.05 : 0.03
   const spacingWinFactor    = Math.max(1 - spacingCapNegPO, Math.min(1 + spacingCapPosPO, 1.0 + spacingDevPO * spacingPerShooterPO))
 
