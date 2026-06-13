@@ -902,7 +902,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
   const [slots, setSlots] = useState<CourtSlot[]>(emptySlots())
   const [spinning, setSpinning] = useState(false)
   const [rosterPool, setRosterPool] = useState<Player[]>([])
-  const [sortBy, setSortBy] = useState<'SPECIAL' | 'PTS' | 'REB' | 'AST' | 'TS' | 'STL' | 'BLK'>('PTS')
+  const [sortBy, setSortBy] = useState<'SPECIAL' | 'PTS' | 'REB' | 'AST' | 'FG3' | 'STL' | 'BLK'>('PTS')
   const [posFilter, setPosFilter] = useState<'G' | 'F' | 'C' | null>(null)
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
   const [rosterCardPlayer, setRosterCardPlayer] = useState<Player | null>(null)
@@ -1570,7 +1570,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                         if (bS !== aS) return bS - aS
                         return playerBaseRating(b, b.era as Era) - playerBaseRating(a, a.era as Era)
                       }
-                      if (sortBy === 'TS') return calcTS(b) - calcTS(a)
+                      if (sortBy === 'FG3') return (b.FG3_PCT ?? 0) - (a.FG3_PCT ?? 0)
                       return (b[sortBy] ?? 0) - (a[sortBy] ?? 0)
                     }).filter(p => sortBy !== 'SPECIAL' || isSpecial(p))
                     visiblePoolRef.current = sorted
@@ -1606,8 +1606,10 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                             <span style={{ color: G.gold, fontWeight: 700 }}>{(p.STL ?? 0).toFixed(1)}</span>
                           ) : sortBy === 'BLK' ? (
                             <span style={{ color: G.gold, fontWeight: 700 }}>{(p.BLK ?? 0).toFixed(1)}</span>
+                          ) : sortBy === 'FG3' ? (
+                            <span style={{ color: G.gold, fontWeight: 700 }}>{p.FG3_PCT != null ? (p.FG3_PCT * 100).toFixed(1) + '%' : '—'}</span>
                           ) : (
-                            <span style={{ color: sortBy === 'TS' ? G.gold : G.greyDark, fontWeight: sortBy === 'TS' ? 700 : 400 }}>{ts}%</span>
+                            <span style={{ color: G.greyDark }}>{ts}%</span>
                           )}
                         </div>
                       </button>
@@ -1624,7 +1626,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                 <div className="flex items-center mt-2" style={{ borderTop: `1px solid ${G.border}`, overflow: 'hidden' }}>
                   <span className="text-xs uppercase tracking-widest shrink-0 px-2" style={{ color: G.greyDark, borderRight: `1px solid ${G.border}`, paddingTop: 6, paddingBottom: 6 }}>Sort</span>
                   <div className="flex overflow-x-auto" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
-                    {(['SPECIAL', 'PTS', 'REB', 'AST', 'TS', 'STL', 'BLK'] as const).map(s => (
+                    {(['SPECIAL', 'PTS', 'REB', 'AST', 'FG3', 'STL', 'BLK'] as const).map(s => (
                       <button
                         key={s}
                         onClick={() => setSortBy(s)}
@@ -1640,7 +1642,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                           transition: 'color 0.1s, background 0.1s',
                         }}
                       >
-                        {s === 'TS' ? 'TS%' : s === 'SPECIAL' ? <><span className="hidden sm:inline">Tagged</span><span className="sm:hidden">★</span></> : s}
+                        {s === 'FG3' ? '3PT%' : s === 'SPECIAL' ? <><span className="hidden sm:inline">Tagged</span><span className="sm:hidden">★</span></> : s}
                       </button>
                     ))}
                   </div>
