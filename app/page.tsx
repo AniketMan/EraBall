@@ -3601,7 +3601,6 @@ export default function Home() {
   const [draftCustomEras, setDraftCustomEras] = useState<Era[] | null>(null)
   const [showLifetimeStats, setShowLifetimeStats] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [updateAvailable, setUpdateAvailable] = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -3611,22 +3610,6 @@ export default function Home() {
       .catch(err => { console.error('Failed to load data:', err); setLoading(false) })
   }, [])
 
-  // Poll for new deployments every 2 minutes; only prompt on the home screen
-  useEffect(() => {
-    const current = process.env.NEXT_PUBLIC_BUILD_ID
-    if (!current) return
-    const check = async () => {
-      try {
-        const { buildId } = await fetch('/api/version').then(r => r.json())
-        if (buildId !== current) setUpdateAvailable(true)
-      } catch {}
-    }
-    check()
-    const id = setInterval(check, 2 * 60 * 1000)
-    const onVisible = () => { if (document.visibilityState === 'visible') check() }
-    document.addEventListener('visibilitychange', onVisible)
-    return () => { clearInterval(id); document.removeEventListener('visibilitychange', onVisible) }
-  }, [])
 
   if (loading) {
     return (
@@ -3676,28 +3659,6 @@ export default function Home() {
 
   return (
     <div style={{ filter: greyscale ? 'grayscale(1)' : 'none', minHeight: '100vh' }}>
-      {phase === 'era-select' && updateAvailable && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
-          background: '#110e00', borderBottom: `1px solid ${G.goldDim}`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
-          padding: '7px 16px',
-        }}>
-          <span style={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: G.grey }}>
-            New update available
-          </span>
-          <button
-            onClick={() => window.location.reload()}
-            style={{
-              background: 'transparent', border: `1px solid ${G.gold}`, color: G.gold,
-              fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase',
-              padding: '2px 10px', cursor: 'pointer',
-            }}
-          >
-            Refresh
-          </button>
-        </div>
-      )}
       {phase === 'era-select' && <EraSelection onEraSelected={era => { setSimEra(era); setStartSandbox(false); setPhase('draft') }} onSandboxSelected={era => { setSimEra(era); setStartSandbox(true); setPhase('draft') }} onRestart={restart} onLifetimeStats={() => setShowLifetimeStats(true)} />}
       {showLifetimeStats && <LifetimeStatsModal onClose={() => setShowLifetimeStats(false)} />}
       {phase === 'draft' && <DraftScreen simEra={simEra} players={players} onDraftComplete={(s, ce) => { setSlots(s); setDraftCustomEras(ce); setPhase('coach-draft') }} onRestart={restart} startInSandbox={startSandbox} greyscaleBtn={greyscaleBtn} />}
