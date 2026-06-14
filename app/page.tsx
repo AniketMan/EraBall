@@ -1507,15 +1507,15 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                 <div style={{ borderBottom: `1px solid ${G.border}` }}>
                   {/* Toggle button */}
                   <button
-                    onClick={() => setShowEraFilter(v => !v)}
+                    onClick={() => { if (!eraFilterLocked) setShowEraFilter(v => !v) }}
                     className="w-full flex items-center justify-between px-3 py-2 text-xs uppercase tracking-widest"
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: eraFilterLocked ? G.gold : G.greyDark, borderBottom: (showEraFilter || eraFilterLocked) ? `1px solid ${G.border}` : 'none' }}
+                    style={{ background: 'none', border: 'none', cursor: eraFilterLocked ? 'default' : 'pointer', color: eraFilterLocked ? G.goldDim : G.greyDark, borderBottom: (showEraFilter || (eraFilterLocked && isCustomRange)) ? `1px solid ${G.border}` : 'none' }}
                   >
-                    <span>Custom Range{eraFilterLocked ? ` · ${eraFilter.size} eras locked` : ' (optional)'}</span>
-                    <span style={{ fontSize: 9 }}>{showEraFilter || eraFilterLocked ? '▲' : '▼'}</span>
+                    <span>Custom Range{eraFilterLocked ? (isCustomRange ? ` · ${eraFilter.size} eras locked` : ' · Locked') : ' (optional)'}</span>
+                    {!eraFilterLocked && <span style={{ fontSize: 9 }}>{showEraFilter ? '▲' : '▼'}</span>}
                   </button>
                   {/* Collapsible panel */}
-                  {(showEraFilter || eraFilterLocked) && (
+                  {(showEraFilter || (eraFilterLocked && isCustomRange)) && (
                     <>
                       <div className="flex justify-center flex-wrap px-2 pt-1 pb-0.5">
                         {ALL_ERAS.map(e => {
