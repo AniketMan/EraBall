@@ -1511,7 +1511,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                     className="w-full flex items-center justify-between px-3 py-2 text-xs uppercase tracking-widest"
                     style={{ background: 'none', border: 'none', cursor: 'pointer', color: eraFilterLocked ? G.gold : G.greyDark, borderBottom: (showEraFilter || eraFilterLocked) ? `1px solid ${G.border}` : 'none' }}
                   >
-                    <span>Custom Range{eraFilterLocked ? ` · ${eraFilter.size} eras locked` : ''}</span>
+                    <span>Custom Range{eraFilterLocked ? ` · ${eraFilter.size} eras locked` : ' (optional)'}</span>
                     <span style={{ fontSize: 9 }}>{showEraFilter || eraFilterLocked ? '▲' : '▼'}</span>
                   </button>
                   {/* Collapsible panel */}
