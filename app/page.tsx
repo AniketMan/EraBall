@@ -897,7 +897,7 @@ function EraSelection({ onEraSelected, onSandboxSelected, onRestart }: { onEraSe
 
 // ─── Phase 2: Draft ───────────────────────────────────────────────────────────
 function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandbox, greyscaleBtn }: {
-  simEra: Era; players: Player[]; onDraftComplete: (slots: CourtSlot[]) => void; onRestart: () => void; startInSandbox?: boolean; greyscaleBtn?: React.ReactNode
+  simEra: Era; players: Player[]; onDraftComplete: (slots: CourtSlot[], customEras: Era[] | null) => void; onRestart: () => void; startInSandbox?: boolean; greyscaleBtn?: React.ReactNode
 }) {
   const [slots, setSlots] = useState<CourtSlot[]>(emptySlots())
   const [spinning, setSpinning] = useState(false)
@@ -919,6 +919,10 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
   const [noPlayersMsg, setNoPlayersMsg] = useState(false)
   const [spinsThisRound, setSpinsThisRound] = useState(0)
   const [respinUsed, setRespinUsed] = useState(false)
+  const [eraFilter, setEraFilter] = useState<Set<Era>>(new Set(ALL_ERAS))
+  const [showEraFilter, setShowEraFilter] = useState(false)
+  const [eraFilterLocked, setEraFilterLocked] = useState(false)
+  const isCustomRange = eraFilter.size < ALL_ERAS.length
   const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   const [devMode, setDevMode] = useState(false)
   const [devTeam, setDevTeam] = useState(NBA_TEAMS[0])
@@ -1000,14 +1004,16 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
       const phase = ticks < 10 ? 'fast' : ticks < 15 ? 'slow' : 'slow'
       setSpinPhase(phase)
       setSpinTeamDisplay(allTeams[Math.floor(Math.random() * allTeams.length)])
-      setSpinEraDisplay(ALL_ERAS[Math.floor(Math.random() * ALL_ERAS.length)])
+      const filteredEras = eraFilterLocked ? ALL_ERAS.filter(e => eraFilter.has(e)) : ALL_ERAS
+      setSpinEraDisplay(filteredEras[Math.floor(Math.random() * filteredEras.length)])
       setSpinKey(k => k + 1)
       if (ticks < schedule.length) {
         setTimeout(doTick, schedule[ticks++])
       } else {
         // Land
-        if (validCombos.length === 0) { setSpinning(false); return }
-        const { team, era } = validCombos[Math.floor(Math.random() * validCombos.length)]
+        const filteredCombos = eraFilterLocked ? validCombos.filter(c => eraFilter.has(c.era)) : validCombos
+        if (filteredCombos.length === 0) { setSpinning(false); return }
+        const { team, era } = filteredCombos[Math.floor(Math.random() * filteredCombos.length)]
         setSpinPhase('land')
         setSpinTeamDisplay(team); setSpinEraDisplay(era)
         setSpinKey(k => k + 1)
@@ -1030,7 +1036,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
       }
     }
     setTimeout(doTick, schedule[ticks++])
-  }, [players, allTeams, validCombos, rosterPool, respinUsed])
+  }, [players, allTeams, validCombos, rosterPool, respinUsed, eraFilter, eraFilterLocked])
 
   const removeSlotPlayer = (idx: number) => {
     const p = slots[idx].player
@@ -1282,7 +1288,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                 </div>
                 {filledCount === 9 && (
                   <div className="p-3">
-                    <Btn onClick={() => onDraftComplete(slots)} variant="gold" className="w-full py-4 text-base">
+                    <Btn onClick={() => onDraftComplete(slots, eraFilterLocked && eraFilter.size < ALL_ERAS.length ? [...eraFilter].sort((a, b) => ALL_ERAS.indexOf(a) - ALL_ERAS.indexOf(b)) : null)} variant="gold" className="w-full py-4 text-base">
                       Draft Coach
                     </Btn>
                   </div>
@@ -1491,8 +1497,81 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                     </div>
                   </div>
                 </div>
+                {/* Era filter */}
+                <div style={{ borderBottom: `1px solid ${G.border}` }}>
+                  {/* Toggle button */}
+                  <button
+                    onClick={() => setShowEraFilter(v => !v)}
+                    className="w-full flex items-center justify-between px-3 py-2 text-xs uppercase tracking-widest"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: eraFilterLocked ? G.gold : G.greyDark, borderBottom: (showEraFilter || eraFilterLocked) ? `1px solid ${G.border}` : 'none' }}
+                  >
+                    <span>Custom Range{eraFilterLocked ? ` · ${eraFilter.size} eras locked` : ''}</span>
+                    <span style={{ fontSize: 9 }}>{showEraFilter || eraFilterLocked ? '▲' : '▼'}</span>
+                  </button>
+                  {/* Collapsible panel */}
+                  {(showEraFilter || eraFilterLocked) && (
+                    <>
+                      <div className="flex justify-center flex-wrap px-2 pt-1 pb-0.5">
+                        {ALL_ERAS.map(e => {
+                          const on = eraFilter.has(e)
+                          return (
+                            <button
+                              key={e}
+                              disabled={eraFilterLocked}
+                              onClick={() => setEraFilter(prev => {
+                                const next = new Set(prev)
+                                if (on && next.size === 1) return prev
+                                on ? next.delete(e) : next.add(e)
+                                return next
+                              })}
+                              className="shrink-0 text-xs uppercase tracking-widest"
+                              style={{
+                                padding: '6px 10px',
+                                color: on ? G.gold : G.greyDark,
+                                background: on ? `${G.gold}12` : 'none',
+                                border: 'none',
+                                borderBottom: on ? `2px solid ${G.gold}` : '2px solid transparent',
+                                cursor: eraFilterLocked ? 'default' : 'pointer',
+                                opacity: eraFilterLocked && !on ? 0.4 : 1,
+                                transition: 'color 0.1s, background 0.1s',
+                              }}
+                            >{e}</button>
+                          )
+                        })}
+                      </div>
+                      <div className="px-3 py-2 flex items-center justify-between gap-3">
+                        <span className="text-xs" style={{ color: eraFilterLocked ? G.goldDim : G.greyDark, letterSpacing: '0.03em' }}>
+                          {eraFilterLocked
+                            ? `Locked — excluding ${ALL_ERAS.length - eraFilter.size} era${ALL_ERAS.length - eraFilter.size !== 1 ? 's' : ''}. Will appear on result card.`
+                            : 'Select eras, then lock to apply.'}
+                        </span>
+                        <button
+                          onClick={() => {
+                            if (eraFilterLocked) {
+                              setEraFilterLocked(false)
+                            } else {
+                              if (isCustomRange) setEraFilterLocked(true)
+                            }
+                          }}
+                          className="shrink-0 text-xs uppercase tracking-widest"
+                          style={{
+                            padding: '4px 12px',
+                            background: eraFilterLocked ? `${G.red}22` : isCustomRange ? `${G.gold}22` : 'transparent',
+                            color: eraFilterLocked ? '#CC3333' : isCustomRange ? G.gold : G.greyDark,
+                            border: `1px solid ${eraFilterLocked ? '#CC3333' : isCustomRange ? G.gold : G.border}`,
+                            borderRadius: 2,
+                            cursor: isCustomRange || eraFilterLocked ? 'pointer' : 'default',
+                            letterSpacing: '0.1em',
+                          }}
+                        >
+                          {eraFilterLocked ? 'Unlock' : 'Lock'}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
                 {filledCount === 9 ? (
-                  <Btn onClick={() => onDraftComplete(slots)} variant="gold" className="w-full py-4 text-base">
+                  <Btn onClick={() => onDraftComplete(slots, eraFilterLocked && eraFilter.size < ALL_ERAS.length ? [...eraFilter].sort((a, b) => ALL_ERAS.indexOf(a) - ALL_ERAS.indexOf(b)) : null)} variant="gold" className="w-full py-4 text-base">
                     Draft Coach
                   </Btn>
                 ) : (
@@ -2583,8 +2662,8 @@ function SeasonAwardsPanel({ awards }: { awards: AwardEntry[] }) {
 }
 
 // ─── Phase 4: Simulation ──────────────────────────────────────────────────────
-function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandboxMode }: {
-  slots: CourtSlot[]; coach: Coach; simEra: Era; onRestart: () => void; greyscaleBtn?: React.ReactNode; sandboxMode?: boolean
+function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandboxMode, customEraRange }: {
+  slots: CourtSlot[]; coach: Coach; simEra: Era; onRestart: () => void; greyscaleBtn?: React.ReactNode; sandboxMode?: boolean; customEraRange?: Era[] | null
 }) {
   const seasonGames = ERA_SEASON_GAMES[simEra]
 
@@ -3351,6 +3430,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
             }, {})}
             finalsMVPId={finalsMVP?.player.person_id ?? null}
             finalsMVPStats={finalsMVP ?? null}
+            customEraRange={customEraRange ?? null}
           />
         </div>
       )}
@@ -3499,6 +3579,7 @@ export default function Home() {
   const [coaches, setCoaches] = useState<Coach[]>([])
   const [slots, setSlots] = useState<CourtSlot[]>(emptySlots())
   const [coach, setCoach] = useState<Coach | null>(null)
+  const [draftCustomEras, setDraftCustomEras] = useState<Era[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [updateAvailable, setUpdateAvailable] = useState(false)
 
@@ -3598,9 +3679,9 @@ export default function Home() {
         </div>
       )}
       {phase === 'era-select' && <EraSelection onEraSelected={era => { setSimEra(era); setStartSandbox(false); setPhase('draft') }} onSandboxSelected={era => { setSimEra(era); setStartSandbox(true); setPhase('draft') }} onRestart={restart} />}
-      {phase === 'draft' && <DraftScreen simEra={simEra} players={players} onDraftComplete={s => { setSlots(s); setPhase('coach-draft') }} onRestart={restart} startInSandbox={startSandbox} greyscaleBtn={greyscaleBtn} />}
+      {phase === 'draft' && <DraftScreen simEra={simEra} players={players} onDraftComplete={(s, ce) => { setSlots(s); setDraftCustomEras(ce); setPhase('coach-draft') }} onRestart={restart} startInSandbox={startSandbox} greyscaleBtn={greyscaleBtn} />}
       {phase === 'coach-draft' && <CoachDraftScreen coaches={coaches} onCoachSelected={c => { setCoach(c); setPhase('simulation') }} onRestart={restart} sandboxMode={startSandbox} greyscaleBtn={greyscaleBtn} />}
-      {phase === 'simulation' && coach && <SimulationScreen slots={slots} coach={coach} simEra={simEra} onRestart={restart} greyscaleBtn={greyscaleBtn} sandboxMode={startSandbox} />}
+      {phase === 'simulation' && coach && <SimulationScreen slots={slots} coach={coach} simEra={simEra} onRestart={restart} greyscaleBtn={greyscaleBtn} sandboxMode={startSandbox} customEraRange={draftCustomEras} />}
 
       {/* Desktop: fixed bottom-right */}
       <div

@@ -2,7 +2,7 @@
 
 import React from 'react'
 import type { PlayerSeasonStats, Coach, Era, Player } from '../lib/types'
-import { playerBaseRating } from '../lib/gameLogic'
+import { playerBaseRating, ALL_ERAS } from '../lib/gameLogic'
 
 // Literal font strings — no CSS variables so html2canvas resolves them reliably
 const BEBAS = '"Bebas Neue", Impact, sans-serif'
@@ -52,6 +52,7 @@ interface ResultCardProps {
   finalsMVPId?: string | null
   finalsMVPStats?: PlayerSeasonStats | null
   sandboxMode?: boolean
+  customEraRange?: Era[] | null
 }
 
 function eliminationLabel(round: string | undefined): string {
@@ -155,7 +156,7 @@ function StatRow({ lbl, val, lead }: { lbl: string; val: string; lead: boolean }
 }
 
 const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
-  function ResultCard({ simEra, wins, losses, seasonStats, coach, teamRating, headshots, playoffOutcome, playerAwards = {}, finalsMVPId, finalsMVPStats, sandboxMode }, ref) {
+  function ResultCard({ simEra, wins, losses, seasonStats, coach, teamRating, headshots, playoffOutcome, playerAwards = {}, finalsMVPId, finalsMVPStats, sandboxMode, customEraRange }, ref) {
     const starters = seasonStats.filter(s => !s.slot.startsWith('B'))
     const bench    = seasonStats.filter(s =>  s.slot.startsWith('B'))
 
@@ -198,7 +199,7 @@ const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
           {/* ── Header ────────────────────────────────────────────────────── */}
           <div style={{
             display: 'flex',
-            alignItems: 'flex-end',
+            alignItems: 'center',
             justifyContent: 'space-between',
             flexShrink: 0,
             paddingBottom: 20,
@@ -217,19 +218,25 @@ const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
             </div>
 
             {/* Record — right-aligned, prominent */}
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 28 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 0 }}>
               {sandboxMode && (
-                <div style={{
-                  fontFamily: BEBAS,
-                  fontSize: 36,
-                  color: C.gold,
-                  letterSpacing: '0.18em',
-                  lineHeight: 1,
-                  marginBottom: 4,
-                }}>
+                <div style={{ fontFamily: BEBAS, fontSize: 28, color: C.gold, letterSpacing: '0.18em', lineHeight: 1, marginBottom: 8 }}>
                   Sandbox Mode
                 </div>
               )}
+              {customEraRange && (() => {
+                const excluded = ALL_ERAS.filter(e => !customEraRange.includes(e))
+                return (
+                  <div style={{ textAlign: 'right', marginBottom: 8 }}>
+                    <div style={{ fontFamily: BEBAS, fontSize: 26, color: C.gold, letterSpacing: '0.18em', lineHeight: 1 }}>
+                      Custom Range
+                    </div>
+                    <div style={{ fontFamily: INTER, fontSize: 9, color: C.gold, letterSpacing: '0.05em', opacity: 0.65, marginTop: 3 }}>
+                      Excluded: {excluded.join(', ')}
+                    </div>
+                  </div>
+                )
+              })()}
               <div style={{ textAlign: 'right' }}>
                 <div style={{
                   fontFamily: INTER,
