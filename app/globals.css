@@ -322,6 +322,40 @@ body {
   background: #111111 !important;
 }
 
+/* ── Lifetime stat boxes ─────────────────────────────────────────────────── */
+
+@keyframes stat-box-sheen {
+  0%   { transform: translateX(-150%) skewX(-15deg); opacity: 0; }
+  10%  { opacity: 1; }
+  40%  { transform: translateX(350%) skewX(-15deg); opacity: 0; }
+  100% { transform: translateX(350%) skewX(-15deg); opacity: 0; }
+}
+
+.stat-box {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.stat-box:hover {
+  transform: scale(1.03);
+  box-shadow: 0 4px 18px rgba(201, 168, 76, 0.12);
+  border-color: rgba(201, 168, 76, 0.35) !important;
+}
+.stat-box::after {
+  content: '';
+  position: absolute;
+  top: -10%;
+  left: 0;
+  width: 45%;
+  height: 120%;
+  background: linear-gradient(to right, transparent 0%, rgba(255,255,255,0.10) 40%, rgba(255,255,255,0.16) 50%, rgba(255,255,255,0.10) 60%, transparent 100%);
+  pointer-events: none;
+  opacity: 0;
+}
+.stat-box:hover::after {
+  animation: stat-box-sheen 0.6s ease-out forwards;
+}
+
 /* ── Modal close button ──────────────────────────────────────────────────── */
 
 .modal-close {

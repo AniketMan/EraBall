@@ -25,7 +25,7 @@ function eraLabel(era: string) {
 
 function StatBox({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div style={{ background: G.surface, border: `1px solid ${G.border}`, padding: '14px 16px', flex: 1, minWidth: 0 }}>
+    <div className="stat-box" style={{ background: G.surface, border: `1px solid ${G.border}`, padding: '14px 16px', flex: 1, minWidth: 0 }}>
       <div style={{ fontFamily: INTER, fontSize: 9, color: G.grey, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 4 }}>{label}</div>
       <div style={{ fontFamily: BEBAS, fontSize: 32, color: G.gold, letterSpacing: '0.06em', lineHeight: 1 }}>{value}</div>
       {sub && <div style={{ fontFamily: INTER, fontSize: 10, color: G.grey, marginTop: 3 }}>{sub}</div>}
