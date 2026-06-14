@@ -81,6 +81,11 @@ const PLAYER_RINGS: Record<string, number> = {
   'Jason Kidd': 1, 'Chauncey Billups': 1, 'Rasheed Wallace': 1, 'Ben Wallace': 1,
   'Rick Barry': 1, 'Nate Archibald': 1,
   'Earl Monroe': 1,
+  // 2025-26 Knicks
+  'Jalen Brunson': 1, 'Mikal Bridges': 1, 'OG Anunoby': 1, 'Karl-Anthony Towns': 1,
+  'Josh Hart': 1, 'Mitchell Robinson': 1, 'Jordan Clarkson': 1, 'Miles McBride': 1,
+  'Landry Shamet': 1, 'Jose Alvarado': 1, 'Jeremy Sochan': 1, 'Ariel Hukporti': 1,
+  'Pacome Dadiet': 1, 'Mohamed Diawara': 1, 'Tyler Kolek': 1,
   // 2024-25 OKC
   'Shai Gilgeous-Alexander': 1, 'Jalen Williams': 1, 'Chet Holmgren': 1,
   'Luguentz Dort': 1, 'Isaiah Hartenstein': 1,

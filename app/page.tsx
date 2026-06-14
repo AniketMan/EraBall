@@ -4,6 +4,8 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import type { Player, Coach, CourtSlot, SlotPosition, Era, GamePhase, PlayerSeasonStats, PlayoffResult, PlayoffGame, PlayerRating } from '../lib/types'
 import ResultCard from './ResultCard'
+import LifetimeStatsModal from './LifetimeStatsModal'
+import { recordSpinEra, recordRunComplete } from '../lib/lifetimeStats'
 import {
   ALL_ERAS, SLOT_POSITIONS, SLOT_MPG, ERA_SEASON_GAMES, calcFitPenalty, calcEraModifier, calcTeamRating,
   simulateSeason, simulatePlayoffs, calcTS, coachBonus, effectiveCoachBonus, coachChampBonus, playerMatchesEra, withEraStats, applyFlexTag, applyRings, applyAnchors, applyTimeless,
@@ -703,7 +705,7 @@ function TopBar({ onRestart, right }: { onRestart: () => void; right?: React.Rea
 }
 
 // ─── Phase 1: Era Selection ───────────────────────────────────────────────────
-function EraSelection({ onEraSelected, onSandboxSelected, onRestart }: { onEraSelected: (era: Era) => void; onSandboxSelected: (era: Era) => void; onRestart: () => void }) {
+function EraSelection({ onEraSelected, onSandboxSelected, onRestart, onLifetimeStats }: { onEraSelected: (era: Era) => void; onSandboxSelected: (era: Era) => void; onRestart: () => void; onLifetimeStats: () => void }) {
   const [spinning, setSpinning] = useState(false)
   const [era, setEra] = useState<Era | null>(null)
   const [showHelp, setShowHelp] = useState(() => {
@@ -885,6 +887,9 @@ function EraSelection({ onEraSelected, onSandboxSelected, onRestart }: { onEraSe
               </Btn>
             </>
           )}
+          <Btn onClick={onLifetimeStats} variant="ghost" className="w-48 py-3 text-sm">
+            Lifetime Stats
+          </Btn>
         </div>
       </div>
       {showHelp && <HowToPlayModal onClose={() => {
@@ -1028,7 +1033,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
             setNoPlayersMsg(true)
             return ids
           }
-          setLockedTeam(team); setLockedEra(era)
+          setLockedTeam(team); setLockedEra(era); recordSpinEra(era)
           setRosterPool([...pool].map(p => applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, era, team)))))).sort((a, b) => (b.PTS ?? 0) - (a.PTS ?? 0)))
           setSpinning(false)
           return ids
@@ -2935,6 +2940,23 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
 
   const allDone = done && (playoffDone || !madePlayoffs)
 
+  const savedRun = useRef(false)
+  useEffect(() => {
+    if (!allDone || sandboxMode || savedRun.current) return
+    savedRun.current = true
+    const players = slots
+      .filter(s => s.player)
+      .map(s => ({ personId: s.player!.person_id, name: s.player!.full_name }))
+    recordRunComplete({
+      era: simEra,
+      wins,
+      losses,
+      champion: playoffResult?.champion ?? false,
+      teamRating: Math.round(tr + 15),
+      players,
+    })
+  }, [allDone])
+
   const seasonAwards = done && seasonStats.length > 0
     ? computeSeasonAwards(seasonStats, pr, wins, DEFAULT_THRESHOLDS)
     : []
@@ -3580,6 +3602,7 @@ export default function Home() {
   const [slots, setSlots] = useState<CourtSlot[]>(emptySlots())
   const [coach, setCoach] = useState<Coach | null>(null)
   const [draftCustomEras, setDraftCustomEras] = useState<Era[] | null>(null)
+  const [showLifetimeStats, setShowLifetimeStats] = useState(false)
   const [loading, setLoading] = useState(true)
   const [updateAvailable, setUpdateAvailable] = useState(false)
 
@@ -3678,7 +3701,8 @@ export default function Home() {
           </button>
         </div>
       )}
-      {phase === 'era-select' && <EraSelection onEraSelected={era => { setSimEra(era); setStartSandbox(false); setPhase('draft') }} onSandboxSelected={era => { setSimEra(era); setStartSandbox(true); setPhase('draft') }} onRestart={restart} />}
+      {phase === 'era-select' && <EraSelection onEraSelected={era => { setSimEra(era); setStartSandbox(false); setPhase('draft') }} onSandboxSelected={era => { setSimEra(era); setStartSandbox(true); setPhase('draft') }} onRestart={restart} onLifetimeStats={() => setShowLifetimeStats(true)} />}
+      {showLifetimeStats && <LifetimeStatsModal onClose={() => setShowLifetimeStats(false)} />}
       {phase === 'draft' && <DraftScreen simEra={simEra} players={players} onDraftComplete={(s, ce) => { setSlots(s); setDraftCustomEras(ce); setPhase('coach-draft') }} onRestart={restart} startInSandbox={startSandbox} greyscaleBtn={greyscaleBtn} />}
       {phase === 'coach-draft' && <CoachDraftScreen coaches={coaches} onCoachSelected={c => { setCoach(c); setPhase('simulation') }} onRestart={restart} sandboxMode={startSandbox} greyscaleBtn={greyscaleBtn} />}
       {phase === 'simulation' && coach && <SimulationScreen slots={slots} coach={coach} simEra={simEra} onRestart={restart} greyscaleBtn={greyscaleBtn} sandboxMode={startSandbox} customEraRange={draftCustomEras} />}
