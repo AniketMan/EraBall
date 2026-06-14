@@ -10,6 +10,7 @@ export interface LifetimeStats {
   bestRecord:         { wins: number; losses: number; era: string } | null
   bestRecordByEra:    Partial<Record<string, EraRecord>>
   playerDraftCounts:  Record<string, { name: string; count: number }>
+  coachDraftCounts:   Record<string, { name: string; count: number }>
   eraSpinCount:       Partial<Record<string, number>>
   highestTeamRating:  { rating: number; era: string } | null
 }
@@ -20,7 +21,7 @@ function defaults(): LifetimeStats {
   return {
     draftsCompleted: 0, totalWins: 0, totalLosses: 0, championshipsTotal: 0,
     recordByEra: {}, championshipsByEra: {}, bestRecord: null,
-    bestRecordByEra: {}, playerDraftCounts: {}, eraSpinCount: {}, highestTeamRating: null,
+    bestRecordByEra: {}, playerDraftCounts: {}, coachDraftCounts: {}, eraSpinCount: {}, highestTeamRating: null,
   }
 }
 
@@ -43,9 +44,10 @@ export function recordRunComplete(params: {
   champion: boolean
   teamRating: number
   players: { personId: string; name: string }[]
+  coach: string
 }) {
   const s = getLifetimeStats()
-  const { era, wins, losses, champion, teamRating, players } = params
+  const { era, wins, losses, champion, teamRating, players, coach } = params
 
   s.draftsCompleted++
   s.totalWins += wins
@@ -76,6 +78,10 @@ export function recordRunComplete(params: {
     existing.count++
     s.playerDraftCounts[p.personId] = existing
   }
+
+  const existingCoach = s.coachDraftCounts[coach] ?? { name: coach, count: 0 }
+  existingCoach.count++
+  s.coachDraftCounts[coach] = existingCoach
 
   save(s)
 }

@@ -46,6 +46,7 @@ export default function LifetimeStatsModal({ onClose }: { onClose: () => void })
     : '—'
 
   const mostDrafted = Object.values(stats.playerDraftCounts).sort((a, b) => b.count - a.count)[0]
+  const mostDraftedCoach = Object.values(stats.coachDraftCounts).sort((a, b) => b.count - a.count)[0]
 
   const favoriteEra = Object.entries(stats.eraSpinCount).sort((a, b) => b[1] - a[1])[0]
 
@@ -102,16 +103,27 @@ export default function LifetimeStatsModal({ onClose }: { onClose: () => void })
                 />
               </div>
 
-              {/* Most drafted player */}
-              {mostDrafted && (
-                <div style={{ background: G.surface, border: `1px solid ${G.border}`, padding: '14px 16px' }}>
-                  <div style={{ fontFamily: INTER, fontSize: 9, color: G.grey, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 6 }}>Most Drafted Player</div>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-                    <div style={{ fontFamily: BEBAS, fontSize: 28, color: G.gold, letterSpacing: '0.06em' }}>{mostDrafted.name}</div>
-                    <div style={{ fontFamily: INTER, fontSize: 12, color: G.grey }}>{mostDrafted.count}× drafted</div>
+              {/* Most drafted player + coach */}
+              <div style={{ display: 'flex', gap: 8 }}>
+                {mostDrafted && (
+                  <div style={{ background: G.surface, border: `1px solid ${G.border}`, padding: '14px 16px', flex: 1 }}>
+                    <div style={{ fontFamily: INTER, fontSize: 9, color: G.grey, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 6 }}>Most Drafted Player</div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+                      <div style={{ fontFamily: BEBAS, fontSize: 24, color: G.gold, letterSpacing: '0.06em' }}>{mostDrafted.name}</div>
+                      <div style={{ fontFamily: INTER, fontSize: 12, color: G.grey }}>{mostDrafted.count}×</div>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+                {mostDraftedCoach && (
+                  <div style={{ background: G.surface, border: `1px solid ${G.border}`, padding: '14px 16px', flex: 1 }}>
+                    <div style={{ fontFamily: INTER, fontSize: 9, color: G.grey, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 6 }}>Most Drafted Coach</div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+                      <div style={{ fontFamily: BEBAS, fontSize: 24, color: G.gold, letterSpacing: '0.06em' }}>{mostDraftedCoach.name}</div>
+                      <div style={{ fontFamily: INTER, fontSize: 12, color: G.grey }}>{mostDraftedCoach.count}×</div>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Record by era */}
               {erasWithRecord.length > 0 && (

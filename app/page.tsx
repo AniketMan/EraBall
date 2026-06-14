@@ -2954,6 +2954,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
       champion: playoffResult?.champion ?? false,
       teamRating: Math.round(tr + 15),
       players,
+      coach: coach.name,
     })
   }, [allDone])
 
