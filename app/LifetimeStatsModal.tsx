@@ -82,7 +82,7 @@ function HoverCard({ children, style }: { children: React.ReactNode; style?: Rea
   )
 }
 
-function StatBox({ label, value, sub }: { label: string; value: string; sub?: string }) {
+function StatBox({ label, value, sub, compact = false }: { label: string; value: string; sub?: string; compact?: boolean }) {
   const [hovered, setHovered] = useState(false)
   const [sheenKey, setSheenKey] = useState(0)
   return (
@@ -92,9 +92,10 @@ function StatBox({ label, value, sub }: { label: string; value: string; sub?: st
       style={{
         background: G.surface,
         border: `1px solid ${hovered ? 'rgba(201,168,76,0.35)' : G.border}`,
-        padding: '14px 16px',
-        flex: 1,
+        padding: compact ? '10px 12px' : '14px 16px',
+        flex: compact ? '1 1 calc(50% - 4px)' : 1,
         minWidth: 0,
+        maxWidth: compact ? 'calc(50% - 4px)' : undefined,
         position: 'relative',
         overflow: 'hidden',
         transform: hovered ? 'scale(1.03)' : 'none',
@@ -103,8 +104,8 @@ function StatBox({ label, value, sub }: { label: string; value: string; sub?: st
       }}
     >
       {hovered && <div key={sheenKey} className="stat-box-sheen" />}
-      <div style={{ fontFamily: INTER, fontSize: 9, color: G.grey, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 4 }}>{label}</div>
-      <div style={{ fontFamily: BEBAS, fontSize: 32, color: G.gold, letterSpacing: '0.06em', lineHeight: 1 }}>{value}</div>
+      <div style={{ fontFamily: INTER, fontSize: 9, color: G.grey, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>{label}</div>
+      <div style={{ fontFamily: BEBAS, fontSize: compact ? 22 : 32, color: G.gold, letterSpacing: '0.06em', lineHeight: 1, whiteSpace: 'nowrap' }}>{value}</div>
       {sub && <div style={{ fontFamily: INTER, fontSize: 10, color: G.grey, marginTop: 3 }}>{sub}</div>}
     </div>
   )
@@ -113,8 +114,15 @@ function StatBox({ label, value, sub }: { label: string; value: string; sub?: st
 export default function LifetimeStatsModal({ onClose }: { onClose: () => void }) {
   const [stats, setStats] = useState<LifetimeStats | null>(null)
   const [confirming, setConfirming] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => { setStats(getLifetimeStats()) }, [])
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   if (!stats) return null
 
@@ -156,37 +164,41 @@ export default function LifetimeStatsModal({ onClose }: { onClose: () => void })
             <>
               {/* Top row */}
               <div style={{ display: 'flex', gap: 8 }}>
-                <StatBox label="Drafts Completed" value={String(stats.draftsCompleted)} />
-                <StatBox label="All-Time Record" value={`${stats.totalWins}–${stats.totalLosses}`} sub={`${winPct}% win rate`} />
-                <StatBox label="Championships" value={String(stats.championshipsTotal)} />
+                <StatBox label="Drafts Completed" value={String(stats.draftsCompleted)} compact={isMobile} />
+                <StatBox label="All-Time Record" value={`${stats.totalWins}–${stats.totalLosses}`} sub={`${winPct}% win rate`} compact={isMobile} />
+                <StatBox label="Championships" value={String(stats.championshipsTotal)} compact={isMobile} />
               </div>
 
-              {/* Second row */}
-              <div style={{ display: 'flex', gap: 8 }}>
+              {/* Second row — 2×2 grid on mobile */}
+              <div style={{ display: 'flex', flexWrap: isMobile ? 'wrap' : 'nowrap', gap: 8 }}>
                 <StatBox
                   label="Best Record"
                   value={stats.bestRecord ? `${stats.bestRecord.wins}–${stats.bestRecord.losses}` : '—'}
                   sub={stats.bestRecord ? eraLabel(stats.bestRecord.era) : undefined}
+                  compact={isMobile}
                 />
                 <StatBox
                   label="Worst Record"
                   value={stats.worstRecord ? `${stats.worstRecord.wins}–${stats.worstRecord.losses}` : '—'}
                   sub={stats.worstRecord ? eraLabel(stats.worstRecord.era) : undefined}
+                  compact={isMobile}
                 />
                 <StatBox
-                  label="Highest Team Rating"
+                  label="Highest Rating"
                   value={stats.highestTeamRating ? String(stats.highestTeamRating.rating) : '—'}
                   sub={stats.highestTeamRating ? eraLabel(stats.highestTeamRating.era) : undefined}
+                  compact={isMobile}
                 />
                 <StatBox
                   label="Favorite Era"
                   value={favoriteEra ? eraLabel(favoriteEra[0]) : '—'}
                   sub={favoriteEra ? `${favoriteEra[1]} played` : undefined}
+                  compact={isMobile}
                 />
               </div>
 
               {/* Most drafted player + coach */}
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', flexWrap: isMobile ? 'wrap' : 'nowrap', gap: 8 }}>
                 {mostDrafted && (
                   <HoverCard style={{ background: G.surface, padding: '14px 16px', flex: 1 }}>
                     <div style={{ fontFamily: INTER, fontSize: 9, color: G.grey, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 6 }}>Most Drafted Player</div>
