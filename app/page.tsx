@@ -991,6 +991,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
 
   const spin = useCallback(() => {
     if (rosterPool.length > 0) { setSpinsThisRound(prev => prev + 1); setRespinUsed(true) }
+    setEraFilterLocked(true)
     setSpinning(true)
     setAwaitingSpin(false)
     setNoPlayersMsg(false)
