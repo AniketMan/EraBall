@@ -104,7 +104,7 @@ function StatBox({ label, value, sub, compact = false }: { label: string; value:
       }}
     >
       {hovered && <div key={sheenKey} className="stat-box-sheen" />}
-      <div style={{ fontFamily: INTER, fontSize: 9, color: G.grey, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>{label}</div>
+      <div style={{ fontFamily: INTER, fontSize: compact ? 8 : 9, color: G.grey, letterSpacing: compact ? '0' : '0.18em', textTransform: 'uppercase', marginBottom: 4 }}>{label}</div>
       <div style={{ fontFamily: BEBAS, fontSize: compact ? 22 : 32, color: G.gold, letterSpacing: '0.06em', lineHeight: 1, whiteSpace: 'nowrap' }}>{value}</div>
       {sub && <div style={{ fontFamily: INTER, fontSize: 10, color: G.grey, marginTop: 3 }}>{sub}</div>}
     </div>
@@ -202,18 +202,18 @@ export default function LifetimeStatsModal({ onClose }: { onClose: () => void })
                 {mostDrafted && (
                   <HoverCard style={{ background: G.surface, padding: '14px 16px', flex: 1 }}>
                     <div style={{ fontFamily: INTER, fontSize: 9, color: G.grey, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 6 }}>Most Drafted Player</div>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-                      <div style={{ fontFamily: BEBAS, fontSize: 24, color: G.gold, letterSpacing: '0.06em' }}>{mostDrafted.name}</div>
-                      <div style={{ fontFamily: INTER, fontSize: 12, color: G.grey }}>{mostDrafted.count}×</div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                      <div style={{ fontFamily: BEBAS, fontSize: 24, color: G.gold, letterSpacing: '0.06em', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mostDrafted.name}</div>
+                      <div style={{ fontFamily: INTER, fontSize: 12, color: G.grey, flexShrink: 0 }}>{mostDrafted.count}×</div>
                     </div>
                   </HoverCard>
                 )}
                 {mostDraftedCoach && (
                   <HoverCard style={{ background: G.surface, padding: '14px 16px', flex: 1 }}>
                     <div style={{ fontFamily: INTER, fontSize: 9, color: G.grey, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 6 }}>Most Drafted Coach</div>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-                      <div style={{ fontFamily: BEBAS, fontSize: 24, color: G.gold, letterSpacing: '0.06em' }}>{mostDraftedCoach.name}</div>
-                      <div style={{ fontFamily: INTER, fontSize: 12, color: G.grey }}>{mostDraftedCoach.count}×</div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                      <div style={{ fontFamily: BEBAS, fontSize: 24, color: G.gold, letterSpacing: '0.06em', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mostDraftedCoach.name}</div>
+                      <div style={{ fontFamily: INTER, fontSize: 12, color: G.grey, flexShrink: 0 }}>{mostDraftedCoach.count}×</div>
                     </div>
                   </HoverCard>
                 )}
