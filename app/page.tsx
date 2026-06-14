@@ -3347,12 +3347,8 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
           type Chip = { label: string; status: 'good' | 'bad' | 'neutral' }
           const chips: Chip[] = []
 
-          // Spacing
-          if (isPreThreePt) {
-            chips.push(highVolumeShooterCount === 0
-              ? { label: 'Good Spacing', status: 'good' }
-              : { label: 'Anachronistic Shooters', status: 'bad' })
-          } else {
+          // Spacing (not applicable in pre-3pt eras)
+          if (!isPreThreePt) {
             chips.push(spacingPct >= 0 ? { label: 'Elite Spacing', status: 'good' }
               : spacingPct >= -4 ? { label: 'Good Spacing', status: 'good' }
               : spacingPct >= -7 ? { label: 'Average Spacing', status: 'neutral' }
