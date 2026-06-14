@@ -24,8 +24,26 @@ function eraLabel(era: string) {
 }
 
 function StatBox({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  const [hovered, setHovered] = useState(false)
+  const [sheenKey, setSheenKey] = useState(0)
   return (
-    <div className="stat-box" style={{ background: G.surface, border: `1px solid ${G.border}`, padding: '14px 16px', flex: 1, minWidth: 0 }}>
+    <div
+      onMouseEnter={() => { setHovered(true); setSheenKey(k => k + 1) }}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: G.surface,
+        border: `1px solid ${hovered ? 'rgba(201,168,76,0.35)' : G.border}`,
+        padding: '14px 16px',
+        flex: 1,
+        minWidth: 0,
+        position: 'relative',
+        overflow: 'hidden',
+        transform: hovered ? 'scale(1.03)' : 'none',
+        transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease',
+        boxShadow: hovered ? '0 4px 18px rgba(201,168,76,0.12)' : 'none',
+      }}
+    >
+      {hovered && <div key={sheenKey} className="stat-box-sheen" />}
       <div style={{ fontFamily: INTER, fontSize: 9, color: G.grey, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 4 }}>{label}</div>
       <div style={{ fontFamily: BEBAS, fontSize: 32, color: G.gold, letterSpacing: '0.06em', lineHeight: 1 }}>{value}</div>
       {sub && <div style={{ fontFamily: INTER, fontSize: 10, color: G.grey, marginTop: 3 }}>{sub}</div>}
