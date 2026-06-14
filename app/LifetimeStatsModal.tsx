@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { getLifetimeStats, type LifetimeStats } from '../lib/lifetimeStats'
+import { getLifetimeStats, clearLifetimeStats, type LifetimeStats } from '../lib/lifetimeStats'
 
 const ALL_ERAS = ['50s','60s','70s','80s','90s','00s','10s','20s']
 
@@ -35,6 +35,7 @@ function StatBox({ label, value, sub }: { label: string; value: string; sub?: st
 
 export default function LifetimeStatsModal({ onClose }: { onClose: () => void }) {
   const [stats, setStats] = useState<LifetimeStats | null>(null)
+  const [confirming, setConfirming] = useState(false)
 
   useEffect(() => { setStats(getLifetimeStats()) }, [])
 
@@ -141,8 +142,26 @@ export default function LifetimeStatsModal({ onClose }: { onClose: () => void })
             </>
           )}
 
-          <div style={{ borderTop: `1px solid ${G.border}`, paddingTop: 12, textAlign: 'center' }}>
-            <div style={{ fontFamily: INTER, fontSize: 10, color: G.greyDark }}>Stats are stored locally on this device and do not carry over to other devices.</div>
+          <div style={{ borderTop: `1px solid ${G.border}`, paddingTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ fontFamily: INTER, fontSize: 10, color: G.greyDark }}>Stored locally — does not carry over to other devices.</div>
+            {confirming ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 11, color: G.grey }}>Reset all stats?</span>
+                <button onClick={() => { clearLifetimeStats(); setStats(getLifetimeStats()); setConfirming(false) }}
+                  style={{ padding: '4px 12px', background: '#CC333322', color: '#CC3333', border: '1px solid #CC3333', cursor: 'pointer', fontSize: 11, letterSpacing: '0.06em' }}>
+                  Confirm
+                </button>
+                <button onClick={() => setConfirming(false)}
+                  style={{ padding: '4px 12px', background: 'none', color: G.grey, border: `1px solid ${G.border}`, cursor: 'pointer', fontSize: 11 }}>
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button onClick={() => setConfirming(true)}
+                style={{ padding: '4px 12px', background: 'none', color: G.greyDark, border: `1px solid ${G.greyDark}`, cursor: 'pointer', fontSize: 11, letterSpacing: '0.06em' }}>
+                Reset Stats
+              </button>
+            )}
           </div>
         </div>
       </div>
