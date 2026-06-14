@@ -1551,25 +1551,21 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                             : 'Select eras, then lock to apply.'}
                         </span>
                         <button
-                          onClick={() => {
-                            if (eraFilterLocked) {
-                              setEraFilterLocked(false)
-                            } else {
-                              if (isCustomRange) setEraFilterLocked(true)
-                            }
-                          }}
+                          onClick={() => { if (!eraFilterLocked && isCustomRange) setEraFilterLocked(true) }}
+                          disabled={eraFilterLocked || !isCustomRange}
                           className="shrink-0 text-xs uppercase tracking-widest"
                           style={{
                             padding: '4px 12px',
-                            background: eraFilterLocked ? `${G.red}22` : isCustomRange ? `${G.gold}22` : 'transparent',
-                            color: eraFilterLocked ? '#CC3333' : isCustomRange ? G.gold : G.greyDark,
-                            border: `1px solid ${eraFilterLocked ? '#CC3333' : isCustomRange ? G.gold : G.border}`,
+                            background: eraFilterLocked ? `${G.gold}12` : isCustomRange ? `${G.gold}22` : 'transparent',
+                            color: eraFilterLocked ? G.goldDim : isCustomRange ? G.gold : G.greyDark,
+                            border: `1px solid ${eraFilterLocked ? G.goldDim : isCustomRange ? G.gold : G.border}`,
                             borderRadius: 2,
-                            cursor: isCustomRange || eraFilterLocked ? 'pointer' : 'default',
+                            cursor: eraFilterLocked || !isCustomRange ? 'default' : 'pointer',
                             letterSpacing: '0.1em',
+                            opacity: eraFilterLocked ? 0.6 : 1,
                           }}
                         >
-                          {eraFilterLocked ? 'Unlock' : 'Lock'}
+                          {eraFilterLocked ? 'Locked' : 'Lock'}
                         </button>
                       </div>
                     </>
