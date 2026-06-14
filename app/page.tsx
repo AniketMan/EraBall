@@ -775,7 +775,7 @@ function EraSelection({ onEraSelected, onSandboxSelected, onRestart, onLifetimeS
     <div className="min-h-screen flex flex-col" style={{ background: G.black }}>
       <TopBar onRestart={onRestart} />
 
-      <div className="flex-1 flex flex-col items-center justify-center px-4 gap-10" style={{ overflowX: 'hidden' }}>
+      <div className="flex-1 flex flex-col items-center justify-center px-4 gap-10" style={{ overflowX: 'hidden', overflowY: 'auto' }}>
         {/* Selected era display */}
         <div className="text-center" style={{ minHeight: displayEra ? 260 : 0, width: '100%' }}>
           {displayEra && (
