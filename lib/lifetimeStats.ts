@@ -36,12 +36,6 @@ function save(s: LifetimeStats) {
   try { localStorage.setItem(KEY, JSON.stringify(s)) } catch {}
 }
 
-export function recordSpinEra(era: string) {
-  const s = getLifetimeStats()
-  s.eraSpinCount[era] = (s.eraSpinCount[era] ?? 0) + 1
-  save(s)
-}
-
 export function recordRunComplete(params: {
   era: string
   wins: number
@@ -56,6 +50,7 @@ export function recordRunComplete(params: {
   s.draftsCompleted++
   s.totalWins += wins
   s.totalLosses += losses
+  s.eraSpinCount[era] = (s.eraSpinCount[era] ?? 0) + 1
 
   if (champion) {
     s.championshipsTotal++

@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import type { Player, Coach, CourtSlot, SlotPosition, Era, GamePhase, PlayerSeasonStats, PlayoffResult, PlayoffGame, PlayerRating } from '../lib/types'
 import ResultCard from './ResultCard'
 import LifetimeStatsModal from './LifetimeStatsModal'
-import { recordSpinEra, recordRunComplete } from '../lib/lifetimeStats'
+import { recordRunComplete } from '../lib/lifetimeStats'
 import {
   ALL_ERAS, SLOT_POSITIONS, SLOT_MPG, ERA_SEASON_GAMES, calcFitPenalty, calcEraModifier, calcTeamRating,
   simulateSeason, simulatePlayoffs, calcTS, coachBonus, effectiveCoachBonus, coachChampBonus, playerMatchesEra, withEraStats, applyFlexTag, applyRings, applyAnchors, applyTimeless,
@@ -1033,7 +1033,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
             setNoPlayersMsg(true)
             return ids
           }
-          setLockedTeam(team); setLockedEra(era); recordSpinEra(era)
+          setLockedTeam(team); setLockedEra(era)
           setRosterPool([...pool].map(p => applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, era, team)))))).sort((a, b) => (b.PTS ?? 0) - (a.PTS ?? 0)))
           setSpinning(false)
           return ids
