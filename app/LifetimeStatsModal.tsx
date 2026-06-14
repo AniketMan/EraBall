@@ -153,9 +153,8 @@ export default function LifetimeStatsModal({ onClose }: { onClose: () => void })
                           </div>
                         </div>
                         {champs > 0 && (
-                          <div style={{ fontFamily: BEBAS, fontSize: 13, color: G.gold, letterSpacing: '0.1em', textAlign: 'right' }}>
-                            Championships<br />
-                            <span style={{ fontSize: 18 }}>×{champs}</span>
+                          <div style={{ fontFamily: BEBAS, fontSize: 13, color: G.gold, letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>
+                            Championships {champs}×
                           </div>
                         )}
                       </div>
