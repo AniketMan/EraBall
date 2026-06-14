@@ -125,7 +125,7 @@ export default function LifetimeStatsModal({ onClose }: { onClose: () => void })
   const mostDrafted = Object.values(stats.playerDraftCounts).sort((a, b) => b.count - a.count)[0]
   const mostDraftedCoach = Object.values(stats.coachDraftCounts).sort((a, b) => b.count - a.count)[0]
 
-  const favoriteEra = Object.entries(stats.eraSpinCount).sort((a, b) => b[1] - a[1])[0]
+  const favoriteEra = Object.entries(stats.eraSpinCount).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]
 
   const erasWithRecord = ALL_ERAS.filter(e => stats.recordByEra[e])
 
