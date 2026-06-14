@@ -561,10 +561,9 @@ export function calcFitPenalty(player: Player, slot: SlotPosition): { penalty: 0
   return { penalty: 0.10, label: 'Positional Penalty -10%' }
 }
 
-// dist → modifier. 0-2 decades same both ways; 3+ splits by direction.
-// Forward = old player in newer era (larger penalty — style/skill gap)
-// Backward = modern player in older era (smaller penalty — athletic/training advantage)
-const ERA_MOD_FORWARD  = [1.00, 0.98, 0.95, 0.90, 0.84, 0.77, 0.70, 0.62]
+// dist → modifier. Forward = old player in newer era (-5% per decade).
+// Backward = modern player in older era (smaller penalty — athletic/training advantage).
+const ERA_MOD_FORWARD  = [1.00, 0.95, 0.90, 0.85, 0.80, 0.75, 0.70, 0.65]
 const ERA_MOD_BACKWARD = [1.00, 0.98, 0.95, 0.92, 0.89, 0.85, 0.81, 0.77]
 
 export function calcEraModifier(player: Player, simEra: Era): number {
