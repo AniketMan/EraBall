@@ -3622,10 +3622,7 @@ export default function Home() {
   }
 
   const restart = () => {
-    setPhase('era-select')
-    setSlots(emptySlots())
-    setCoach(null)
-    setGreyscale(false)
+    window.location.href = '/'
   }
 
   const greyscaleBtn = simEra === '50s' && phase !== 'era-select' ? (
