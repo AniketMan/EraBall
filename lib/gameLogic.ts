@@ -974,7 +974,7 @@ export function simulateSeason(
     // floored at −0.05 so stacked negatives (spacing + teamQuality + noise) can't crater a player's line
     const rawFgCtx = spacingMod * 0.25 + playmakingMod + teamQualityMod + preEff[i].fg + preEff[i].stretch
     const fgCtx  = Math.max(-0.05, rawFgCtx)
-    const fg3Ctx = playmakingMod + teamQualityMod + preEff[i].fg + preEff[i].stretch
+    const fg3Ctx = playmakingMod + teamQualityMod + preEff[i].stretch
     const ftCtx  = preEff[i].ft + preEff[i].stretch * 0.4
     return {
       player:  pr.player,
