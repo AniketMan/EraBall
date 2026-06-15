@@ -809,11 +809,16 @@ function generateGameScore(
 const LEAGUE_AVG_DEF_INDEX = 8.0
 const LEAGUE_AVG_AST_INDEX = 22
 
-// Era-specific rebounding baselines — earlier eras had lower FG% (more misses = more boards)
-// Computed from typical per-position RPG weighted by rebSlotMod × minScale across a 9-man roster
+// Era-specific rebounding baselines — earlier eras had lower FG% (more misses = more boards).
+// Guards (PG/SG) are now neutral by default — only their excess above average counts —
+// so baselines are reduced ~4 pts vs the raw weighted sum to compensate.
 const ERA_LEAGUE_AVG_REB: Record<Era, number> = {
-  '50s': 70, '60s': 63, '70s': 52, '80s': 47, '90s': 44, '00s': 42, '10s': 38, '20s': 38,
+  '50s': 66, '60s': 59, '70s': 48, '80s': 43, '90s': 40, '00s': 38, '10s': 34, '20s': 34,
 }
+// Fixed guard baselines (post-rebSlotMod). Average guards score exactly at these thresholds → neutral.
+// Only guards who rebound well above their position average (Westbrook, Oscar, Magic) add anything.
+const PG_REB_THRESHOLD = 2.0
+const SG_REB_THRESHOLD = 2.5
 
 // Guards rarely protect the rim regardless of their natural BLK rate
 function blkSlotMod(slot: string): number {
@@ -867,9 +872,14 @@ function calcPlayerDefFactor(entries: { pr: PlayerRating; minScale: number }[]):
 // High REB → more team possessions (+score) and fewer opp second chances (−opp score)
 export function calcRebFactor(entries: { pr: PlayerRating; minScale: number }[], simEra: Era): number {
   const leagueAvg = ERA_LEAGUE_AVG_REB[simEra]
-  const eraScale  = leagueAvg / ERA_LEAGUE_AVG_REB['20s']  // scale slot expectations relative to modern
-  const rebIndex  = entries.reduce((s, { pr, minScale }) =>
-    s + (pr.player.REB ?? 0) * pr.eraMod * minScale * rebSlotMod(pr.slot), 0)
+  const eraScale  = leagueAvg / ERA_LEAGUE_AVG_REB['20s']  // scale C/PF expectations relative to modern
+  const rebIndex  = entries.reduce((s, { pr, minScale }) => {
+    const contrib = (pr.player.REB ?? 0) * pr.eraMod * minScale * rebSlotMod(pr.slot)
+    // Guards are neutral by default — only surplus above positional average contributes
+    if (pr.slot === 'PG') return s + Math.max(0, contrib - PG_REB_THRESHOLD)
+    if (pr.slot === 'SG') return s + Math.max(0, contrib - SG_REB_THRESHOLD)
+    return s + contrib
+  }, 0)
   // C and PF necessity: weak rebounders at key slots can't be offset by perimeter boards.
   // Slot expectations scale with era — a 10 RPG center is fine in the 20s but below par in the 60s.
   const slotPenalty = (['C', 'PF'] as SlotPosition[]).reduce((pen, slot) => {
