@@ -270,6 +270,10 @@ const TIMELESS_PLAYERS = new Set([
   'Kobe Bryant',
   'Dwight Howard',
   'Shaquille O\'Neal',
+  'Kevin Garnett',
+  'Hakeem Olajuwon',
+  'Kawhi Leonard',
+  'Charles Barkley',
 ])
 
 export function applyTimeless(player: Player): Player {
