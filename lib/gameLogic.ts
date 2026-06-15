@@ -869,7 +869,7 @@ export function simulateSeason(
   simEra: Era,
   coachDefBonus?: number,
   coachOffBonus?: number,
-): { wins: number; losses: number; games: boolean[]; seasonStats: PlayerSeasonStats[]; avgTeamScore: number; avgOppScore: number; teamAnalysis: { spacingWinFactor: number; shooterCount: number; spacingBaseline: number; isPreThreePt: boolean; highVolumeShooterCount: number; rebFactor: number; blkScore: number } } {
+): { wins: number; losses: number; games: boolean[]; seasonStats: PlayerSeasonStats[]; avgTeamScore: number; avgOppScore: number; teamAnalysis: { spacingWinFactor: number; shooterCount: number; spacingBaseline: number; isPreThreePt: boolean; highVolumeShooterCount: number; rebFactor: number; blkScore: number; astFactor: number } } {
   const games: boolean[] = []
   let wins = 0
   let totalTeamScore = 0
@@ -1014,7 +1014,7 @@ export function simulateSeason(
   const blkScore = entries.reduce((s, { pr, minScale }) => s + imputeBLK(pr.player) * pr.eraMod * minScale * blkSlotMod(pr.slot), 0)
   return {
     wins, losses: seasonGames - wins, games, seasonStats, avgTeamScore, avgOppScore,
-    teamAnalysis: { spacingWinFactor, shooterCount, spacingBaseline, isPreThreePt, highVolumeShooterCount, rebFactor, blkScore },
+    teamAnalysis: { spacingWinFactor, shooterCount, spacingBaseline, isPreThreePt, highVolumeShooterCount, rebFactor, blkScore, astFactor },
   }
 }
 

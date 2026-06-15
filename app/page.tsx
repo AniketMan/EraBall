@@ -2730,7 +2730,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
   const [avgOppScore, setAvgOppScore] = useState<number | null>(null)
   const [seasonOppStats, setSeasonOppStats] = useState<OppTeamStats | null>(null)
   const [playoffOppStats, setPlayoffOppStats] = useState<OppTeamStats | null>(null)
-  const [teamAnalysis, setTeamAnalysis] = useState<{ spacingWinFactor: number; shooterCount: number; spacingBaseline: number; isPreThreePt: boolean; highVolumeShooterCount: number; rebFactor: number; blkScore: number } | null>(null)
+  const [teamAnalysis, setTeamAnalysis] = useState<{ spacingWinFactor: number; shooterCount: number; spacingBaseline: number; isPreThreePt: boolean; highVolumeShooterCount: number; rebFactor: number; blkScore: number; astFactor: number } | null>(null)
 
   // ── Playoffs ──
   const [playoffStarted, setPlayoffStarted] = useState(false)
@@ -3448,7 +3448,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
 
         {/* Team Analysis */}
         {allDone && teamAnalysis && (() => {
-          const { spacingWinFactor, isPreThreePt, highVolumeShooterCount, rebFactor, blkScore } = teamAnalysis
+          const { spacingWinFactor, isPreThreePt, highVolumeShooterCount, rebFactor, blkScore, astFactor } = teamAnalysis
           const spacingPct = (spacingWinFactor - 1) * 100
           const rebPct     = (rebFactor - 1) * 100
           const BLK_BASELINE = 3.5
@@ -3479,6 +3479,14 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
             : rebPct < -5 ? { label: 'Rebounding Deficit', status: 'bad' }
             : rebPct < -2 ? { label: 'Slight Reb. Deficit', status: 'bad' }
             : { label: 'Average Rebounding', status: 'neutral' })
+
+          // Playmaking
+          const astPct = (astFactor - 1) * 100
+          chips.push(astPct > 3 ? { label: 'Elite Playmaking', status: 'good' }
+            : astPct > 1 ? { label: 'Good Playmaking', status: 'good' }
+            : astPct < -3 ? { label: 'Poor Playmaking', status: 'bad' }
+            : astPct < -1 ? { label: 'Limited Playmaking', status: 'bad' }
+            : { label: 'Average Playmaking', status: 'neutral' })
 
           const chipColor = { good: '#4ade80', bad: G.red, neutral: G.greyDark }
 
