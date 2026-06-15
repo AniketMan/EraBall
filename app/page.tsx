@@ -3456,6 +3456,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
             chips.push(spacingPct >= 5 ? { label: 'Elite Spacing', status: 'good' }
               : spacingPct >= 0 ? { label: 'Good Spacing', status: 'good' }
               : spacingPct >= -5 ? { label: 'Average Spacing', status: 'neutral' }
+              : spacingPct >= -7.5 ? { label: 'Limited Spacing', status: 'bad' }
               : spacingPct >= -10 ? { label: 'Poor Spacing', status: 'bad' }
               : { label: 'No Spacing', status: 'bad' })
           }
