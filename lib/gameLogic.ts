@@ -1035,7 +1035,7 @@ function playoffOppRating(round: number, teamWins: number, teamRaw: number, simE
   const eraDifficulty = ERA_DIFFICULTY[simEra] ?? 1.00
   const offRating = Math.round(baseRating * eraDifficulty)
   // Later rounds face better defenses — mild progressive reduction to team's effective rating
-  const defFactor = [1.00, 0.99, 0.97, 0.95][idx]
+  const defFactor = [1.00, 0.97, 0.93, 0.88][idx]
   return { offRating, defFactor }
 }
 
