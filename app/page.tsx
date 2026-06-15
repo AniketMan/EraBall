@@ -1697,7 +1697,11 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                         if (bS !== aS) return bS - aS
                         return playerBaseRating(b, b.era as Era) - playerBaseRating(a, a.era as Era)
                       }
-                      if (sortBy === 'FG3') return (b.FG3_PCT ?? 0) - (a.FG3_PCT ?? 0)
+                      if (sortBy === 'FG3') {
+                        const aQ = (a.FG3M ?? 0) >= 0.5, bQ = (b.FG3M ?? 0) >= 0.5
+                        if (aQ !== bQ) return aQ ? -1 : 1
+                        return (b.FG3_PCT ?? 0) - (a.FG3_PCT ?? 0)
+                      }
                       return (b[sortBy] ?? 0) - (a[sortBy] ?? 0)
                     }).filter(p => sortBy !== 'SPECIAL' || isSpecial(p))
                     visiblePoolRef.current = sorted
