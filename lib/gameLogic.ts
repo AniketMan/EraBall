@@ -562,16 +562,30 @@ export function calcFitPenalty(player: Player, slot: SlotPosition): { penalty: 0
 }
 
 // dist → modifier. Forward = old player in newer era (-5% per decade).
-// Backward = modern player in older era (smaller penalty — athletic/training advantage).
-const ERA_MOD_FORWARD  = [1.00, 0.95, 0.90, 0.85, 0.80, 0.75, 0.70, 0.65]
-const ERA_MOD_BACKWARD = [1.00, 0.98, 0.95, 0.92, 0.89, 0.85, 0.81, 0.77]
+// Backward = modern player in older era (-3% per decade — training/athleticism advantage).
+// Tall centers (6'10"+) going backward: -1.5% per decade (physical dominance translates).
+// 10s↔20s: treated as the same modern era (only 2% apart) in either direction.
+const ERA_MOD_FORWARD       = [1.00, 0.95, 0.90, 0.85, 0.80, 0.75, 0.70, 0.65]
+const ERA_MOD_BACKWARD      = [1.00, 0.97, 0.94, 0.91, 0.88, 0.85, 0.82, 0.79]
+const ERA_MOD_BACKWARD_TALL = [1.00, 0.985, 0.97, 0.955, 0.94, 0.925, 0.91, 0.895]
+
+function playerHeightInches(player: Player): number {
+  const parts = (player.height ?? '').split('-').map(Number)
+  return parts.length === 2 ? parts[0] * 12 + parts[1] : 0
+}
 
 export function calcEraModifier(player: Player, simEra: Era): number {
   const playerIdx = ERA_ORDER.indexOf(player.era)
   const simIdx = ERA_ORDER.indexOf(simEra)
   const dist = Math.abs(playerIdx - simIdx)
   if (player.timeless) return dist >= 6 ? 0.95 : 1.0
-  const table = playerIdx > simIdx ? ERA_MOD_BACKWARD : ERA_MOD_FORWARD
+  // 10s and 20s are the same modern era — only 2% apart in either direction
+  if ((player.era === '10s' && simEra === '20s') || (player.era === '20s' && simEra === '10s')) return 0.98
+  // Tall centers (6'10"+) or Bam Adebayo going back get reduced penalty (physical size translates)
+  const isTallCenter = playerHeightInches(player) >= 82 || player.full_name === 'Bam Adebayo'
+  const table = playerIdx > simIdx
+    ? (isTallCenter ? ERA_MOD_BACKWARD_TALL : ERA_MOD_BACKWARD)
+    : ERA_MOD_FORWARD
   let mod = table[Math.min(dist, table.length - 1)]
   // Extra penalty for modern players (10s/20s) in the 50s/60s — style gap is too severe
   // for the normal backward table to capture (no 3PT, physical defense, different spacing).
@@ -770,7 +784,7 @@ function generateGameScore(
 }
 
 // League-average indices for normalisation (calibrated to typical 9-man roster)
-const LEAGUE_AVG_DEF_INDEX = 10.5
+const LEAGUE_AVG_DEF_INDEX = 8.0
 const LEAGUE_AVG_REB_INDEX = 38
 const LEAGUE_AVG_AST_INDEX = 22
 
@@ -797,12 +811,17 @@ function calcPlayerDefFactor(entries: { pr: PlayerRating; minScale: number }[]):
 
   // Rim protection: BLK-based, slot-discounted (guards get less credit even if naturally high BLK)
   const blkScore    = entries.reduce((s, { pr, minScale }) => s + imputeBLK(pr.player) * pr.eraMod * minScale * blkSlotMod(pr.slot), 0)
-  const BLK_BASELINE = 5.0
+  const BLK_BASELINE = 3.5
   const blkShortfall = BLK_BASELINE - blkScore  // positive = below average = bad defense
   const blkRate      = blkShortfall > 0 ? 0.035 : 0.015
   const rimFactor    = Math.max(0.86, Math.min(1.08, 1.0 + blkShortfall * blkRate))
 
-  return Math.max(0.82, Math.min(1.15, stlFactor * rimFactor))
+  // Defensive anchors reduce opponent scoring directly (T1: -2.5%, T2: -1.5%, weighted by minutes)
+  const anchorAdj = entries.reduce((s, { pr, minScale }) => {
+    if (!pr.player.defAnchor) return s
+    return s + ((pr.player.anchorTier ?? 1) === 1 ? 0.025 : 0.015) * minScale
+  }, 0)
+  return Math.max(0.82, Math.min(1.15, stlFactor * rimFactor * (1 - anchorAdj)))
 }
 
 // High REB → more team possessions (+score) and fewer opp second chances (−opp score)
@@ -836,9 +855,9 @@ export function simulateSeason(
   let totalTeamScore = 0
   let totalOppScore = 0
 
-  const OPP_BASELINE = 40
+  const OPP_BASELINE = 43
   const OPP_SPREAD   = 6
-  const GAME_NOISE   = 10
+  const GAME_NOISE   = 8
 
   // Per-player entries with minutes info (no stat accumulation needed)
   const entries = playerRatings.map(pr => {
@@ -880,9 +899,9 @@ export function simulateSeason(
   const spacingDev        = isPreThreePt ? -highVolumeShooterCount : shooterCount - spacingBaseline
   const spacingPerShooter = spacingDev < 0
     ? (isPreThreePt ? 0.035 : simEra === '20s' || simEra === '10s' ? 0.050 : simEra === '00s' ? 0.050 : simEra === '90s' ? 0.025 : 0.015)
-    : (simEra === '20s' || simEra === '10s' ? 0.015 : simEra === '00s' ? 0.010 : 0.006)
+    : (simEra === '20s' || simEra === '10s' ? 0.022 : simEra === '00s' ? 0.014 : 0.009)
   const spacingCapNeg     = isPreThreePt ? 0.15 : simEra === '20s' ? 0.25 : simEra === '10s' ? 0.20 : simEra === '00s' ? 0.14 : simEra === '90s' ? 0.10 : 0.06
-  const spacingCapPos     = simEra === '20s' ? 0.15 : simEra === '10s' ? 0.12 : simEra === '00s' ? 0.09 : simEra === '90s' ? 0.06 : 0.05
+  const spacingCapPos     = simEra === '20s' ? 0.20 : simEra === '10s' ? 0.16 : simEra === '00s' ? 0.12 : simEra === '90s' ? 0.08 : 0.06
   const spacingWinFactor  = Math.max(1 - spacingCapNeg, Math.min(1 + spacingCapPos, 1.0 + spacingDev * spacingPerShooter))
 
   // Scoring win factor: ties win probability to offensive output vs era baseline.
@@ -1045,9 +1064,9 @@ export function simulatePlayoffs(
   const spacingDevPO        = isPreThreePtPO ? -highVolumeShooterCountPO : shooterCount - spacingBaselinePO
   const spacingPerShooterPO = spacingDevPO < 0
     ? (isPreThreePtPO ? 0.035 : simEra === '20s' || simEra === '10s' ? 0.050 : simEra === '00s' ? 0.050 : simEra === '90s' ? 0.025 : 0.015)
-    : (simEra === '20s' || simEra === '10s' ? 0.015 : simEra === '00s' ? 0.010 : 0.006)
+    : (simEra === '20s' || simEra === '10s' ? 0.022 : simEra === '00s' ? 0.014 : 0.009)
   const spacingCapNegPO     = isPreThreePtPO ? 0.15 : simEra === '20s' ? 0.25 : simEra === '10s' ? 0.20 : simEra === '00s' ? 0.14 : simEra === '90s' ? 0.10 : 0.06
-  const spacingCapPosPO     = simEra === '20s' ? 0.15 : simEra === '10s' ? 0.12 : simEra === '00s' ? 0.09 : simEra === '90s' ? 0.06 : 0.05
+  const spacingCapPosPO     = simEra === '20s' ? 0.20 : simEra === '10s' ? 0.16 : simEra === '00s' ? 0.12 : simEra === '90s' ? 0.08 : 0.06
   const spacingWinFactor    = Math.max(1 - spacingCapNegPO, Math.min(1 + spacingCapPosPO, 1.0 + spacingDevPO * spacingPerShooterPO))
 
   // Ring-boosted effective team rating for playoff win determination

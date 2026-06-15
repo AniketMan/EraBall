@@ -80,6 +80,7 @@ const COACH_GURUS: Record<string, CoachGuru> = {
   'Wes Unseld Jr.':   { offOverride: 'B', defOverride: 'A' },
   'Richie Guerin':    { offOverride: 'B', defOverride: 'B' },
   'Cotton Fitzsimmons': { offOverride: 'B', defOverride: 'C' },
+  'Michael Malone':     { offOverride: 'A', defOverride: 'B' },
 }
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -1005,19 +1006,23 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
       ...Array(5).fill(120),   // slowing
       ...Array(3).fill(220),   // crawling
     ]
+    // Capture filter state now — setEraFilterLocked(true) above is async and won't
+    // update the closure in time for doTick, so derive it directly from eraFilter.
+    const spinShouldFilter = eraFilterLocked || eraFilter.size < ALL_ERAS.length
+    const spinEraFilter = eraFilter
     let ticks = 0
     const doTick = () => {
       const phase = ticks < 10 ? 'fast' : ticks < 15 ? 'slow' : 'slow'
       setSpinPhase(phase)
       setSpinTeamDisplay(allTeams[Math.floor(Math.random() * allTeams.length)])
-      const filteredEras = eraFilterLocked ? ALL_ERAS.filter(e => eraFilter.has(e)) : ALL_ERAS
+      const filteredEras = spinShouldFilter ? ALL_ERAS.filter(e => spinEraFilter.has(e)) : ALL_ERAS
       setSpinEraDisplay(filteredEras[Math.floor(Math.random() * filteredEras.length)])
       setSpinKey(k => k + 1)
       if (ticks < schedule.length) {
         setTimeout(doTick, schedule[ticks++])
       } else {
         // Land
-        const filteredCombos = eraFilterLocked ? validCombos.filter(c => eraFilter.has(c.era)) : validCombos
+        const filteredCombos = spinShouldFilter ? validCombos.filter(c => spinEraFilter.has(c.era)) : validCombos
         if (filteredCombos.length === 0) { setSpinning(false); return }
         const { team, era } = filteredCombos[Math.floor(Math.random() * filteredCombos.length)]
         setSpinPhase('land')
@@ -1177,7 +1182,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
     const top9 = scored
       .sort((a, b) => b.score - a.score)
       .slice(0, 9)
-      .map(({ p }) => applyTimeless(applyRings(applyFlexTag(withEraStats(p, p.era as Era, p.team_abbreviation)))))
+      .map(({ p }) => applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, p.era as Era, p.team_abbreviation))))))
     const newSlots = SLOT_POSITIONS.map((pos, i) => {
       const { penalty, label } = calcFitPenalty(top9[i], pos)
       return { position: pos, player: top9[i], fitPenalty: penalty, fitLabel: label }
@@ -1192,7 +1197,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
     const shuffled = [...players].sort(() => Math.random() - 0.5)
     const picks = shuffled.slice(0, 9)
     const newSlots = SLOT_POSITIONS.map((pos, i) => {
-      const player = applyTimeless(applyRings(applyFlexTag(withEraStats(picks[i], picks[i].era as Era, picks[i].team_abbreviation))))
+      const player = applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(picks[i], picks[i].era as Era, picks[i].team_abbreviation)))))
       const { penalty, label } = calcFitPenalty(player, pos)
       return { position: pos, player, fitPenalty: penalty, fitLabel: label }
     })
@@ -1224,7 +1229,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
         return teamsForEra?.includes(team)
       })
       if (!match) continue
-      const tagged = applyTimeless(applyRings(applyFlexTag(withEraStats(match, era, team))))
+      const tagged = applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(match, era, team)))))
       const slotIdx = SLOT_POSITIONS.indexOf(slot)
       const { penalty, label } = calcFitPenalty(tagged, slot)
       newSlots[slotIdx] = { position: slot, player: tagged, fitPenalty: penalty, fitLabel: label }
@@ -1572,6 +1577,11 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                     </>
                   )}
                 </div>
+                {eraFilterLocked && isCustomRange && (
+                  <div className="text-xs text-center pb-2" style={{ color: G.greyDark }}>
+                    Custom range active — will <span style={{ color: '#CC8844' }}>not count</span> toward lifetime stats
+                  </div>
+                )}
                 {filledCount === 9 ? (
                   <Btn onClick={() => onDraftComplete(slots, eraFilterLocked && eraFilter.size < ALL_ERAS.length ? [...eraFilter].sort((a, b) => ALL_ERAS.indexOf(a) - ALL_ERAS.indexOf(b)) : null)} variant="gold" className="w-full py-4 text-base">
                     Draft Coach
@@ -2668,6 +2678,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
   slots: CourtSlot[]; coach: Coach; simEra: Era; onRestart: () => void; greyscaleBtn?: React.ReactNode; sandboxMode?: boolean; customEraRange?: Era[] | null
 }) {
   const seasonGames = ERA_SEASON_GAMES[simEra]
+  const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
 
   // ── Regular season ──
   const [simStarted, setSimStarted] = useState(false)
@@ -2780,6 +2791,21 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
   const { teamRating: tr, rawRating, playerRatings: pr } = calcTeamRating(slots, coach, simEra)
   // rawRating with champ bonus on the team side — passed to sims so off/def apply separately
   const simRaw = rawRating * (1 + coachChampBonus(coach))
+
+  type BatchRun = { wins: number; losses: number; roundsWon: number; champion: boolean }
+  const [batchResults, setBatchResults] = useState<BatchRun[] | null>(null)
+
+  const runBatch = (n = 10) => {
+    const runs: BatchRun[] = []
+    for (let i = 0; i < n; i++) {
+      const { games: allGames } = simulateSeason(simRaw, pr, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'))
+      const w = allGames.filter(Boolean).length
+      const l = allGames.length - w
+      const playoff = simulatePlayoffs(simRaw, pr, w, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'))
+      runs.push({ wins: w, losses: l, roundsWon: playoff.rounds.filter(r => r.advanced).length, champion: playoff.champion })
+    }
+    setBatchResults(runs)
+  }
 
   const startSim = () => {
     setSimStarted(true); setGames([]); setDone(false); setSeasonStats([])
@@ -2939,7 +2965,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
 
   const savedRun = useRef(false)
   useEffect(() => {
-    if (!allDone || sandboxMode || savedRun.current) return
+    if (!allDone || sandboxMode || customEraRange || savedRun.current) return
     savedRun.current = true
     const players = slots
       .filter(s => s.player)
@@ -3020,10 +3046,55 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
 
         {/* Simulate Season button */}
         {!simStarted && (
-          <div className="text-center py-4">
-            <Btn onClick={startSim} variant="gold" className="px-16 py-4 text-base">
-              Simulate Season
-            </Btn>
+          <div className="py-4">
+            <div className="flex justify-center gap-3">
+              <Btn onClick={startSim} variant="gold" className="px-12 py-4 text-base">
+                Simulate Season
+              </Btn>
+              {isLocalhost && (
+                <Btn onClick={() => runBatch(10)} variant="outline" className="px-6 py-4 text-base">
+                  Run 10×
+                </Btn>
+              )}
+            </div>
+
+            {batchResults && (() => {
+              const avgWins = batchResults.reduce((s, r) => s + r.wins, 0) / batchResults.length
+              const minW = Math.min(...batchResults.map(r => r.wins))
+              const maxW = Math.max(...batchResults.map(r => r.wins))
+              const champCount = batchResults.filter(r => r.champion).length
+              const roundLabels = ['First Round Exit', 'Semifinals', 'Conf. Finals', 'Finals L']
+              return (
+                <div className="mt-4 mx-2" style={{ background: G.surface, border: `1px solid ${G.border}` }}>
+                  <div className="px-4 py-2 flex items-center justify-between" style={{ borderBottom: `1px solid ${G.border}` }}>
+                    <span className="text-xs uppercase tracking-[0.2em]" style={{ color: G.grey }}>10-Run Batch Results</span>
+                    <span className="text-xs" style={{ color: G.gold }}>
+                      avg {avgWins.toFixed(1)}W &nbsp;({minW}–{maxW} range) &nbsp;·&nbsp; {champCount}/10 champs
+                    </span>
+                  </div>
+                  <table className="w-full text-xs" style={{ borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr style={{ borderBottom: `1px solid ${G.border}` }}>
+                        <th className="px-3 py-1.5 text-left" style={{ color: G.grey, fontWeight: 400 }}>#</th>
+                        <th className="px-3 py-1.5 text-left" style={{ color: G.grey, fontWeight: 400 }}>Record</th>
+                        <th className="px-3 py-1.5 text-left" style={{ color: G.grey, fontWeight: 400 }}>Playoff Result</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {batchResults.map((r, i) => (
+                        <tr key={i} style={{ borderBottom: i < batchResults.length - 1 ? `1px solid ${G.border}33` : 'none' }}>
+                          <td className="px-3 py-1.5" style={{ color: G.greyDark }}>{i + 1}</td>
+                          <td className="px-3 py-1.5" style={{ color: G.white, fontWeight: 500 }}>{r.wins}–{r.losses}</td>
+                          <td className="px-3 py-1.5" style={{ color: r.champion ? G.gold : r.roundsWon >= 3 ? '#88BBFF' : G.grey }}>
+                            {r.champion ? 'Champion 🏆' : roundLabels[Math.min(r.roundsWon, 3)]}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )
+            })()}
           </div>
         )}
 
@@ -3342,17 +3413,17 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
           const { spacingWinFactor, isPreThreePt, highVolumeShooterCount, rebFactor, blkScore } = teamAnalysis
           const spacingPct = (spacingWinFactor - 1) * 100
           const rebPct     = (rebFactor - 1) * 100
-          const BLK_BASELINE = 5.0
+          const BLK_BASELINE = 3.5
 
           type Chip = { label: string; status: 'good' | 'bad' | 'neutral' }
           const chips: Chip[] = []
 
           // Spacing (not applicable in pre-3pt eras)
           if (!isPreThreePt) {
-            chips.push(spacingPct >= 0 ? { label: 'Elite Spacing', status: 'good' }
-              : spacingPct >= -4 ? { label: 'Good Spacing', status: 'good' }
-              : spacingPct >= -7 ? { label: 'Average Spacing', status: 'neutral' }
-              : spacingPct >= -12 ? { label: 'Poor Spacing', status: 'bad' }
+            chips.push(spacingPct >= 5 ? { label: 'Elite Spacing', status: 'good' }
+              : spacingPct >= 0 ? { label: 'Good Spacing', status: 'good' }
+              : spacingPct >= -5 ? { label: 'Average Spacing', status: 'neutral' }
+              : spacingPct >= -10 ? { label: 'Poor Spacing', status: 'bad' }
               : { label: 'No Spacing', status: 'bad' })
           }
 
