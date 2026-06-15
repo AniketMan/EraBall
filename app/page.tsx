@@ -207,9 +207,47 @@ function Btn({ children, onClick, disabled, variant = 'gold', className = '', st
   )
 }
 
+// ─── Headshot cache ────────────────────────────────────────────────────────────
+const HEADSHOT_CACHE = 'eraball-headshots-v1'
+const _sessionCache = new Map<string, string>() // url → objectURL
+
+async function getCachedResponse(url: string): Promise<Response> {
+  if (typeof caches !== 'undefined') {
+    try {
+      const c = await caches.open(HEADSHOT_CACHE)
+      const hit = await c.match(url)
+      if (hit) return hit
+    } catch {}
+  }
+  const res = await fetch(url)
+  if (!res.ok) throw new Error('not found')
+  if (typeof caches !== 'undefined') {
+    try {
+      const c = await caches.open(HEADSHOT_CACHE)
+      await c.put(url, res.clone())
+    } catch {}
+  }
+  return res
+}
+
+async function fetchCachedHeadshot(url: string): Promise<string> {
+  if (_sessionCache.has(url)) return _sessionCache.get(url)!
+  const res = await getCachedResponse(url)
+  const blob = await res.blob()
+  const objectUrl = URL.createObjectURL(blob)
+  _sessionCache.set(url, objectUrl)
+  return objectUrl
+}
+
 // ─── Player headshot ──────────────────────────────────────────────────────────
 function PlayerHeadshot({ personId, size, initial, lazy }: { personId: string; size: number; initial?: string; lazy?: boolean }) {
   const [failed, setFailed] = useState(false)
+  const [src, setSrc] = useState<string | null>(null)
+  useEffect(() => {
+    fetchCachedHeadshot(`/api/headshot?id=${personId}`)
+      .then(setSrc)
+      .catch(() => setFailed(true))
+  }, [personId])
   const wrap: React.CSSProperties = {
     width: size,
     height: size,
@@ -227,13 +265,12 @@ function PlayerHeadshot({ personId, size, initial, lazy }: { personId: string; s
       </div>
     )
   }
+  if (!src) return <div style={wrap} />
   return (
     <div style={wrap}>
       <img
-        src={`/api/headshot?id=${personId}`}
+        src={src}
         alt=""
-        loading={lazy ? 'lazy' : 'eager'}
-        onError={() => setFailed(true)}
         style={{
           position: 'absolute',
           height: '100%',
@@ -250,6 +287,12 @@ function PlayerHeadshot({ personId, size, initial, lazy }: { personId: string; s
 
 function CoachHeadshot({ name, size }: { name: string; size: number }) {
   const [failed, setFailed] = useState(false)
+  const [src, setSrc] = useState<string | null>(null)
+  useEffect(() => {
+    fetchCachedHeadshot(`/api/coach-headshot?name=${encodeURIComponent(name)}`)
+      .then(setSrc)
+      .catch(() => setFailed(true))
+  }, [name])
   const base: React.CSSProperties = {
     width: size, height: size, borderRadius: '50%', flexShrink: 0,
     border: `1px solid ${G.goldDim}`, background: G.surface2,
@@ -262,11 +305,11 @@ function CoachHeadshot({ name, size }: { name: string; size: number }) {
       </div>
     )
   }
+  if (!src) return <div style={{ ...base, border: `1px solid ${G.goldDim}` }} />
   return (
     <img
-      src={`/api/coach-headshot?name=${encodeURIComponent(name)}`}
+      src={src}
       alt=""
-      onError={() => setFailed(true)}
       style={{ ...base, objectFit: 'cover', objectPosition: 'center top', transform: 'translateZ(0)' }}
     />
   )
@@ -1106,8 +1149,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
   useEffect(() => {
     if (rosterPool.length === 0) return
     rosterPool.slice(0, 20).forEach(p => {
-      const img = new Image()
-      img.src = `/api/headshot?id=${p.person_id}`
+      fetchCachedHeadshot(`/api/headshot?id=${p.person_id}`).catch(() => {})
     })
   }, [rosterPool])
 
@@ -2753,7 +2795,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
       starters.map(async s => {
         const url = `/api/headshot?id=${s.player.person_id}`
         try {
-          const res = await fetch(url)
+          const res = await getCachedResponse(url)
           if (!res.ok) return [s.player.person_id, null] as [string, null]
           const blob = await res.blob()
           const base64 = await new Promise<string | null>(resolve => {
