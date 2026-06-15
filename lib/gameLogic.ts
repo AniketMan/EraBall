@@ -856,8 +856,8 @@ export function calcRebFactor(entries: { pr: PlayerRating; minScale: number }[])
 function calcAstFactor(entries: { pr: PlayerRating; minScale: number }[]): number {
   const astIndex = entries.reduce((s, { pr, minScale }) =>
     s + (pr.player.AST ?? 0) * pr.eraMod * minScale, 0)
-  const raw = 1.0 + (astIndex - LEAGUE_AVG_AST_INDEX) / LEAGUE_AVG_AST_INDEX * 0.05
-  return Math.max(0.95, Math.min(1.05, raw))
+  const raw = 1.0 + (astIndex - LEAGUE_AVG_AST_INDEX) / LEAGUE_AVG_AST_INDEX * 0.10
+  return Math.max(0.90, Math.min(1.10, raw))
 }
 
 
