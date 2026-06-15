@@ -386,11 +386,6 @@ export function withEraStats(player: Player, era: Era, team?: string): Player {
     player.stats_by_era?.[era]
   if (!eraData) return { ...player, era }
   const { team: eraTeam, GP, ...stats } = eraData
-  // Era stats capture specific seasons which may underrepresent peak ability.
-  // Career FG% is the floor — era stats can only boost, never penalize shooting efficiency.
-  if (stats.FG_PCT != null && player.FG_PCT != null && stats.FG_PCT < player.FG_PCT) {
-    stats.FG_PCT = player.FG_PCT
-  }
   return { ...player, era, eraTeam, GP, ...stats }
 }
 
