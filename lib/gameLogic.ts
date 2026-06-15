@@ -826,13 +826,26 @@ function rebSlotMod(slot: string): number {
   return 1.0  // PF, C, B1-B4
 }
 
+// C and PF necessity: a guard at C with 0.5 BPG can't be offset by bench shotblockers
+function calcBlkScore(entries: { pr: PlayerRating; minScale: number }[]): number {
+  const raw = entries.reduce((s, { pr, minScale }) => s + imputeBLK(pr.player) * pr.eraMod * minScale * blkSlotMod(pr.slot), 0)
+  const slotPenalty = (['C', 'PF'] as SlotPosition[]).reduce((pen, slot) => {
+    const entry = entries.find(ent => ent.pr.slot === slot)
+    if (!entry) return pen
+    const expected = slot === 'C' ? 1.2 : 0.6
+    const contrib = imputeBLK(entry.pr.player) * entry.pr.eraMod * entry.minScale
+    return pen + Math.max(0, expected - contrib) * 0.7
+  }, 0)
+  return Math.max(0, raw - slotPenalty)
+}
+
 function calcPlayerDefFactor(entries: { pr: PlayerRating; minScale: number }[]): number {
   // Perimeter defense: STL-based, normalized ±6%
   const stlIndex  = entries.reduce((s, { pr, minScale }) => s + imputeSTL(pr.player) * pr.eraMod * minScale, 0)
   const stlFactor = Math.max(0.94, Math.min(1.06, 1.0 + (LEAGUE_AVG_DEF_INDEX - stlIndex) / LEAGUE_AVG_DEF_INDEX * 0.06))
 
-  // Rim protection: BLK-based, slot-discounted (guards get less credit even if naturally high BLK)
-  const blkScore    = entries.reduce((s, { pr, minScale }) => s + imputeBLK(pr.player) * pr.eraMod * minScale * blkSlotMod(pr.slot), 0)
+  // Rim protection: BLK-based, slot-discounted, with C/PF necessity penalty
+  const blkScore    = calcBlkScore(entries)
   const BLK_BASELINE = 3.5
   const blkShortfall = BLK_BASELINE - blkScore  // positive = below average = bad defense
   const blkRate      = blkShortfall > 0 ? 0.035 : 0.015
@@ -850,7 +863,15 @@ function calcPlayerDefFactor(entries: { pr: PlayerRating; minScale: number }[]):
 export function calcRebFactor(entries: { pr: PlayerRating; minScale: number }[]): number {
   const rebIndex = entries.reduce((s, { pr, minScale }) =>
     s + (pr.player.REB ?? 0) * pr.eraMod * minScale * rebSlotMod(pr.slot), 0)
-  const raw = 1.0 + (rebIndex - LEAGUE_AVG_REB_INDEX) / LEAGUE_AVG_REB_INDEX * 0.09
+  // C and PF necessity: a guard at C with 4.7 RPG can't be offset by perimeter boards
+  const slotPenalty = (['C', 'PF'] as SlotPosition[]).reduce((pen, slot) => {
+    const entry = entries.find(ent => ent.pr.slot === slot)
+    if (!entry) return pen
+    const expected = slot === 'C' ? 7.5 : 5.5
+    const contrib = (entry.pr.player.REB ?? 0) * entry.pr.eraMod * entry.minScale
+    return pen + Math.max(0, expected - contrib)
+  }, 0)
+  const raw = 1.0 + (rebIndex - slotPenalty - LEAGUE_AVG_REB_INDEX) / LEAGUE_AVG_REB_INDEX * 0.15
   return Math.max(0.91, Math.min(1.09, raw))
 }
 
@@ -1013,7 +1034,7 @@ export function simulateSeason(
     }
   })
 
-  const blkScore = entries.reduce((s, { pr, minScale }) => s + imputeBLK(pr.player) * pr.eraMod * minScale * blkSlotMod(pr.slot), 0)
+  const blkScore = calcBlkScore(entries)
   return {
     wins, losses: seasonGames - wins, games, seasonStats, avgTeamScore, avgOppScore,
     teamAnalysis: { spacingWinFactor, shooterCount, spacingBaseline, isPreThreePt, highVolumeShooterCount, rebFactor, blkScore, astFactor },
