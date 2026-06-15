@@ -81,6 +81,7 @@ const COACH_GURUS: Record<string, CoachGuru> = {
   'Richie Guerin':    { offOverride: 'B', defOverride: 'B' },
   'Cotton Fitzsimmons': { offOverride: 'B', defOverride: 'C' },
   'Michael Malone':     { offOverride: 'A', defOverride: 'B' },
+  'Stephen Silas':      { offOverride: 'F', defOverride: 'F' },
 }
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -106,8 +107,10 @@ function parseCoachesCSV(text: string): Coach[] {
     const guru = COACH_GURUS[name] ?? {}
     const regG = regW + regL
     const capF = (g: string) => (regG > 200 && g === 'F' ? 'C' : g)
-    const offGrade = capF(guru.offGuru ? 'A' : guru.offOverride ?? (regWLPct >= 0.600 ? 'A' : regWLPct >= 0.550 ? 'B' : regWLPct >= 0.500 ? 'C' : regWLPct >= 0.450 ? 'D' : 'F')) as Coach['offGrade']
-    const defGrade = capF(guru.defGuru ? 'A' : guru.defOverride ?? (playoffG === 0 ? 'C' : playoffWLPct >= 0.550 ? 'A' : playoffWLPct >= 0.500 ? 'B' : playoffWLPct >= 0.450 ? 'C' : playoffWLPct >= 0.400 ? 'D' : 'F')) as Coach['defGrade']
+    const rawOffGrade = guru.offGuru ? 'A' : guru.offOverride ?? (regWLPct >= 0.600 ? 'A' : regWLPct >= 0.550 ? 'B' : regWLPct >= 0.500 ? 'C' : regWLPct >= 0.450 ? 'D' : 'F')
+    const rawDefGrade = guru.defGuru ? 'A' : guru.defOverride ?? (playoffG === 0 ? 'C' : playoffWLPct >= 0.550 ? 'A' : playoffWLPct >= 0.500 ? 'B' : playoffWLPct >= 0.450 ? 'C' : playoffWLPct >= 0.400 ? 'D' : 'F')
+    const offGrade = (guru.offGuru || guru.offOverride ? rawOffGrade : capF(rawOffGrade)) as Coach['offGrade']
+    const defGrade = (guru.defGuru || guru.defOverride ? rawDefGrade : capF(rawDefGrade)) as Coach['defGrade']
     const gradeN = (g: Coach['offGrade']) => ({ A: 4, B: 3, C: 2, D: 1, F: 0 }[g])
     const avg = (gradeN(offGrade) + gradeN(defGrade)) / 2
     const overallGrade = (avg >= 3.5 ? 'A' : avg >= 2.5 ? 'B' : avg >= 1.5 ? 'C' : avg >= 0.5 ? 'D' : 'F') as Coach['overallGrade']
