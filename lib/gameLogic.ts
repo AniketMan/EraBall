@@ -893,6 +893,15 @@ export function calcRebFactor(entries: { pr: PlayerRating; minScale: number }[],
   return Math.max(0.91, Math.min(1.09, raw))
 }
 
+// Per-slot spacing weight: guards are primary spacers, C matters less and only in modern eras
+function spacingSlotWeight(slot: SlotPosition, simEra: Era): number {
+  if (slot === 'PG' || slot === 'SG') return 1.20
+  if (slot === 'SF') return 1.15
+  if (slot === 'PF') return 0.90
+  if (slot === 'C') return (simEra === '20s' || simEra === '10s') ? 0.75 : 0.50
+  return 0.90  // B1–B4
+}
+
 // High AST → better shot quality → scoring efficiency boost (offense only)
 function calcAstFactor(entries: { pr: PlayerRating; minScale: number }[]): number {
   const astIndex = entries.reduce((s, { pr, minScale }) =>
@@ -953,8 +962,8 @@ export function simulateSeason(
   const astWinFactor     = 1.0 + (astFactor - 1.0) * 0.5                                          // ±2.5% on team roll
   const rebOppFactor     = 1.0 - (rebFactor - 1.0) * 0.25                                         // ±2.25% on opp roll (def boards)
   // Tiered: 40%+ = elite (1.25×), 37–40% = good (1.12×), 34–37% = solid (1.0×), below 34% = 0
-  const shooterCount           = entries.reduce((s, e) => { const w = STARTER_SLOTS.includes(e.pr.slot) ? 1.08 : 0.90; const f = e.pr.player.FG3_PCT ?? 0; const fg3m = e.pr.player.FG3M ?? 0; if (fg3m < 0.5) return s; return s + (f >= 0.40 ? e.minScale * 1.25 : f >= 0.37 ? e.minScale * 1.12 : f >= 0.34 ? e.minScale : f >= 0.30 ? e.minScale * 0.5 : f >= 0.25 ? e.minScale * 0.25 : 0) * w }, 0)
-  const highVolumeShooterCount = entries.reduce((s, e) => { const w = STARTER_SLOTS.includes(e.pr.slot) ? 1.08 : 0.90; return s + ((e.pr.player.FG3M ?? 0) >= 2.9 ? e.minScale * w : 0) }, 0)
+  const shooterCount           = entries.reduce((s, e) => { const w = spacingSlotWeight(e.pr.slot, simEra); const f = e.pr.player.FG3_PCT ?? 0; const fg3m = e.pr.player.FG3M ?? 0; if (fg3m < 0.5) return s; return s + (f >= 0.40 ? e.minScale * 1.25 : f >= 0.37 ? e.minScale * 1.12 : f >= 0.34 ? e.minScale : f >= 0.30 ? e.minScale * 0.5 : f >= 0.25 ? e.minScale * 0.25 : 0) * w }, 0)
+  const highVolumeShooterCount = entries.reduce((s, e) => { const w = spacingSlotWeight(e.pr.slot, simEra); return s + ((e.pr.player.FG3M ?? 0) >= 2.9 ? e.minScale * w : 0) }, 0)
   const isPreThreePt      = simEra === '50s' || simEra === '60s' || simEra === '70s'
   const spacingBaseline   = simEra === '20s' ? 6 : simEra === '10s' ? 5 : simEra === '00s' ? 4 : simEra === '90s' ? 3 : simEra === '80s' ? 2 : 0
   // Pre-3PT eras: high-volume shooters hurt (anachronistic). Modern eras: below baseline hurts more than above helps.
@@ -1124,8 +1133,8 @@ export function simulatePlayoffs(
   const rebWinFactor     = 1.0 + (rebFactor - 1.0) * 0.5
   const astWinFactor     = 1.0 + (astFactor - 1.0) * 0.5
   const rebOppFactor     = 1.0 - (rebFactor - 1.0) * 0.25
-  const shooterCount             = entries.reduce((s, e) => { const w = STARTER_SLOTS.includes(e.pr.slot) ? 1.08 : 0.90; const f = e.pr.player.FG3_PCT ?? 0; const fg3m = e.pr.player.FG3M ?? 0; if (fg3m < 0.5) return s; return s + (f >= 0.40 ? e.minScale * 1.25 : f >= 0.37 ? e.minScale * 1.12 : f >= 0.34 ? e.minScale : f >= 0.30 ? e.minScale * 0.5 : f >= 0.25 ? e.minScale * 0.25 : 0) * w }, 0)
-  const highVolumeShooterCountPO = entries.reduce((s, e) => { const w = STARTER_SLOTS.includes(e.pr.slot) ? 1.08 : 0.90; return s + ((e.pr.player.FG3M ?? 0) >= 2.9 ? e.minScale * w : 0) }, 0)
+  const shooterCount             = entries.reduce((s, e) => { const w = spacingSlotWeight(e.pr.slot, simEra); const f = e.pr.player.FG3_PCT ?? 0; const fg3m = e.pr.player.FG3M ?? 0; if (fg3m < 0.5) return s; return s + (f >= 0.40 ? e.minScale * 1.25 : f >= 0.37 ? e.minScale * 1.12 : f >= 0.34 ? e.minScale : f >= 0.30 ? e.minScale * 0.5 : f >= 0.25 ? e.minScale * 0.25 : 0) * w }, 0)
+  const highVolumeShooterCountPO = entries.reduce((s, e) => { const w = spacingSlotWeight(e.pr.slot, simEra); return s + ((e.pr.player.FG3M ?? 0) >= 2.9 ? e.minScale * w : 0) }, 0)
   const isPreThreePtPO      = simEra === '50s' || simEra === '60s' || simEra === '70s'
   const spacingBaselinePO   = simEra === '20s' ? 6 : simEra === '10s' ? 5 : simEra === '00s' ? 4 : simEra === '90s' ? 3 : simEra === '80s' ? 2 : 0
   const spacingDevPO        = isPreThreePtPO ? -highVolumeShooterCountPO : shooterCount - spacingBaselinePO
