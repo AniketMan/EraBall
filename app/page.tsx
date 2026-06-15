@@ -1209,15 +1209,15 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
 
   const fillDevPreset = () => {
     const preset: { name: string; era: Era; team: string; slot: SlotPosition }[] = [
-      { name: 'Jamal Murray',              era: '20s', team: 'DEN', slot: 'PG' },
-      { name: 'Kentavious Caldwell-Pope',  era: '20s', team: 'DEN', slot: 'SG' },
-      { name: 'Michael Porter Jr.',        era: '20s', team: 'DEN', slot: 'SF' },
-      { name: 'Aaron Gordon',              era: '20s', team: 'DEN', slot: 'PF' },
-      { name: 'Nikola Jokic',             era: '20s', team: 'DEN', slot: 'C'  },
-      { name: 'Bruce Brown',               era: '20s', team: 'DEN', slot: 'B1' },
-      { name: 'Christian Braun',           era: '20s', team: 'DEN', slot: 'B2' },
-      { name: 'Julian Strawther',          era: '20s', team: 'DEN', slot: 'B3' },
-      { name: 'Peyton Watson',             era: '20s', team: 'DEN', slot: 'B4' },
+      { name: 'Damian Lillard',   era: '10s', team: 'POR', slot: 'PG' },
+      { name: 'Klay Thompson',    era: '10s', team: 'GSW', slot: 'SG' },
+      { name: 'Kawhi Leonard',    era: '10s', team: 'TOR', slot: 'SF' },
+      { name: 'Anthony Davis',    era: '10s', team: 'NOP', slot: 'PF' },
+      { name: 'Rudy Gobert',      era: '10s', team: 'UTA', slot: 'C'  },
+      { name: 'Jimmy Butler',     era: '10s', team: 'MIA', slot: 'B1' },
+      { name: 'Jaylen Brown',     era: '10s', team: 'BOS', slot: 'B2' },
+      { name: 'Draymond Green',   era: '10s', team: 'GSW', slot: 'B3' },
+      { name: 'Bam Adebayo',      era: '10s', team: 'MIA', slot: 'B4' },
     ]
     const newSlots = emptySlots()
     const drafted = new Set<string>()
