@@ -1026,10 +1026,10 @@ export function firstRoundLabel(simEra: Era): string {
 // Finals (round 4): scales with team's raw rating so stronger teams face proportionally harder opponents.
 function playoffOppRating(round: number, teamWins: number, teamRaw: number, simEra: Era): { offRating: number; defFactor: number } {
   const idx = round - 1
-  const winsBase = teamWins >= 60 ? [39, 43, 47, 52][idx]
-                 : teamWins >= 53 ? [40, 44, 48, 53][idx]
-                 : teamWins >= 47 ? [42, 45, 49, 53][idx]
-                 :                  [44, 46, 50, 55][idx]
+  const winsBase = teamWins >= 60 ? [45, 49, 53, 52][idx]
+                 : teamWins >= 53 ? [46, 50, 54, 53][idx]
+                 : teamWins >= 47 ? [48, 51, 55, 53][idx]
+                 :                  [50, 52, 56, 55][idx]
   // Finals opponent scales with team strength — max of wins-based floor and team's raw rating
   const baseRating = round === 4 ? Math.max(winsBase, Math.round(teamRaw * 1.00)) : winsBase
   const eraDifficulty = ERA_DIFFICULTY[simEra] ?? 1.00
