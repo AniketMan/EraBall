@@ -1017,12 +1017,15 @@ export function firstRoundLabel(simEra: Era): string {
 // Opponent profile per round based on team's regular season wins.
 // offRating: raw opponent strength (then scaled by user's playerDefFactor)
 // defFactor: how well the opponent defends — multiplied against effectiveTeamRating each round
-function playoffOppRating(round: number, teamWins: number): { offRating: number; defFactor: number } {
+// Finals (round 4): scales with team's raw rating so stronger teams face proportionally harder opponents.
+function playoffOppRating(round: number, teamWins: number, teamRaw: number): { offRating: number; defFactor: number } {
   const idx = round - 1
-  const offRating = teamWins >= 60 ? [39, 43, 47, 52][idx]
-                  : teamWins >= 53 ? [40, 44, 48, 53][idx]
-                  : teamWins >= 47 ? [42, 45, 49, 53][idx]
-                  :                  [44, 46, 50, 55][idx]
+  const winsBase = teamWins >= 60 ? [39, 43, 47, 52][idx]
+                 : teamWins >= 53 ? [40, 44, 48, 53][idx]
+                 : teamWins >= 47 ? [42, 45, 49, 53][idx]
+                 :                  [44, 46, 50, 55][idx]
+  // Finals opponent scales with team strength — max of wins-based floor and team's raw rating
+  const offRating = round === 4 ? Math.max(winsBase, Math.round(teamRaw * 1.00)) : winsBase
   // Later rounds face better defenses — mild progressive reduction to team's effective rating
   const defFactor = [1.00, 0.99, 0.97, 0.95][idx]
   return { offRating, defFactor }
@@ -1106,7 +1109,7 @@ export function simulatePlayoffs(
   let champion = false
 
   for (let r = 0; r < 4; r++) {
-    const { offRating: oppMean, defFactor: roundDefFactor } = playoffOppRating(r + 1, regularSeasonWins)
+    const { offRating: oppMean, defFactor: roundDefFactor } = playoffOppRating(r + 1, regularSeasonWins, rawRating)
     const winsNeeded = r === 0 ? firstRoundWinsNeeded(simEra) : 4
     let sW = 0, sL = 0
 
