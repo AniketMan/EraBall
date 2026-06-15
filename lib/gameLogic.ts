@@ -1096,7 +1096,7 @@ function playoffOppRating(round: number, teamWins: number, teamRaw: number, simE
                  : teamWins >= 47 ? [48, 51, 55, 53][idx]
                  :                  [50, 52, 56, 55][idx]
   // Finals opponent scales with team strength — slightly weaker than user's raw rating
-  const baseRating = round === 4 ? Math.max(winsBase, Math.round(teamRaw * 0.90)) : winsBase
+  const baseRating = round === 4 ? Math.max(winsBase, Math.round(teamRaw * 0.88)) : winsBase
   const eraDifficulty = ERA_DIFFICULTY[simEra] ?? 1.00
   const offRating = Math.round(baseRating * eraDifficulty)
   // Later rounds face better defenses — mild progressive reduction to team's effective rating
