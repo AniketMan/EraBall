@@ -807,8 +807,13 @@ function generateGameScore(
 
 // League-average indices for normalisation (calibrated to typical 9-man roster)
 const LEAGUE_AVG_DEF_INDEX = 8.0
-const LEAGUE_AVG_REB_INDEX = 38
 const LEAGUE_AVG_AST_INDEX = 22
+
+// Era-specific rebounding baselines — earlier eras had lower FG% (more misses = more boards)
+// Computed from typical per-position RPG weighted by rebSlotMod × minScale across a 9-man roster
+const ERA_LEAGUE_AVG_REB: Record<Era, number> = {
+  '50s': 70, '60s': 63, '70s': 52, '80s': 47, '90s': 44, '00s': 42, '10s': 38, '20s': 38,
+}
 
 // Guards rarely protect the rim regardless of their natural BLK rate
 function blkSlotMod(slot: string): number {
@@ -860,18 +865,21 @@ function calcPlayerDefFactor(entries: { pr: PlayerRating; minScale: number }[]):
 }
 
 // High REB → more team possessions (+score) and fewer opp second chances (−opp score)
-export function calcRebFactor(entries: { pr: PlayerRating; minScale: number }[]): number {
-  const rebIndex = entries.reduce((s, { pr, minScale }) =>
+export function calcRebFactor(entries: { pr: PlayerRating; minScale: number }[], simEra: Era): number {
+  const leagueAvg = ERA_LEAGUE_AVG_REB[simEra]
+  const eraScale  = leagueAvg / ERA_LEAGUE_AVG_REB['20s']  // scale slot expectations relative to modern
+  const rebIndex  = entries.reduce((s, { pr, minScale }) =>
     s + (pr.player.REB ?? 0) * pr.eraMod * minScale * rebSlotMod(pr.slot), 0)
-  // C and PF necessity: a guard at C with 4.7 RPG can't be offset by perimeter boards
+  // C and PF necessity: weak rebounders at key slots can't be offset by perimeter boards.
+  // Slot expectations scale with era — a 10 RPG center is fine in the 20s but below par in the 60s.
   const slotPenalty = (['C', 'PF'] as SlotPosition[]).reduce((pen, slot) => {
     const entry = entries.find(ent => ent.pr.slot === slot)
     if (!entry) return pen
-    const expected = slot === 'C' ? 7.5 : 5.5
+    const expected = (slot === 'C' ? 7.5 : 5.5) * eraScale
     const contrib = (entry.pr.player.REB ?? 0) * entry.pr.eraMod * entry.minScale
     return pen + Math.max(0, expected - contrib)
   }, 0)
-  const raw = 1.0 + (rebIndex - slotPenalty - LEAGUE_AVG_REB_INDEX) / LEAGUE_AVG_REB_INDEX * 0.15
+  const raw = 1.0 + (rebIndex - slotPenalty - leagueAvg) / leagueAvg * 0.15
   return Math.max(0.91, Math.min(1.09, raw))
 }
 
@@ -925,7 +933,7 @@ export function simulateSeason(
   const baseExpectedScore = entries.reduce((s, e) => s + (e.pr.player.PTS ?? 0) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty), 0)
   const expectedTeamScore = Math.max(85, Math.min(132, baseExpectedScore * (1 + avgFGDelta * 3)))
   const playerDefFactor = calcPlayerDefFactor(entries)
-  const rebFactor = calcRebFactor(entries)
+  const rebFactor = calcRebFactor(entries, simEra)
   const astFactor = calcAstFactor(entries)
   const defBonus = coachDefBonus ?? coachBonus(coachDefGrade)
   const offBonus = coachOffBonus ?? coachBonus(coachOffGrade)
@@ -1098,7 +1106,7 @@ export function simulatePlayoffs(
   })
 
   const playerDefFactor = calcPlayerDefFactor(entries)
-  const rebFactor = calcRebFactor(entries)
+  const rebFactor = calcRebFactor(entries, simEra)
   const astFactor = calcAstFactor(entries)
   const defBonus = coachDefBonus ?? coachBonus(coachDefGrade)
   const offBonus = coachOffBonus ?? coachBonus(coachOffGrade)

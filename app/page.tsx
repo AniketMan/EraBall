@@ -2858,7 +2858,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
     setTeamAnalysis(ta)
     const { stl: teamSTL, blk: teamBLK } = calcTeamDefTotals(pr)
     const rebEntries = pr.map(r => ({ pr: r, minScale: SLOT_MPG[r.slot] / 35 }))
-    setSeasonOppStats(genOppTeamStats(aos, simEra, teamSTL, teamBLK, calcRebFactor(rebEntries)))
+    setSeasonOppStats(genOppTeamStats(aos, simEra, teamSTL, teamBLK, calcRebFactor(rebEntries, simEra)))
     let idx = 0
     intervalRef.current = setInterval(() => {
       setGames(allGames.slice(0, ++idx))
@@ -2875,7 +2875,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
     const poAvgOpp = result.allGames.reduce((s, g) => s + g.oppScore, 0) / result.allGames.length
     const { stl: poTeamSTL, blk: poTeamBLK } = calcTeamDefTotals(pr)
     const poRebEntries = pr.map(r => ({ pr: r, minScale: SLOT_MPG[r.slot] / 35 }))
-    setPlayoffOppStats(genOppTeamStats(poAvgOpp, simEra, poTeamSTL, poTeamBLK, calcRebFactor(poRebEntries)))
+    setPlayoffOppStats(genOppTeamStats(poAvgOpp, simEra, poTeamSTL, poTeamBLK, calcRebFactor(poRebEntries, simEra)))
     setTimeout(() => setPlayoffRevealIndex(0), 400)
   }
 
