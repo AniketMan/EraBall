@@ -14,6 +14,7 @@ const FLEX_PLAYERS: Record<string, SlotPosition[]> = {
   'Paolo Banchero':          ['PG', 'SG', 'SF', 'PF'],
   'Jimmy Butler':            ['PG', 'SG', 'SF', 'PF'],
   'Kawhi Leonard':           ['SG', 'SF', 'PF'],
+  'Paul George':             ['SG', 'SF', 'PF'],
 
   'Nikola Jokic':            ['PG', 'PF', 'C'],
 
@@ -29,6 +30,7 @@ const POSITION_LOCK: Record<string, SlotPosition[]> = {
   'Joel Embiid':         ['PF', 'C'],
   'LaMarcus Aldridge':   ['PF', 'C'],
   'Tim Duncan':          ['PF', 'C'],
+  'Karl Malone':         ['PF'],
 }
 
 export function applyFlexTag(player: Player): Player {
