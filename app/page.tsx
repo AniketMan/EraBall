@@ -2527,10 +2527,12 @@ function computeSeasonAwards(
       })
     }
   } else if (wins >= t.mvpWins) {
-    const tdCandidate = rated.find(({ s }) =>
+    const starterSlots: SlotPosition[] = ['PG', 'SG', 'SF', 'PF', 'C']
+    const ratedStarters = rated.filter(({ s }) => starterSlots.includes(s.slot))
+    const tdCandidate = ratedStarters.find(({ s }) =>
       (s.PTS > 20 && s.REB > 10 && s.AST > 10) || (s.PTS > 20 && s.AST > 10 && s.REB > 7)
     )
-    const mvpCandidate = tdCandidate ?? rated
+    const mvpCandidate = tdCandidate ?? ratedStarters
       .filter(({ s, base }) => base > t.mvpBase && s.PTS > t.mvpPPG)
       .sort((a, b) => b.base - a.base)[0]
     if (mvpCandidate) {
