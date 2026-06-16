@@ -3866,36 +3866,6 @@ export default function Home() {
         </a>
       </div>
 
-      {/* Mobile: inline at page bottom, doesn't float over content */}
-      <div className="suggestions-btn-mobile" style={{ textAlign: 'center', padding: '16px 0 32px', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-        <a
-          href="https://eshanbhattdesign.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
-            color: G.greyDark, border: `1px solid ${G.border}`,
-            padding: '6px 12px', background: G.surface,
-            textDecoration: 'none', opacity: 0.7,
-          }}
-        >
-          eshanbhattdesign.com
-        </a>
-        <a
-          href="https://x.com/Eshan_Design"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
-            color: G.greyDark, border: `1px solid ${G.border}`,
-            padding: '6px 12px', background: G.surface,
-            textDecoration: 'none', opacity: 0.7,
-          }}
-        >
-          Suggestions or bugs? DM me
-        </a>
-      </div>
-
       {/* Disclaimer */}
       <div style={{ textAlign: 'center', padding: '12px 24px 28px', maxWidth: 640, margin: '0 auto' }}>
         <p style={{ fontSize: 10, color: G.greyDark, opacity: 0.5, letterSpacing: '0.04em', lineHeight: 1.6, margin: 0 }}>
@@ -3903,11 +3873,6 @@ export default function Home() {
         </p>
       </div>
 
-      <style>{`
-        .suggestions-btn-mobile { display: flex; }
-        @media (min-width: 641px) { .suggestions-btn-mobile { display: none !important; } }
-        @media (max-width: 640px)  { .suggestions-btn-desktop { display: none !important; } }
-      `}</style>
     </div>
   )
 }
