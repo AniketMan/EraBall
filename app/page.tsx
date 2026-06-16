@@ -765,18 +765,19 @@ function PatchNotesModal({ onClose }: { onClose: () => void }) {
         </div>
         {([
           { section: 'Simulation', items: [
-            'Finals opponent difficulty reduced — harder to dominate in the championship',
-            'Shooting specialists (Korver, Miller, Allen, etc.) now properly rewarded for spacing',
+            'Finals opponent difficulty reduced. I went overboard last time.',
+            'Specialist shooters like Korver, Miller, Allen etc. now properly reward you for spacing.',
+            'Increased difficulty of opponents each round of the playoffs.',
           ]},
           { section: 'Performance', items: [
-            'Headshot images cached in browser — faster load times for returning players',
-            'Player data file reduced by 39% — quicker initial load',
+            'Headshots are cached in the browser. So if you have seen a player before on your device, it does not need to load that headshot again through the network.',
+          ]},
+          { section: 'UI', items: [
+            'Sandbox: Added an optional spin tab that is in the regular mode. In case you still wanted random players and liked that method.',
+            'Footer links stay at the footer of the page. Do not follow your scroll.',
           ]},
           { section: 'Compatibility', items: [
-            'Older iPhones (iPhone X era) now fully supported',
-          ]},
-          { section: 'Sandbox', items: [
-            'Spin tab added — use the full random spin inside sandbox mode',
+            'Supports iOS 13+',
           ]},
         ] as { section: string; items: string[] }[]).map(({ section, items }) => (
           <div key={section} className="mb-4">
