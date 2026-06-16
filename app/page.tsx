@@ -752,14 +752,32 @@ function TopBar({ onRestart, right }: { onRestart: () => void; right?: React.Rea
 }
 
 // ─── Phase 1: Era Selection ───────────────────────────────────────────────────
+const V1_NOTES = [
+  { section: 'Simulation', items: [
+    'Regular season opponent baseline difficulty moderately improved, reflecting the stats of that era. Reducing regular season dominance that\'s not deserved.',
+    'Elite Spacing bonus increased. Good to elite spacing was not rewarded enough (depending on the era).',
+    'Defensive anchors now have more impact on overall team defense.',
+    'Sim opponent defense baseline was reduced. I originally had them set based off era stats without taking into account 9 man rotations.',
+  ]},
+  { section: 'Era Modifiers', items: [
+    'Backward travel reduced to a base 3%/decade. Making modern players going back more impactful. Older players\' larger penalty to modern eras stays the same.',
+    '10s → 20s treated as the same modern era. 98% modifier in either direction.',
+    'Tall centers and players (~6\'10"+) get reduced backward penalty. 1.5%/decade instead of 3%. Bam Adebayo and others are specific name exceptions.',
+  ]},
+  { section: 'Draft', items: [
+    'Custom era range excluded from lifetime stats. Runs with a locked custom range no longer count toward your lifetime record.',
+  ]},
+]
+
 function PatchNotesModal({ onClose }: { onClose: () => void }) {
+  const [showV1, setShowV1] = useState(false)
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }} onClick={onClose}>
       <div style={{ background: G.surface, border: `1px solid ${G.border}`, maxWidth: 520, width: '100%', maxHeight: '80vh', overflowY: 'auto', padding: '28px 32px' }} onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <div>
             <div style={{ ...BEBAS, fontSize: 24, color: G.white, letterSpacing: '0.05em' }}>What's New</div>
-            <div style={{ fontSize: 11, color: G.gold, letterSpacing: '0.12em', textTransform: 'uppercase' }}>v1.1</div>
+            <div style={{ fontSize: 11, color: G.gold, letterSpacing: '0.12em', textTransform: 'uppercase' }}>v1.1 · June 16</div>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: G.greyDark, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>✕</button>
         </div>
@@ -783,12 +801,40 @@ function PatchNotesModal({ onClose }: { onClose: () => void }) {
           <div key={section} className="mb-4">
             <div style={{ fontSize: 11, color: G.gold, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6 }}>{section}</div>
             {items.map((item, i) => (
-              <div key={i} style={{ fontSize: 13, color: G.greyDark, marginBottom: 4, paddingLeft: 12, borderLeft: `2px solid ${G.border}` }}>
-                {item}
+              <div key={i} style={{ fontSize: 13, color: G.greyDark, marginBottom: 8, display: 'flex', gap: 8 }}>
+                <span style={{ color: G.greyDark, flexShrink: 0 }}>—</span>
+                <span>{item}</span>
               </div>
             ))}
           </div>
         ))}
+
+        {/* v1 collapsible */}
+        <div style={{ borderTop: `1px solid ${G.border}`, marginTop: 8, paddingTop: 12 }}>
+          <button
+            onClick={() => setShowV1(v => !v)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: 0 }}
+          >
+            <span style={{ fontSize: 11, color: G.greyDark, letterSpacing: '0.12em', textTransform: 'uppercase' }}>V1 · June 12</span>
+            <span style={{ fontSize: 10, color: G.greyDark, display: 'inline-block', transform: showV1 ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▼</span>
+          </button>
+          {showV1 && (
+            <div style={{ marginTop: 12 }}>
+              <div style={{ fontSize: 13, color: G.greyDark, marginBottom: 12, fontStyle: 'italic' }}>Post beta!</div>
+              {V1_NOTES.map(({ section, items }) => (
+                <div key={section} className="mb-4">
+                  <div style={{ fontSize: 11, color: G.gold, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6 }}>{section}</div>
+                  {items.map((item, i) => (
+                    <div key={i} style={{ fontSize: 13, color: G.greyDark, marginBottom: 8, display: 'flex', gap: 8 }}>
+                      <span style={{ color: G.greyDark, flexShrink: 0 }}>—</span>
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
