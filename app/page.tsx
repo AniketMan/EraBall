@@ -3824,14 +3824,8 @@ export default function Home() {
       {phase === 'coach-draft' && <CoachDraftScreen coaches={coaches} onCoachSelected={c => { setCoach(c); setPhase('simulation') }} onRestart={restart} sandboxMode={startSandbox} greyscaleBtn={greyscaleBtn} />}
       {phase === 'simulation' && coach && <SimulationScreen slots={slots} coach={coach} simEra={simEra} onRestart={restart} greyscaleBtn={greyscaleBtn} sandboxMode={startSandbox} customEraRange={draftCustomEras} />}
 
-      {/* Desktop: fixed bottom-right */}
-      <div
-        className="suggestions-btn-desktop"
-        style={{
-          position: 'fixed', bottom: 20, right: 20, zIndex: 500,
-          display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6,
-        }}
-      >
+      {/* Bottom-right footer links */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, padding: '16px 20px 32px' }}>
         <a
           href="https://eshanbhattdesign.com"
           target="_blank"
