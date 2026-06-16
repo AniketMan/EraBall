@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     const contentType = imgRes.headers.get('Content-Type') ?? 'image/jpeg'
 
     return new NextResponse(buffer, {
-      headers: { 'Content-Type': contentType, 'Cache-Control': 'public, max-age=86400' }
+      headers: { 'Content-Type': contentType, 'Cache-Control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=3600' }
     })
   } catch {
     return new NextResponse('Error', { status: 500 })

@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
 
   if (cache.has(personId)) {
     return new NextResponse(cache.get(personId)!, {
-      headers: { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=604800' }
+      headers: { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=604800, s-maxage=604800, stale-while-revalidate=86400' }
     })
   }
 
@@ -23,6 +23,6 @@ export async function GET(request: NextRequest) {
   const buffer = await res.arrayBuffer()
   cache.set(personId, buffer)
   return new NextResponse(buffer, {
-    headers: { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=604800' }
+    headers: { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=604800, s-maxage=604800, stale-while-revalidate=86400' }
   })
 }
