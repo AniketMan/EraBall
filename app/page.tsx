@@ -357,7 +357,7 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra }: { player: Pl
               </TagTooltip>
             )}
             {player.defAnchor && (
-              <TagTooltip tip="Defensive impact beyond the stat sheet. T1 carries a larger boost than T2.">
+              <TagTooltip tip={(player.anchorTier ?? 1) === 1 ? "Elite defensive anchor — Defensive impact beyond the stat sheet. T1 carries a larger boost than T2." : "Solid defensive anchor — Defensive impact beyond the stat sheet. T1 carries a larger boost than T2."}>
                 <span className="text-xs uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: '#4A9ECC' }}>
                   Defensive Anchor <span style={{ opacity: 0.7 }}>T{player.anchorTier ?? 1}</span>
                 </span>
