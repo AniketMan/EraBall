@@ -3749,6 +3749,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
   )
 }
 
+
 // ─── Root ─────────────────────────────────────────────────────────────────────
 export default function Home() {
   const [phase, setPhase] = useState<GamePhase>('era-select')
