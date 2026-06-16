@@ -752,6 +752,47 @@ function TopBar({ onRestart, right }: { onRestart: () => void; right?: React.Rea
 }
 
 // ─── Phase 1: Era Selection ───────────────────────────────────────────────────
+function PatchNotesModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }} onClick={onClose}>
+      <div style={{ background: G.surface, border: `1px solid ${G.border}`, maxWidth: 520, width: '100%', maxHeight: '80vh', overflowY: 'auto', padding: '28px 32px' }} onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <div style={{ ...BEBAS, fontSize: 24, color: G.white, letterSpacing: '0.05em' }}>What's New</div>
+            <div style={{ fontSize: 11, color: G.gold, letterSpacing: '0.12em', textTransform: 'uppercase' }}>v1.1</div>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: G.greyDark, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>✕</button>
+        </div>
+        {([
+          { section: 'Simulation', items: [
+            'Finals opponent difficulty reduced — harder to dominate in the championship',
+            'Shooting specialists (Korver, Miller, Allen, etc.) now properly rewarded for spacing',
+          ]},
+          { section: 'Performance', items: [
+            'Headshot images cached in browser — faster load times for returning players',
+            'Player data file reduced by 39% — quicker initial load',
+          ]},
+          { section: 'Compatibility', items: [
+            'Older iPhones (iPhone X era) now fully supported',
+          ]},
+          { section: 'Sandbox', items: [
+            'Spin tab added — use the full random spin inside sandbox mode',
+          ]},
+        ] as { section: string; items: string[] }[]).map(({ section, items }) => (
+          <div key={section} className="mb-4">
+            <div style={{ fontSize: 11, color: G.gold, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6 }}>{section}</div>
+            {items.map((item, i) => (
+              <div key={i} style={{ fontSize: 13, color: G.greyDark, marginBottom: 4, paddingLeft: 12, borderLeft: `2px solid ${G.border}` }}>
+                {item}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function EraSelection({ onEraSelected, onSandboxSelected, onRestart, onLifetimeStats }: { onEraSelected: (era: Era) => void; onSandboxSelected: (era: Era) => void; onRestart: () => void; onLifetimeStats: () => void }) {
   const [spinning, setSpinning] = useState(false)
   const [era, setEra] = useState<Era | null>(null)
@@ -761,6 +802,7 @@ function EraSelection({ onEraSelected, onSandboxSelected, onRestart, onLifetimeS
   const [displayEra, setDisplayEra] = useState<Era | null>(null)
   const [spinKey, setSpinKey] = useState(0)
   const [spinPhase, setSpinPhase] = useState<'fast' | 'slow' | 'land'>('fast')
+  const [showPatchNotes, setShowPatchNotes] = useState(false)
 
   const spinRandom = () => {
     setSpinning(true)
@@ -937,8 +979,15 @@ function EraSelection({ onEraSelected, onSandboxSelected, onRestart, onLifetimeS
           <Btn onClick={onLifetimeStats} variant="ghost" className="w-48 py-3 text-sm">
             Lifetime Stats
           </Btn>
+          <button
+            onClick={() => setShowPatchNotes(true)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: G.gold, letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.8, marginTop: 4 }}
+          >
+            What's New!
+          </button>
         </div>
       </div>
+      {showPatchNotes && <PatchNotesModal onClose={() => setShowPatchNotes(false)} />}
       {showHelp && <HowToPlayModal onClose={() => {
         try { localStorage.setItem('eraball_seen_help', '1') } catch {}
         setShowHelp(false)
