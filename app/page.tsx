@@ -1177,22 +1177,32 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
     })
   }
 
-  const loadSandboxRoster = () => {
+  const loadSandboxRosterFor = (team: string, era: Era) => {
     setDraftedIds(ids => {
       const pool = players.filter(p => {
-        if (!playerMatchesEra(p, sandboxEra) || ids.has(p.person_id)) return false
-        const eraTeams = p.all_teams_by_era?.[sandboxEra] as string[] | undefined
-        return eraTeams ? eraTeams.includes(sandboxTeam) : playerTeamForEra(p, sandboxEra) === sandboxTeam
+        if (!playerMatchesEra(p, era) || ids.has(p.person_id)) return false
+        const eraTeams = p.all_teams_by_era?.[era] as string[] | undefined
+        return eraTeams ? eraTeams.includes(team) : playerTeamForEra(p, era) === team
       })
-      if (pool.length === 0) { alert(`No players found for ${sandboxTeam} - ${sandboxEra}`); return ids }
-      const sorted = pool.map(p => applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, sandboxEra, sandboxTeam))))))
+      if (pool.length === 0) { alert(`No players found for ${team} - ${era}`); return ids }
+      const sorted = pool.map(p => applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, era, team))))))
         .sort((a, b) => (b.PTS ?? 0) - (a.PTS ?? 0))
-      setLockedTeam(sandboxTeam); setLockedEra(sandboxEra)
-      setSpinTeamDisplay(sandboxTeam); setSpinEraDisplay(sandboxEra)
+      setLockedTeam(team); setLockedEra(era)
+      setSpinTeamDisplay(team); setSpinEraDisplay(era)
       setRosterPool(sorted)
       setSelectedPlayer(null); setPendingSlotIdx(null); setHighlightEmpty(false); setAwaitingSpin(false)
       return ids
     })
+  }
+
+  const loadSandboxRoster = () => loadSandboxRosterFor(sandboxTeam, sandboxEra)
+
+  const randomSandbox = () => {
+    if (validCombos.length === 0) return
+    const combo = validCombos[Math.floor(Math.random() * validCombos.length)]
+    setSandboxTeam(combo.team)
+    setSandboxEra(combo.era)
+    loadSandboxRosterFor(combo.team, combo.era)
   }
 
   const loadPlayerVersions = () => {
@@ -1463,9 +1473,14 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                       ))}
                     </select>
                   </div>
-                  <Btn onClick={loadSandboxRoster} variant="outline" className="w-full py-3">
-                    Load Roster
-                  </Btn>
+                  <div className="flex gap-2">
+                    <Btn onClick={randomSandbox} variant="ghost" className="flex-1 py-3">
+                      Random
+                    </Btn>
+                    <Btn onClick={loadSandboxRoster} variant="outline" className="flex-1 py-3">
+                      Load Roster
+                    </Btn>
+                  </div>
                   </>
                   )}
                 </div>
