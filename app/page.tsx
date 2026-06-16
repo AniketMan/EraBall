@@ -985,7 +985,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
   const [sandboxEra, setSandboxEra] = useState<Era>(ALL_ERAS[6])
   const [sandboxTeamSearch, setSandboxTeamSearch] = useState('')
   const [sandboxTeamOpen, setSandboxTeamOpen] = useState(false)
-  const [sandboxPlayerMode, setSandboxPlayerMode] = useState(false)
+  const [sandboxTab, setSandboxTab] = useState<'spin' | 'team' | 'player'>('team')
   const [sandboxPlayerSearch, setSandboxPlayerSearch] = useState('')
 
   const filledCount = slots.filter(s => s.player !== null).length
@@ -1177,32 +1177,22 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
     })
   }
 
-  const loadSandboxRosterFor = (team: string, era: Era) => {
+  const loadSandboxRoster = () => {
     setDraftedIds(ids => {
       const pool = players.filter(p => {
-        if (!playerMatchesEra(p, era) || ids.has(p.person_id)) return false
-        const eraTeams = p.all_teams_by_era?.[era] as string[] | undefined
-        return eraTeams ? eraTeams.includes(team) : playerTeamForEra(p, era) === team
+        if (!playerMatchesEra(p, sandboxEra) || ids.has(p.person_id)) return false
+        const eraTeams = p.all_teams_by_era?.[sandboxEra] as string[] | undefined
+        return eraTeams ? eraTeams.includes(sandboxTeam) : playerTeamForEra(p, sandboxEra) === sandboxTeam
       })
-      if (pool.length === 0) { alert(`No players found for ${team} - ${era}`); return ids }
-      const sorted = pool.map(p => applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, era, team))))))
+      if (pool.length === 0) { alert(`No players found for ${sandboxTeam} - ${sandboxEra}`); return ids }
+      const sorted = pool.map(p => applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, sandboxEra, sandboxTeam))))))
         .sort((a, b) => (b.PTS ?? 0) - (a.PTS ?? 0))
-      setLockedTeam(team); setLockedEra(era)
-      setSpinTeamDisplay(team); setSpinEraDisplay(era)
+      setLockedTeam(sandboxTeam); setLockedEra(sandboxEra)
+      setSpinTeamDisplay(sandboxTeam); setSpinEraDisplay(sandboxEra)
       setRosterPool(sorted)
       setSelectedPlayer(null); setPendingSlotIdx(null); setHighlightEmpty(false); setAwaitingSpin(false)
       return ids
     })
-  }
-
-  const loadSandboxRoster = () => loadSandboxRosterFor(sandboxTeam, sandboxEra)
-
-  const randomSandbox = () => {
-    if (validCombos.length === 0) return
-    const combo = validCombos[Math.floor(Math.random() * validCombos.length)]
-    setSandboxTeam(combo.team)
-    setSandboxEra(combo.era)
-    loadSandboxRosterFor(combo.team, combo.era)
   }
 
   const loadPlayerVersions = () => {
@@ -1363,25 +1353,22 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
           <div className="space-y-4">
 
             {sandboxMode ? (
-              /* ── Sandbox mode: team/era picker for all users ── */
+              /* ── Sandbox mode ── */
               <div style={{ border: `1px solid ${G.gold}33`, background: G.surface }}>
                 <div className="px-3 py-2 flex items-center justify-between" style={{ borderBottom: `1px solid ${G.border}`, background: `${G.gold}0a` }}>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs uppercase tracking-widest" style={{ color: G.gold }}>Sandbox</span>
-                    <span className="text-xs" style={{ color: G.greyDark }}>— {sandboxPlayerMode ? 'search by player' : 'pick any team / era'}</span>
-                  </div>
+                  <span className="text-xs uppercase tracking-widest" style={{ color: G.gold }}>Sandbox</span>
                   <div className="flex" style={{ border: `1px solid ${G.border}` }}>
-                    {(['Team', 'Player'] as const).map(mode => (
+                    {(['Spin', 'Team', 'Player'] as const).map(tab => (
                       <button
-                        key={mode}
-                        onClick={() => setSandboxPlayerMode(mode === 'Player')}
+                        key={tab}
+                        onClick={() => setSandboxTab(tab.toLowerCase() as 'spin' | 'team' | 'player')}
                         className="text-xs uppercase tracking-widest px-2 py-1"
                         style={{
-                          background: (mode === 'Player') === sandboxPlayerMode ? `${G.gold}22` : 'transparent',
-                          color: (mode === 'Player') === sandboxPlayerMode ? G.gold : G.greyDark,
+                          background: sandboxTab === tab.toLowerCase() ? `${G.gold}22` : 'transparent',
+                          color: sandboxTab === tab.toLowerCase() ? G.gold : G.greyDark,
                           border: 'none', cursor: 'pointer',
                         }}
-                      >{mode}</button>
+                      >{tab}</button>
                     ))}
                   </div>
                 </div>
@@ -1392,98 +1379,105 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                     </Btn>
                   </div>
                 )}
-                <div className="p-3 space-y-3">
-                  {sandboxPlayerMode ? (
-                    <>
-                      <div>
-                        <div className="text-xs uppercase tracking-widest mb-1" style={{ color: G.grey }}>Player Name</div>
-                        <input
-                          type="text"
-                          value={sandboxPlayerSearch}
-                          onChange={e => setSandboxPlayerSearch(e.target.value)}
-                          onKeyDown={e => { if (e.key === 'Enter') loadPlayerVersions() }}
-                          placeholder="e.g. LeBron James"
-                          className="w-full px-3 py-2 text-sm"
-                          style={{ background: G.surface2, border: `1px solid ${G.border}`, color: G.white, outline: 'none', fontSize: 16 }}
-                        />
-                      </div>
-                      <Btn onClick={loadPlayerVersions} variant="outline" className="w-full py-3">
-                        Load Player
-                      </Btn>
-                    </>
-                  ) : (
+                {sandboxTab === 'spin' ? (
                   <>
-                  <div className="relative">
-                    <div className="text-xs uppercase tracking-widest mb-1" style={{ color: G.grey }}>Team</div>
-                    <input
-                      type="text"
-                      value={sandboxTeamSearch || (sandboxTeamOpen ? '' : sandboxTeam)}
-                      onFocus={() => { setSandboxTeamOpen(true); setSandboxTeamSearch('') }}
-                      onBlur={() => setTimeout(() => { setSandboxTeamOpen(false); setSandboxTeamSearch('') }, 150)}
-                      onChange={e => {
-                        const val = e.target.value.toUpperCase()
-                        setSandboxTeamSearch(val)
-                        setSandboxTeamOpen(true)
-                      }}
-                      placeholder="Search team..."
-                      className="w-full px-3 py-2 text-sm font-semibold"
-                      style={{ background: G.surface2, border: `1px solid ${G.border}`, color: G.white, outline: 'none', fontSize: 16 }}
-                    />
-                    {sandboxTeamOpen && (
-                      <div className="roster-scroll" style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: G.surface2, border: `1px solid ${G.border}`, borderTop: 'none', maxHeight: 200, overflowY: 'auto', zIndex: 50 }}>
-                        {allTeams.filter(t => !sandboxTeamSearch || t.startsWith(sandboxTeamSearch)).map(t => (
-                          <div
-                            key={t}
-                            onMouseDown={() => {
-                              setSandboxTeam(t)
-                              setSandboxTeamSearch('')
-                              setSandboxTeamOpen(false)
-                              const validEras = new Set(validCombos.filter(c => c.team === t).map(c => c.era))
-                              if (!validEras.has(sandboxEra)) {
-                                const first = ALL_ERAS.find(era => validEras.has(era))
-                                if (first) setSandboxEra(first)
-                              }
-                            }}
-                            style={{
-                              padding: '7px 12px', cursor: 'pointer', fontSize: 13,
-                              color: t === sandboxTeam ? G.gold : G.white,
-                              background: t === sandboxTeam ? `${G.gold}18` : 'transparent',
-                              borderBottom: `1px solid ${G.border}`,
-                            }}
-                            onMouseEnter={e => (e.currentTarget.style.background = `${G.gold}22`)}
-                            onMouseLeave={e => (e.currentTarget.style.background = t === sandboxTeam ? `${G.gold}18` : 'transparent')}
-                          >{t}</div>
-                        ))}
+                    <div className="grid grid-cols-2 gap-px" style={{ background: G.border }}>
+                      <div className="py-5 text-center" style={{ background: G.surface }}>
+                        <div className="text-xs uppercase tracking-[0.2em] mb-2" style={{ color: G.grey }}>Team</div>
+                        <div style={{ ...BEBAS, fontSize: 36, color: spinning ? G.greyDark : G.white, letterSpacing: '0.05em' }}>
+                          <span className="slot-reel-window">
+                            <span key={`team-${spinKey}`} className={spinning || spinPhase === 'land' ? `slot-reel${spinPhase === 'slow' ? ' slot-reel--slow' : spinPhase === 'land' ? ' slot-reel--land' : ''}` : ''}>
+                              {spinTeamDisplay || '—'}
+                            </span>
+                          </span>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                  <div>
-                    <div className="text-xs uppercase tracking-widest mb-1" style={{ color: G.grey }}>Era</div>
-                    <select
-                      value={sandboxEra}
-                      onChange={e => setSandboxEra(e.target.value as Era)}
-                      className="w-full px-3 py-2 text-sm font-semibold"
-                      style={{ background: G.surface2, border: `1px solid ${G.border}`, color: G.gold, outline: 'none', fontSize: 16 }}
-                    >
-                      {ALL_ERAS.map(era => (
-                        <option key={era} value={era} disabled={!sandboxValidEras.has(era)}
-                          style={{ color: sandboxValidEras.has(era) ? undefined : G.greyDark }}>
-                          {era}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex gap-2">
-                    <Btn onClick={randomSandbox} variant="ghost" className="flex-1 py-3">
-                      Random
+                      <div className="py-5 text-center" style={{ background: G.surface }}>
+                        <div className="text-xs uppercase tracking-[0.2em] mb-2" style={{ color: G.grey }}>Era</div>
+                        <div style={{ ...BEBAS, fontSize: 36, color: spinning ? G.greyDark : G.gold, letterSpacing: '0.05em' }}>
+                          <span className="slot-reel-window">
+                            <span key={`era-${spinKey}`} className={spinning || spinPhase === 'land' ? `slot-reel${spinPhase === 'slow' ? ' slot-reel--slow' : spinPhase === 'land' ? ' slot-reel--land' : ''}` : ''}>
+                              {spinEraDisplay ? eraLabel(spinEraDisplay) : '—'}
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-3 space-y-2">
+                      {filledCount < 9 && (
+                        <Btn onClick={spin} disabled={spinning || (rosterPool.length > 0 && respinUsed)} variant="gold" className={`w-full py-4 text-base${awaitingSpin ? ' spin-awaiting' : ''}`}>
+                          {spinning ? 'Spinning...' : 'Spin'}
+                        </Btn>
+                      )}
+                      {awaitingSpin && !spinning && <div className="text-center text-xs uppercase tracking-[0.2em]" style={{ color: G.goldDim }}>{filledCount === 9 ? 'Draft your coach' : 'Spin for your next pick'}</div>}
+                      {!awaitingSpin && !spinning && !respinUsed && rosterPool.length > 0 && <div className="text-center text-xs uppercase tracking-[0.2em]" style={{ color: G.goldDim }}>1 re-spin remaining this draft</div>}
+                      {!awaitingSpin && !spinning && respinUsed && rosterPool.length > 0 && <div className="text-center text-xs uppercase tracking-[0.2em]" style={{ color: G.grey }}>No re-spins left — pick from this roster</div>}
+                      {noPlayersMsg && !spinning && <div className="text-center text-xs uppercase tracking-[0.2em]" style={{ color: G.red }}>All players from this combo drafted — spin again</div>}
+                    </div>
+                  </>
+                ) : sandboxTab === 'player' ? (
+                  <div className="p-3 space-y-3">
+                    <div>
+                      <div className="text-xs uppercase tracking-widest mb-1" style={{ color: G.grey }}>Player Name</div>
+                      <input
+                        type="text"
+                        value={sandboxPlayerSearch}
+                        onChange={e => setSandboxPlayerSearch(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') loadPlayerVersions() }}
+                        placeholder="e.g. LeBron James"
+                        className="w-full px-3 py-2 text-sm"
+                        style={{ background: G.surface2, border: `1px solid ${G.border}`, color: G.white, outline: 'none', fontSize: 16 }}
+                      />
+                    </div>
+                    <Btn onClick={loadPlayerVersions} variant="outline" className="w-full py-3">
+                      Load Player
                     </Btn>
-                    <Btn onClick={loadSandboxRoster} variant="outline" className="flex-1 py-3">
+                  </div>
+                ) : (
+                  <div className="p-3 space-y-3">
+                    <div className="relative">
+                      <div className="text-xs uppercase tracking-widest mb-1" style={{ color: G.grey }}>Team</div>
+                      <input
+                        type="text"
+                        value={sandboxTeamSearch || (sandboxTeamOpen ? '' : sandboxTeam)}
+                        onFocus={() => { setSandboxTeamOpen(true); setSandboxTeamSearch('') }}
+                        onBlur={() => setTimeout(() => { setSandboxTeamOpen(false); setSandboxTeamSearch('') }, 150)}
+                        onChange={e => { const val = e.target.value.toUpperCase(); setSandboxTeamSearch(val); setSandboxTeamOpen(true) }}
+                        placeholder="Search team..."
+                        className="w-full px-3 py-2 text-sm font-semibold"
+                        style={{ background: G.surface2, border: `1px solid ${G.border}`, color: G.white, outline: 'none', fontSize: 16 }}
+                      />
+                      {sandboxTeamOpen && (
+                        <div className="roster-scroll" style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: G.surface2, border: `1px solid ${G.border}`, borderTop: 'none', maxHeight: 200, overflowY: 'auto', zIndex: 50 }}>
+                          {allTeams.filter(t => !sandboxTeamSearch || t.startsWith(sandboxTeamSearch)).map(t => (
+                            <div
+                              key={t}
+                              onMouseDown={() => {
+                                setSandboxTeam(t); setSandboxTeamSearch(''); setSandboxTeamOpen(false)
+                                const validEras = new Set(validCombos.filter(c => c.team === t).map(c => c.era))
+                                if (!validEras.has(sandboxEra)) { const first = ALL_ERAS.find(era => validEras.has(era)); if (first) setSandboxEra(first) }
+                              }}
+                              style={{ padding: '7px 12px', cursor: 'pointer', fontSize: 13, color: t === sandboxTeam ? G.gold : G.white, background: t === sandboxTeam ? `${G.gold}18` : 'transparent', borderBottom: `1px solid ${G.border}` }}
+                              onMouseEnter={e => (e.currentTarget.style.background = `${G.gold}22`)}
+                              onMouseLeave={e => (e.currentTarget.style.background = t === sandboxTeam ? `${G.gold}18` : 'transparent')}
+                            >{t}</div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <div className="text-xs uppercase tracking-widest mb-1" style={{ color: G.grey }}>Era</div>
+                      <select value={sandboxEra} onChange={e => setSandboxEra(e.target.value as Era)} className="w-full px-3 py-2 text-sm font-semibold" style={{ background: G.surface2, border: `1px solid ${G.border}`, color: G.gold, outline: 'none', fontSize: 16 }}>
+                        {ALL_ERAS.map(era => (
+                          <option key={era} value={era} disabled={!sandboxValidEras.has(era)} style={{ color: sandboxValidEras.has(era) ? undefined : G.greyDark }}>{era}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <Btn onClick={loadSandboxRoster} variant="outline" className="w-full py-3">
                       Load Roster
                     </Btn>
                   </div>
-                  </>
-                  )}
-                </div>
+                )}
               </div>
             ) : devMode ? (
               /* ── Dev mode: manual team/era picker ── */
