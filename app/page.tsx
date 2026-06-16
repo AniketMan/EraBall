@@ -357,7 +357,7 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra }: { player: Pl
               </TagTooltip>
             )}
             {player.defAnchor && (
-              <TagTooltip tip={(player.anchorTier ?? 1) === 1 ? "Elite defensive anchor — major impact beyond the stat sheet." : "Solid defensive anchor — meaningful impact beyond the stat sheet. T1 anchors carry a larger boost."}>
+              <TagTooltip tip="Defensive impact beyond the stat sheet. T1 carries a larger boost than T2.">
                 <span className="text-xs uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: '#4A9ECC' }}>
                   Defensive Anchor <span style={{ opacity: 0.7 }}>T{player.anchorTier ?? 1}</span>
                 </span>
@@ -1967,7 +1967,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="text-xs font-bold uppercase tracking-wide shrink-0" style={{ color: '#4A9ECC' }}>Def Anchor</span>
-                  <span className="text-xs leading-tight" style={{ color: G.greyDark }}>Impact beyond the stat sheet on defense. T1 carries a larger boost than T2.</span>
+                  <span className="text-xs leading-tight" style={{ color: G.greyDark }}>Defensive impact beyond the stat sheet. T1 carries a larger boost than T2.</span>
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="text-xs font-bold uppercase tracking-wide shrink-0" style={{ color: G.gold }}>Off Anchor</span>
