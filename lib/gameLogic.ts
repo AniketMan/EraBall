@@ -1168,7 +1168,7 @@ export function simulatePlayoffs(
   const rebWinFactor     = 1.0 + (rebFactor - 1.0) * 0.5
   const astWinFactor     = 1.0 + (astFactor - 1.0) * 0.5
   const rebOppFactor     = 1.0 - (rebFactor - 1.0) * 0.25
-  const shooterCount             = entries.reduce((s, e) => { const w = spacingSlotWeight(e.pr.slot, simEra); const f = e.pr.player.FG3_PCT ?? 0; const fg3m = e.pr.player.FG3M ?? 0; if (fg3m < 0.5) return s; return s + (f >= 0.40 ? e.minScale * 1.25 : f >= 0.37 ? e.minScale * 1.12 : f >= 0.34 ? e.minScale : f >= 0.30 ? e.minScale * 0.5 : f >= 0.25 ? e.minScale * 0.25 : 0) * w }, 0)
+  const shooterCount             = entries.reduce((s, e) => { const w = spacingSlotWeight(e.pr.slot, simEra); const f = e.pr.player.FG3_PCT ?? 0; const fg3m = e.pr.player.FG3M ?? 0; if (fg3m < 0.5) return s; const ssm = e.pr.player.shootingStar ? (e.pr.player.shootingStarTier === 1 ? 2.2 : 1.6) : 1.0; return s + (f >= 0.40 ? e.minScale * 1.25 : f >= 0.37 ? e.minScale * 1.12 : f >= 0.34 ? e.minScale : f >= 0.30 ? e.minScale * 0.5 : f >= 0.25 ? e.minScale * 0.25 : 0) * w * ssm }, 0)
   const highVolumeShooterCountPO = entries.reduce((s, e) => { const w = spacingSlotWeight(e.pr.slot, simEra); return s + ((e.pr.player.FG3M ?? 0) >= 2.9 ? e.minScale * w : 0) }, 0)
   const isPreThreePtPO      = simEra === '50s' || simEra === '60s' || simEra === '70s'
   const spacingBaselinePO   = simEra === '20s' ? 6 : simEra === '10s' ? 5 : simEra === '00s' ? 4 : simEra === '90s' ? 3 : simEra === '80s' ? 2 : 0
