@@ -8,7 +8,7 @@ import LifetimeStatsModal from './LifetimeStatsModal'
 import { recordRunComplete } from '../lib/lifetimeStats'
 import {
   ALL_ERAS, SLOT_POSITIONS, SLOT_MPG, ERA_SEASON_GAMES, calcFitPenalty, calcEraModifier, calcTeamRating,
-  simulateSeason, simulatePlayoffs, calcTS, coachBonus, effectiveCoachBonus, coachChampBonus, playerMatchesEra, withEraStats, applyFlexTag, applyRings, applyAnchors, applyTimeless,
+  simulateSeason, simulatePlayoffs, calcTS, coachBonus, effectiveCoachBonus, coachChampBonus, playerMatchesEra, withEraStats, applyFlexTag, applyRings, applyAnchors, applyTimeless, applyShootingStar,
   firstRoundLabel, playerBaseRating, genOppTeamStats, calcTeamDefTotals, calcRebFactor,
 } from '../lib/gameLogic'
 import type { OppTeamStats } from '../lib/gameLogic'
@@ -240,14 +240,8 @@ async function fetchCachedHeadshot(url: string): Promise<string> {
 }
 
 // ─── Player headshot ──────────────────────────────────────────────────────────
-function PlayerHeadshot({ personId, size, initial, lazy }: { personId: string; size: number; initial?: string; lazy?: boolean }) {
+function PlayerHeadshot({ personId, size, initial }: { personId: string; size: number; initial?: string; lazy?: boolean }) {
   const [failed, setFailed] = useState(false)
-  const [src, setSrc] = useState<string | null>(null)
-  useEffect(() => {
-    fetchCachedHeadshot(`/api/headshot?id=${personId}`)
-      .then(setSrc)
-      .catch(() => setFailed(true))
-  }, [personId])
   const wrap: React.CSSProperties = {
     width: size,
     height: size,
@@ -265,12 +259,13 @@ function PlayerHeadshot({ personId, size, initial, lazy }: { personId: string; s
       </div>
     )
   }
-  if (!src) return <div style={wrap} />
   return (
     <div style={wrap}>
       <img
-        src={src}
+        src={`https://cdn.nba.com/headshots/nba/latest/260x190/${personId}.png`}
         alt=""
+        referrerPolicy="no-referrer"
+        onError={() => setFailed(true)}
         style={{
           position: 'absolute',
           height: '100%',
@@ -367,6 +362,13 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra }: { player: Pl
               <TagTooltip tip={(player.anchorTier ?? 1) === 1 ? "Elite offensive engine — major boost to team scoring and ball movement." : "Strong offensive contributor — elevates the team's offense. T1 anchors carry a larger boost."}>
                 <span className="text-xs uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: G.gold }}>
                   Offensive Anchor <span style={{ opacity: 0.7 }}>T{player.anchorTier ?? 1}</span>
+                </span>
+              </TagTooltip>
+            )}
+            {player.shootingStar && (
+              <TagTooltip tip={(player.shootingStarTier ?? 1) === 1 ? "Boosts team spacing. Elite all-time shooter. T1 carries a larger boost than T2." : "Boosts team spacing. Special shooter. T1 carries a larger boost than T2."}>
+                <span className="text-xs uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: '#F472B6' }}>
+                  Shooting Star <span style={{ opacity: 0.7 }}>T{player.shootingStarTier ?? 1}</span>
                 </span>
               </TagTooltip>
             )}
@@ -782,17 +784,24 @@ function PatchNotesModal({ onClose }: { onClose: () => void }) {
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: G.greyDark, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>✕</button>
         </div>
         {([
+          { section: 'NEW TAG: Shooting Star', items: [
+            'New player tag with two tiers. Multiplies the player\'s contribution to team spacing.',
+            'T1: Curry, Klay, Ray Allen, Reggie Miller, Korver, Lillard, Kerr, Bird, Redick.',
+            'T2: Peja, Dell Curry, Joe Harris, THJ, Petrovic, Hodges, Glen Rice, MPJ, KAT, Duncan Robinson, Mike Miller, Dirk.',
+          ]},
           { section: 'Simulation', items: [
             'Finals opponent difficulty reduced. I went overboard last time.',
             'Specialist shooters like Korver, Miller, Allen etc. now properly reward you for spacing.',
             'Increased difficulty of opponents each round of the playoffs.',
           ]},
           { section: 'Performance', items: [
-            'Headshots are cached in the browser. So if you have seen a player before on your device, it does not need to load that headshot again through the network.',
+            'Player headshots now load directly from NBA CDN, bypassing the server proxy. Significantly reduces backend load.',
           ]},
           { section: 'UI', items: [
             'Sandbox: Added an optional spin tab that is in the regular mode. In case you still wanted random players and liked that method.',
             'Footer links stay at the footer of the page. Do not follow your scroll.',
+            'Sandbox: added ALL option to team picker. Loads all players from the selected era regardless of team.',
+            'Tag effects panel: Shooting Star and Timeless now align side by side.',
           ]},
           { section: 'Compatibility', items: [
             'Supports iOS 13+',
@@ -1128,7 +1137,9 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
   }, [players])
 
   const sandboxValidEras = useMemo(
-    () => new Set(validCombos.filter(c => c.team === sandboxTeam).map(c => c.era)),
+    () => sandboxTeam === 'ALL'
+      ? new Set(ALL_ERAS)
+      : new Set(validCombos.filter(c => c.team === sandboxTeam).map(c => c.era)),
     [validCombos, sandboxTeam]
   )
 
@@ -1182,7 +1193,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
             return ids
           }
           setLockedTeam(team); setLockedEra(era)
-          setRosterPool([...pool].map(p => applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, era, team)))))).sort((a, b) => (b.PTS ?? 0) - (a.PTS ?? 0)))
+          setRosterPool([...pool].map(p => applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, era, team))))))).sort((a, b) => (b.PTS ?? 0) - (a.PTS ?? 0)))
           setSpinning(false)
           return ids
         })
@@ -1245,7 +1256,9 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
   useEffect(() => {
     if (rosterPool.length === 0) return
     rosterPool.slice(0, 20).forEach(p => {
-      fetchCachedHeadshot(`/api/headshot?id=${p.person_id}`).catch(() => {})
+      const img = new Image()
+      img.referrerPolicy = 'no-referrer'
+      img.src = `https://cdn.nba.com/headshots/nba/latest/260x190/${p.person_id}.png`
     })
   }, [rosterPool])
 
@@ -1263,7 +1276,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
         const team = isAll
           ? ((p.all_teams_by_era?.[devEra] as string[] | undefined)?.[0] ?? p.team_abbreviation)
           : devTeam
-        return applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, devEra, team)))))
+        return applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, devEra, team))))))
       }).sort((a, b) => (b.PTS ?? 0) - (a.PTS ?? 0))
       setLockedTeam(devTeam); setLockedEra(devEra)
       setSpinTeamDisplay(isAll ? devEra : devTeam); setSpinEraDisplay(devEra)
@@ -1277,12 +1290,15 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
     setDraftedIds(ids => {
       const pool = players.filter(p => {
         if (!playerMatchesEra(p, sandboxEra) || ids.has(p.person_id)) return false
+        if (sandboxTeam === 'ALL') return true
         const eraTeams = p.all_teams_by_era?.[sandboxEra] as string[] | undefined
         return eraTeams ? eraTeams.includes(sandboxTeam) : playerTeamForEra(p, sandboxEra) === sandboxTeam
       })
       if (pool.length === 0) { alert(`No players found for ${sandboxTeam} - ${sandboxEra}`); return ids }
-      const sorted = pool.map(p => applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, sandboxEra, sandboxTeam))))))
-        .sort((a, b) => (b.PTS ?? 0) - (a.PTS ?? 0))
+      const sorted = pool.map(p => {
+        const team = sandboxTeam === 'ALL' ? (playerTeamForEra(p, sandboxEra) ?? p.team_abbreviation) : sandboxTeam
+        return applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, sandboxEra, team))))))
+      }).sort((a, b) => (b.PTS ?? 0) - (a.PTS ?? 0))
       setLockedTeam(sandboxTeam); setLockedEra(sandboxEra)
       setSpinTeamDisplay(sandboxTeam); setSpinEraDisplay(sandboxEra)
       setRosterPool(sorted)
@@ -1302,7 +1318,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
       const [era, team] = key.split(':') as [Era, string]
       if (!era || !team || seen.has(key)) continue
       seen.add(key)
-      versions.push(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(match, era, team))))))
+      versions.push(applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(match, era, team)))))))
     }
     if (versions.length === 0) { alert(`No era stats found for ${match.full_name}`); return }
     versions.sort((a, b) => ALL_ERAS.indexOf(a.era as Era) - ALL_ERAS.indexOf(b.era as Era))
@@ -1323,7 +1339,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
     const top9 = scored
       .sort((a, b) => b.score - a.score)
       .slice(0, 9)
-      .map(({ p }) => applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, p.era as Era, p.team_abbreviation))))))
+      .map(({ p }) => applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, p.era as Era, p.team_abbreviation)))))))
     const newSlots = SLOT_POSITIONS.map((pos, i) => {
       const { penalty, label } = calcFitPenalty(top9[i], pos)
       return { position: pos, player: top9[i], fitPenalty: penalty, fitLabel: label }
@@ -1338,7 +1354,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
     const shuffled = [...players].sort(() => Math.random() - 0.5)
     const picks = shuffled.slice(0, 9)
     const newSlots = SLOT_POSITIONS.map((pos, i) => {
-      const player = applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(picks[i], picks[i].era as Era, picks[i].team_abbreviation)))))
+      const player = applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(picks[i], picks[i].era as Era, picks[i].team_abbreviation))))))
       const { penalty, label } = calcFitPenalty(player, pos)
       return { position: pos, player, fitPenalty: penalty, fitLabel: label }
     })
@@ -1370,7 +1386,40 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
         return teamsForEra?.includes(team)
       })
       if (!match) continue
-      const tagged = applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(match, era, team)))))
+      const tagged = applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(match, era, team))))))
+      const slotIdx = SLOT_POSITIONS.indexOf(slot)
+      const { penalty, label } = calcFitPenalty(tagged, slot)
+      newSlots[slotIdx] = { position: slot, player: tagged, fitPenalty: penalty, fitLabel: label }
+      drafted.add(match.person_id)
+    }
+    setSlots(newSlots)
+    setDraftedIds(drafted)
+    setSelectedPlayer(null); setPendingSlotIdx(null); setHighlightEmpty(false)
+    setRosterPool([]); setAwaitingSpin(false)
+  }
+
+  const fillShootingTestPreset = () => {
+    const preset: { name: string; era: Era; team: string; slot: SlotPosition }[] = [
+      { name: 'Stephen Curry',    era: '20s', team: 'GSW', slot: 'PG' },
+      { name: 'Kyle Korver',      era: '10s', team: 'ATL', slot: 'SG' },
+      { name: 'Andrew Wiggins',   era: '10s', team: 'MIN', slot: 'SF' },
+      { name: 'Draymond Green',   era: '10s', team: 'GSW', slot: 'PF' },
+      { name: 'Karl-Anthony Towns', era: '20s', team: 'MIN', slot: 'C' },
+      { name: 'Damian Lillard',   era: '10s', team: 'POR', slot: 'B1' },
+      { name: 'Klay Thompson',    era: '10s', team: 'GSW', slot: 'B2' },
+      { name: 'Dejounte Murray',  era: '20s', team: 'SAS', slot: 'B3' },
+      { name: "De'Andre Hunter",  era: '20s', team: 'ATL', slot: 'B4' },
+    ]
+    const newSlots = emptySlots()
+    const drafted = new Set<string>()
+    for (const { name, era, team, slot } of preset) {
+      const match = players.find(p => {
+        if (p.full_name !== name) return false
+        const teamsForEra = (p.all_teams_by_era as Record<string, string[]>)?.[era]
+        return teamsForEra?.includes(team)
+      })
+      if (!match) continue
+      const tagged = applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(match, era, team))))))
       const slotIdx = SLOT_POSITIONS.indexOf(slot)
       const { penalty, label } = calcFitPenalty(tagged, slot)
       newSlots[slotIdx] = { position: slot, player: tagged, fitPenalty: penalty, fitLabel: label }
@@ -1403,7 +1452,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
         return teamsForEra?.includes(team)
       })
       if (!match) continue
-      const tagged = applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(match, era, team)))))
+      const tagged = applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(match, era, team))))))
       const slotIdx = SLOT_POSITIONS.indexOf(slot)
       const { penalty, label } = calcFitPenalty(tagged, slot)
       newSlots[slotIdx] = { position: slot, player: tagged, fitPenalty: penalty, fitLabel: label }
@@ -1545,13 +1594,15 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                       />
                       {sandboxTeamOpen && (
                         <div className="roster-scroll" style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: G.surface2, border: `1px solid ${G.border}`, borderTop: 'none', maxHeight: 200, overflowY: 'auto', zIndex: 50 }}>
-                          {allTeams.filter(t => !sandboxTeamSearch || t.startsWith(sandboxTeamSearch)).map(t => (
+                          {(['ALL', ...allTeams]).filter(t => !sandboxTeamSearch || t.startsWith(sandboxTeamSearch)).map(t => (
                             <div
                               key={t}
                               onMouseDown={() => {
                                 setSandboxTeam(t); setSandboxTeamSearch(''); setSandboxTeamOpen(false)
-                                const validEras = new Set(validCombos.filter(c => c.team === t).map(c => c.era))
-                                if (!validEras.has(sandboxEra)) { const first = ALL_ERAS.find(era => validEras.has(era)); if (first) setSandboxEra(first) }
+                                if (t !== 'ALL') {
+                                  const validEras = new Set(validCombos.filter(c => c.team === t).map(c => c.era))
+                                  if (!validEras.has(sandboxEra)) { const first = ALL_ERAS.find(era => validEras.has(era)); if (first) setSandboxEra(first) }
+                                }
                               }}
                               style={{ padding: '7px 12px', cursor: 'pointer', fontSize: 13, color: t === sandboxTeam ? G.gold : G.white, background: t === sandboxTeam ? `${G.gold}18` : 'transparent', borderBottom: `1px solid ${G.border}` }}
                               onMouseEnter={e => (e.currentTarget.style.background = `${G.gold}22`)}
@@ -1618,6 +1669,9 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                   <Btn onClick={fillDevPreset} variant="ghost" className="w-full py-3">
                     Champ Nuggets
                   </Btn>
+                  <Btn onClick={fillShootingTestPreset} variant="ghost" className="w-full py-3">
+                    Shooting Test
+                  </Btn>
 
                   <div>
                     <div className="text-xs uppercase tracking-widest mb-1" style={{ color: G.grey }}>Search Player</div>
@@ -1637,7 +1691,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                             <div
                               key={p.person_id}
                               onClick={() => {
-                                const tagged = applyTimeless(applyRings(applyFlexTag(withEraStats(p, p.era as Era, p.team_abbreviation))))
+                                const tagged = applyShootingStar(applyTimeless(applyRings(applyFlexTag(withEraStats(p, p.era as Era, p.team_abbreviation)))))
                                 setLockedTeam(p.team_abbreviation)
                                 setLockedEra(p.era as Era)
                                 setSpinTeamDisplay(p.team_abbreviation)
@@ -1828,7 +1882,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                 <div className="roster-scroll" style={{ border: `1px solid ${G.border}`, maxHeight: 220, overflowY: 'auto', overflowX: 'hidden' }}>
                   {(() => {
                     const isSpecial = (p: Player) =>
-                      p.greatest_75_flag === 'Y' || (p.rings ?? 0) > 0 || p.defAnchor || p.offAnchor || !!p.flexPositions || !!p.timeless
+                      p.greatest_75_flag === 'Y' || (p.rings ?? 0) > 0 || p.defAnchor || p.offAnchor || !!p.flexPositions || !!p.timeless || !!p.shootingStar
                     const posMatch = (p: Player) => {
                       const primary = (p.position?.split('-')[0] ?? '').toLowerCase()
                       if (posFilter === 'G') return primary === 'guard'
@@ -1894,7 +1948,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                     )
                   })})()}
                   {sortBy === 'SPECIAL' && !rosterPool.some(p =>
-                    p.greatest_75_flag === 'Y' || (p.rings ?? 0) > 0 || p.defAnchor || p.offAnchor || !!p.flexPositions || !!p.timeless
+                    p.greatest_75_flag === 'Y' || (p.rings ?? 0) > 0 || p.defAnchor || p.offAnchor || !!p.flexPositions || !!p.timeless || !!p.shootingStar
                   ) && (
                     <div className="text-center py-6 text-xs uppercase tracking-widest" style={{ color: G.greyDark }}>
                       No players with special tags
@@ -2073,8 +2127,10 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                   <span className="text-xs font-bold uppercase tracking-wide shrink-0" style={{ color: '#4A9ECC' }}>FLEX</span>
                   <span className="text-xs leading-tight" style={{ color: G.greyDark }}>Fits multiple positions without penalty.</span>
                 </div>
-              </div>
-              <div className="flex justify-center mt-1">
+                <div className="flex items-start gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wide shrink-0" style={{ color: '#F472B6' }}>Shooting Star</span>
+                  <span className="text-xs leading-tight" style={{ color: G.greyDark }}>Boosts the team spacing. All-time shooters. T1 carries a larger boost than T2.</span>
+                </div>
                 <div className="flex items-start gap-2">
                   <span className="text-xs font-bold uppercase tracking-wide shrink-0" style={{ color: '#C084FC' }}>Timeless</span>
                   <span className="text-xs leading-tight" style={{ color: G.greyDark }}>Minimal era penalties across all decades. Minor penalty only if 6+ eras from home era.</span>

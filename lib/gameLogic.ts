@@ -294,6 +294,39 @@ export function applyTimeless(player: Player): Player {
   return { ...player, timeless: true }
 }
 
+const SHOOTING_STAR_T1 = new Set([
+  'Stephen Curry',
+  'Klay Thompson',
+  'Ray Allen',
+  'Reggie Miller',
+  'Kyle Korver',
+  'Damian Lillard',
+  'Steve Kerr',
+  'Larry Bird',
+  'JJ Redick',
+])
+
+const SHOOTING_STAR_T2 = new Set([
+  'Peja Stojakovic',
+  'Dell Curry',
+  'Joe Harris',
+  'Tim Hardaway Jr.',
+  'Drazen Petrovic',
+  'Craig Hodges',
+  'Glen Rice',
+  'Michael Porter Jr.',
+  'Karl-Anthony Towns',
+  'Duncan Robinson',
+  'Mike Miller',
+  'Dirk Nowitzki',
+])
+
+export function applyShootingStar(player: Player): Player {
+  if (SHOOTING_STAR_T1.has(player.full_name)) return { ...player, shootingStar: true, shootingStarTier: 1 }
+  if (SHOOTING_STAR_T2.has(player.full_name)) return { ...player, shootingStar: true, shootingStarTier: 2 }
+  return player
+}
+
 function playoffRingBoost(rings: number): number {
   if (rings >= 9)  return 0.13
   if (rings >= 6)  return 0.10
@@ -962,7 +995,7 @@ export function simulateSeason(
   const astWinFactor     = 1.0 + (astFactor - 1.0) * 0.5                                          // ±2.5% on team roll
   const rebOppFactor     = 1.0 - (rebFactor - 1.0) * 0.25                                         // ±2.25% on opp roll (def boards)
   // Tiered: 40%+ = elite (1.25×), 37–40% = good (1.12×), 34–37% = solid (1.0×), below 34% = 0
-  const shooterCount           = entries.reduce((s, e) => { const w = spacingSlotWeight(e.pr.slot, simEra); const f = e.pr.player.FG3_PCT ?? 0; const fg3m = e.pr.player.FG3M ?? 0; if (fg3m < 0.5) return s; return s + (f >= 0.40 ? e.minScale * 1.25 : f >= 0.37 ? e.minScale * 1.12 : f >= 0.34 ? e.minScale : f >= 0.30 ? e.minScale * 0.5 : f >= 0.25 ? e.minScale * 0.25 : 0) * w }, 0)
+  const shooterCount           = entries.reduce((s, e) => { const w = spacingSlotWeight(e.pr.slot, simEra); const f = e.pr.player.FG3_PCT ?? 0; const fg3m = e.pr.player.FG3M ?? 0; if (fg3m < 0.5) return s; const ssm = e.pr.player.shootingStar ? (e.pr.player.shootingStarTier === 1 ? 2.2 : 1.6) : 1.0; return s + (f >= 0.40 ? e.minScale * 1.25 : f >= 0.37 ? e.minScale * 1.12 : f >= 0.34 ? e.minScale : f >= 0.30 ? e.minScale * 0.5 : f >= 0.25 ? e.minScale * 0.25 : 0) * w * ssm }, 0)
   const highVolumeShooterCount = entries.reduce((s, e) => { const w = spacingSlotWeight(e.pr.slot, simEra); return s + ((e.pr.player.FG3M ?? 0) >= 2.9 ? e.minScale * w : 0) }, 0)
   const isPreThreePt      = simEra === '50s' || simEra === '60s' || simEra === '70s'
   const spacingBaseline   = simEra === '20s' ? 6 : simEra === '10s' ? 5 : simEra === '00s' ? 4 : simEra === '90s' ? 3 : simEra === '80s' ? 2 : 0
