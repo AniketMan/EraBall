@@ -1124,7 +1124,7 @@ export function firstRoundLabel(simEra: Era): string {
 // Finals (round 4): scales with team's raw rating so stronger teams face proportionally harder opponents.
 function playoffOppRating(round: number, teamWins: number, teamRaw: number, simEra: Era): { offRating: number; defFactor: number } {
   const idx = round - 1
-  const winsBase = teamWins >= 60 ? [45, 49, 53, 52][idx]
+  const winsBase = teamWins >= 60 ? [45, 49, 50, 52][idx]
                  : teamWins >= 53 ? [46, 50, 54, 53][idx]
                  : teamWins >= 47 ? [48, 51, 55, 53][idx]
                  :                  [50, 52, 56, 55][idx]
