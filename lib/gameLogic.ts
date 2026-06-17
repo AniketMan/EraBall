@@ -828,7 +828,8 @@ function generateGameScore(
   if (win && teamScore <= oppScore) {
     teamScore = oppScore + 2 + Math.round(Math.abs(randn()) * 7)
   } else if (!win && oppScore <= teamScore) {
-    oppScore = teamScore + 2 + Math.round(Math.abs(randn()) * 7)
+    const defScale = Math.min(1.0, playerDefFactor * rebDefEffect * (1 - coachDefBonus * 0.5))
+    oppScore = Math.round(teamScore * defScale + 2 + Math.abs(randn()) * 7)
   }
 
   let ts = Math.min(scoreCap, teamScore)
