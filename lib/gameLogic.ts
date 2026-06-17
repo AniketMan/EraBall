@@ -368,7 +368,8 @@ const ERA_OPP_BASELINE: Record<Era, number> = {
 
 // Modern eras have deeper, more competitive leagues — opponents are proportionally harder
 const ERA_DIFFICULTY: Partial<Record<Era, number>> = {
-  '90s': 1.06, '00s': 1.06, '10s': 1.08, '20s': 1.10,
+  '50s': 1.04, '60s': 1.05, '70s': 1.05, '80s': 1.05,
+  '90s': 1.08, '00s': 1.06, '10s': 1.08, '20s': 1.10,
 }
 
 // Era-appropriate score caps (elite teams in 50s/60s historically hit 120-130 PPG)
