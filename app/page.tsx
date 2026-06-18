@@ -754,6 +754,31 @@ function TopBar({ onRestart, right }: { onRestart: () => void; right?: React.Rea
 }
 
 // ─── Phase 1: Era Selection ───────────────────────────────────────────────────
+const V1_1_NOTES = [
+  { section: 'NEW TAG: Shooting Star', items: [
+    'New player tag with two tiers. Multiplies the player\'s contribution to team spacing.',
+    'T1: Curry, Klay, Ray Allen, Reggie Miller, Korver, Lillard, Kerr, Bird, Redick.',
+    'T2: Peja, Dell Curry, Joe Harris, THJ, Petrovic, Hodges, Glen Rice, MPJ, KAT, Duncan Robinson, Mike Miller, Dirk.',
+  ]},
+  { section: 'Simulation', items: [
+    'Finals opponent difficulty reduced. I went overboard last time.',
+    'Specialist shooters like Korver, Miller, Allen etc. now properly reward you for spacing.',
+    'Increased difficulty of opponents each round of the playoffs.',
+  ]},
+  { section: 'Performance', items: [
+    'Player headshots now load directly from NBA CDN, bypassing the server proxy. Significantly reduces backend load.',
+  ]},
+  { section: 'UI', items: [
+    'Sandbox: Added an optional spin tab that is in the regular mode. In case you still wanted random players and liked that method.',
+    'Footer links stay at the footer of the page. Do not follow your scroll.',
+    'Sandbox: added ALL option to team picker. Loads all players from the selected era regardless of team.',
+    'Tag effects panel: Shooting Star and Timeless now align side by side.',
+  ]},
+  { section: 'Compatibility', items: [
+    'Supports iOS 13+',
+  ]},
+]
+
 const V1_NOTES = [
   { section: 'Simulation', items: [
     'Regular season opponent baseline difficulty moderately improved, reflecting the stats of that era. Reducing regular season dominance that\'s not deserved.',
@@ -771,52 +796,68 @@ const V1_NOTES = [
   ]},
 ]
 
+const V1_2_NOTES = [
+  { section: 'Simulation', items: [
+    'Increased the 2000s era difficulty in the regular season. It was the weakest before.',
+    'Slightly increased difficulty of the 80s.',
+    '90s negative spacing penalty increased for the regular season and playoffs to be more realistic for the time.',
+    'Finals opponents play better defense in all eras. More difficulty.',
+    'Decreased coaching impact — closed the gap between guru and F/D coaches to be more realistic.',
+    'Reduced championship bonus for coaches, capped at 8 championships. Phil Jackson is no longer an easy 70+ win season regardless of roster quality.',
+    'Pre-3pt era rim protection: Reduced the defensive impact of shot blocking in the 50s/60s/70s. Elite shot blockers gave too high a boost when opponents didn\'t have the same.',
+  ]},
+  { section: 'Playoffs', items: [
+    'Click any playoff game card to open a full box score. See how each one of your players performed (MIN, PTS, REB, AST, STL, BLK, TOV, FG%, 3P%, FT%).',
+  ]},
+  { section: 'UI', items: [
+    'Added a game-by-game advance button to the playoffs. Go one game at a time, or hit Auto Sim to let it run.',
+  ]},
+  { section: 'Coming Soon', items: [
+    'Real team opponents in the playoffs.',
+    'More player-specific lifetime stat tracking.',
+  ]},
+]
+
 function PatchNotesModal({ onClose }: { onClose: () => void }) {
+  const [showV1_1, setShowV1_1] = useState(false)
   const [showV1, setShowV1] = useState(false)
+
+  const renderNotes = (notes: { section: string; items: string[] }[]) => notes.map(({ section, items }) => (
+    <div key={section} className="mb-4">
+      <div style={{ fontSize: 11, color: G.gold, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6 }}>{section}</div>
+      {items.map((item, i) => (
+        <div key={i} style={{ fontSize: 13, color: G.greyDark, marginBottom: 8, display: 'flex', gap: 8 }}>
+          <span style={{ color: G.greyDark, flexShrink: 0 }}>—</span>
+          <span>{item}</span>
+        </div>
+      ))}
+    </div>
+  ))
+
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }} onClick={onClose}>
       <div style={{ background: G.surface, border: `1px solid ${G.border}`, maxWidth: 520, width: '100%', maxHeight: '80vh', overflowY: 'auto', padding: '28px 32px' }} onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <div>
             <div style={{ ...BEBAS, fontSize: 24, color: G.white, letterSpacing: '0.05em' }}>What's New</div>
-            <div style={{ fontSize: 11, color: G.gold, letterSpacing: '0.12em', textTransform: 'uppercase' }}>v1.1 · June 16</div>
+            <div style={{ fontSize: 11, color: G.gold, letterSpacing: '0.12em', textTransform: 'uppercase' }}>v1.2 · June 18</div>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: G.greyDark, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>✕</button>
         </div>
-        {([
-          { section: 'NEW TAG: Shooting Star', items: [
-            'New player tag with two tiers. Multiplies the player\'s contribution to team spacing.',
-            'T1: Curry, Klay, Ray Allen, Reggie Miller, Korver, Lillard, Kerr, Bird, Redick.',
-            'T2: Peja, Dell Curry, Joe Harris, THJ, Petrovic, Hodges, Glen Rice, MPJ, KAT, Duncan Robinson, Mike Miller, Dirk.',
-          ]},
-          { section: 'Simulation', items: [
-            'Finals opponent difficulty reduced. I went overboard last time.',
-            'Specialist shooters like Korver, Miller, Allen etc. now properly reward you for spacing.',
-            'Increased difficulty of opponents each round of the playoffs.',
-          ]},
-          { section: 'Performance', items: [
-            'Player headshots now load directly from NBA CDN, bypassing the server proxy. Significantly reduces backend load.',
-          ]},
-          { section: 'UI', items: [
-            'Sandbox: Added an optional spin tab that is in the regular mode. In case you still wanted random players and liked that method.',
-            'Footer links stay at the footer of the page. Do not follow your scroll.',
-            'Sandbox: added ALL option to team picker. Loads all players from the selected era regardless of team.',
-            'Tag effects panel: Shooting Star and Timeless now align side by side.',
-          ]},
-          { section: 'Compatibility', items: [
-            'Supports iOS 13+',
-          ]},
-        ] as { section: string; items: string[] }[]).map(({ section, items }) => (
-          <div key={section} className="mb-4">
-            <div style={{ fontSize: 11, color: G.gold, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6 }}>{section}</div>
-            {items.map((item, i) => (
-              <div key={i} style={{ fontSize: 13, color: G.greyDark, marginBottom: 8, display: 'flex', gap: 8 }}>
-                <span style={{ color: G.greyDark, flexShrink: 0 }}>—</span>
-                <span>{item}</span>
-              </div>
-            ))}
-          </div>
-        ))}
+
+        {renderNotes(V1_2_NOTES)}
+
+        {/* v1.1 collapsible */}
+        <div style={{ borderTop: `1px solid ${G.border}`, marginTop: 8, paddingTop: 12 }}>
+          <button
+            onClick={() => setShowV1_1(v => !v)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: 0 }}
+          >
+            <span style={{ fontSize: 11, color: G.greyDark, letterSpacing: '0.12em', textTransform: 'uppercase' }}>V1.1 · June 16</span>
+            <span style={{ fontSize: 10, color: G.greyDark, display: 'inline-block', transform: showV1_1 ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▼</span>
+          </button>
+          {showV1_1 && <div style={{ marginTop: 12 }}>{renderNotes(V1_1_NOTES)}</div>}
+        </div>
 
         {/* v1 collapsible */}
         <div style={{ borderTop: `1px solid ${G.border}`, marginTop: 8, paddingTop: 12 }}>
@@ -830,17 +871,7 @@ function PatchNotesModal({ onClose }: { onClose: () => void }) {
           {showV1 && (
             <div style={{ marginTop: 12 }}>
               <div style={{ fontSize: 13, color: G.greyDark, marginBottom: 12, fontStyle: 'italic' }}>Post beta!</div>
-              {V1_NOTES.map(({ section, items }) => (
-                <div key={section} className="mb-4">
-                  <div style={{ fontSize: 11, color: G.gold, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6 }}>{section}</div>
-                  {items.map((item, i) => (
-                    <div key={i} style={{ fontSize: 13, color: G.greyDark, marginBottom: 8, display: 'flex', gap: 8 }}>
-                      <span style={{ color: G.greyDark, flexShrink: 0 }}>—</span>
-                      <span>{item}</span>
-                    </div>
-                  ))}
-                </div>
-              ))}
+              {renderNotes(V1_NOTES)}
             </div>
           )}
         </div>
@@ -2944,6 +2975,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
   const [playoffRevealIndex, setPlayoffRevealIndex] = useState(-1)
   const [playoffDone, setPlayoffDone] = useState(false)
   const [playoffResult, setPlayoffResult] = useState<PlayoffResult | null>(null)
+  const [autoAdvance, setAutoAdvance] = useState(false)
   const [selectedGame, setSelectedGame] = useState<{ game: PlayoffGame; roundName: string; gameNum: number } | null>(null)
 
   // ── Headshots ──
@@ -3073,6 +3105,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
     setPlayoffStarted(true)
     setPlayoffRevealIndex(-1)
     setPlayoffDone(false)
+    setAutoAdvance(false)
     const result = simulatePlayoffs(simRaw, pr, wins, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'))
     setPlayoffResult(result)
     const poAvgOpp = result.allGames.reduce((s, g) => s + g.oppScore, 0) / result.allGames.length
@@ -3088,6 +3121,17 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
     setPlayoffDone(true)
   }
 
+  const nextGame = () => {
+    if (!playoffResult || playoffDone) return
+    const next = playoffRevealIndex + 1
+    if (next >= playoffResult.allGames.length) {
+      setPlayoffRevealIndex(playoffResult.allGames.length)
+      setPlayoffDone(true)
+    } else {
+      setPlayoffRevealIndex(next)
+    }
+  }
+
   useEffect(() => () => {
     if (intervalRef.current) clearInterval(intervalRef.current)
   }, [])
@@ -3099,10 +3143,12 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
       setPlayoffDone(true)
       return
     }
+    // Always show the first game automatically, then pause unless autoAdvance is on
+    if (!autoAdvance && playoffRevealIndex > 0) return
     const delay = playoffRevealIndex === 0 ? 500 : 600
     const timer = setTimeout(() => setPlayoffRevealIndex(i => i + 1), delay)
     return () => clearTimeout(timer)
-  }, [playoffRevealIndex, playoffStarted, playoffResult])
+  }, [playoffRevealIndex, playoffStarted, playoffResult, autoAdvance])
 
 
   const wins = games.filter(Boolean).length
@@ -3297,8 +3343,8 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
                 Simulate Season
               </Btn>
               {isLocalhost && (
-                <Btn onClick={() => runBatch(10)} variant="outline" className="px-6 py-4 text-base">
-                  Run 10×
+                <Btn onClick={() => runBatch(50)} variant="outline" className="px-6 py-4 text-base">
+                  Run 50×
                 </Btn>
               )}
             </div>
@@ -3588,9 +3634,19 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
               </div>
             )}
 
-            {/* Skip button */}
-            {!playoffDone && (
-              <div className="text-center">
+            {/* Playoff controls */}
+            {!playoffDone && playoffRevealIndex > 0 && (
+              <div className="flex justify-center gap-3">
+                {!autoAdvance && (
+                  <Btn onClick={nextGame} variant="outline" className="px-8 py-2 text-xs">
+                    Next Game
+                  </Btn>
+                )}
+                {!autoAdvance && (
+                  <Btn onClick={() => setAutoAdvance(true)} variant="ghost" className="px-8 py-2 text-xs">
+                    Auto Advance
+                  </Btn>
+                )}
                 <Btn onClick={skipPlayoffs} variant="ghost" className="px-8 py-2 text-xs">
                   Skip to End
                 </Btn>
@@ -3781,7 +3837,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
         const { game: g, roundName, gameNum } = selectedGame
         return (
           <div onClick={() => setSelectedGame(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 900, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div onClick={e => e.stopPropagation()} style={{ background: G.surface, border: `1px solid ${g.win ? G.goldDim : G.border}`, width: 320, overflow: 'hidden' }}>
+            <div onClick={e => e.stopPropagation()} style={{ background: G.surface, border: `1px solid ${g.win ? G.goldDim : G.border}`, width: 'min(560px, 95vw)', overflow: 'hidden' }}>
               {/* Win/loss bar */}
               <div style={{ height: 4, background: g.win ? G.gold : G.red }} />
               {/* Header */}
@@ -3801,16 +3857,43 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
                 </div>
                 <div style={{ fontSize: 9, color: G.greyDark, letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: 4 }}>Your Team -Opponent</div>
               </div>
-              {/* Leaders */}
-              <div style={{ borderTop: `1px solid ${G.border}`, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}>
-                {([['PTS', g.leaders.pts], ['REB', g.leaders.reb], ['AST', g.leaders.ast]] as [string, { name: string; val: number }][]).map(([label, leader]) => (
-                  <div key={label} style={{ padding: '10px 0', textAlign: 'center', borderRight: `1px solid ${G.border}` }}>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: G.gold, lineHeight: 1 }}>{leader.val}</div>
-                    <div style={{ fontSize: 8, color: G.grey, textTransform: 'uppercase', letterSpacing: '0.15em', marginTop: 2 }}>{label}</div>
-                    <div style={{ fontSize: 9, color: G.white, marginTop: 3, lineHeight: 1.2 }}>{leader.name}</div>
-                  </div>
-                ))}
-              </div>
+              {/* Box score */}
+              {g.playerLines && g.playerLines.length > 0 && (
+                <div style={{ borderTop: `1px solid ${G.border}`, overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10 }}>
+                    <thead>
+                      <tr style={{ borderBottom: `1px solid ${G.border}` }}>
+                        <th style={{ padding: '5px 8px', textAlign: 'left', color: G.grey, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Player</th>
+                        {['MIN','PTS','REB','AST','STL','BLK','TOV','FG%','3P%','FT%'].map(h => (
+                          <th key={h} style={{ padding: '5px 6px', textAlign: 'center', color: G.grey, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {g.playerLines.map((line, i) => {
+                        const lastName = line.name.split(' ').slice(-1)[0]
+                        const isBench = line.slot.startsWith('B')
+                        const isPtsLeader = line.pts === g.leaders.pts.val
+                        return (
+                          <tr key={i} style={{ borderBottom: `1px solid ${G.borderSub}`, background: i % 2 === 0 ? 'transparent' : `${G.white}04` }}>
+                            <td style={{ padding: '5px 8px', color: isBench ? G.grey : G.white, whiteSpace: 'nowrap' }}>{lastName}</td>
+                            <td style={{ padding: '5px 6px', textAlign: 'center', color: G.greyDark }}>{line.mpg}</td>
+                            <td style={{ padding: '5px 6px', textAlign: 'center', color: isPtsLeader ? G.gold : G.white, fontWeight: isPtsLeader ? 700 : 400 }}>{line.pts}</td>
+                            <td style={{ padding: '5px 6px', textAlign: 'center', color: line.reb === g.leaders.reb.val ? G.gold : G.white }}>{line.reb}</td>
+                            <td style={{ padding: '5px 6px', textAlign: 'center', color: line.ast === g.leaders.ast.val ? G.gold : G.white }}>{line.ast}</td>
+                            <td style={{ padding: '5px 6px', textAlign: 'center', color: G.greyDark }}>{line.stl}</td>
+                            <td style={{ padding: '5px 6px', textAlign: 'center', color: G.greyDark }}>{line.blk}</td>
+                            <td style={{ padding: '5px 6px', textAlign: 'center', color: G.greyDark }}>{line.tov}</td>
+                            <td style={{ padding: '5px 6px', textAlign: 'center', color: G.greyDark }}>{(line.fg * 100).toFixed(1)}%</td>
+                            <td style={{ padding: '5px 6px', textAlign: 'center', color: G.greyDark }}>{line.fg3 != null ? `${(line.fg3 * 100).toFixed(1)}%` : '—'}</td>
+                            <td style={{ padding: '5px 6px', textAlign: 'center', color: G.greyDark }}>{(line.ft * 100).toFixed(1)}%</td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
               {/* Special performance */}
               {g.special && (
                 <div style={{ borderTop: `1px solid ${G.border}`, padding: '10px 16px', background: `${G.gold}0A` }}>

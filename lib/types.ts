@@ -151,7 +151,7 @@ export interface PlayoffGame {
   gameInSeries: number
   leaders: { pts: GameLeader; reb: GameLeader; ast: GameLeader }
   special?: SpecialPerformance
-  playerLines?: { personId: string; pts: number; reb: number; ast: number }[]
+  playerLines?: { personId: string; name: string; slot: string; mpg: number; pts: number; reb: number; ast: number; stl: number; blk: number; tov: number; fg: number; fg3: number | null; ft: number }[]
 }
 
 export interface PlayoffResult {

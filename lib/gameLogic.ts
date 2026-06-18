@@ -319,6 +319,7 @@ const SHOOTING_STAR_T2 = new Set([
   'Duncan Robinson',
   'Mike Miller',
   'Dirk Nowitzki',
+  'Kentavious Caldwell-Pope',
 ])
 
 export function applyShootingStar(player: Player): Player {
@@ -368,8 +369,8 @@ const ERA_OPP_BASELINE: Record<Era, number> = {
 
 // Modern eras have deeper, more competitive leagues — opponents are proportionally harder
 const ERA_DIFFICULTY: Partial<Record<Era, number>> = {
-  '50s': 1.04, '60s': 1.05, '70s': 1.05, '80s': 1.05,
-  '90s': 1.10, '00s': 1.06, '10s': 1.08, '20s': 1.10,
+  '50s': 1.04, '60s': 1.05, '70s': 1.05, '80s': 1.06,
+  '90s': 1.10, '00s': 1.08, '10s': 1.08, '20s': 1.10,
 }
 
 // Era-appropriate score caps (elite teams in 50s/60s historically hit 120-130 PPG)
@@ -710,17 +711,17 @@ export function coachOverallGrade(coach: Coach): 'A' | 'B' | 'C' | 'D' | 'F' {
 }
 
 export function coachBonus(grade: 'A' | 'B' | 'C' | 'D' | 'F'): number {
-  return { A: 0.06, B: 0.03, C: 0, D: -0.04, F: -0.05 }[grade]
+  return { A: 0.05, B: 0.025, C: 0, D: -0.025, F: -0.03 }[grade]
 }
 
 export function effectiveCoachBonus(coach: Coach, side: 'off' | 'def'): number {
-  if (side === 'off' && coach.offGuru) return 0.09
-  if (side === 'def' && coach.defGuru) return 0.09
+  if (side === 'off' && coach.offGuru) return 0.06
+  if (side === 'def' && coach.defGuru) return 0.06
   return coachBonus(side === 'off' ? coach.offGrade : coach.defGrade)
 }
 
 export function coachChampBonus(coach: Coach): number {
-  return Math.min(coach.champ, 8) * 0.004
+  return Math.min(coach.champ, 8) * 0.003
 }
 
 const STARTER_SLOTS: SlotPosition[] = ['PG', 'SG', 'SF', 'PF', 'C']
@@ -884,16 +885,19 @@ function calcBlkScore(entries: { pr: PlayerRating; minScale: number }[]): number
   return Math.max(0, raw - slotPenalty)
 }
 
-function calcPlayerDefFactor(entries: { pr: PlayerRating; minScale: number }[]): number {
+function calcPlayerDefFactor(entries: { pr: PlayerRating; minScale: number }[], simEra: Era): number {
   // Perimeter defense: STL-based, normalized ±6%
   const stlIndex  = entries.reduce((s, { pr, minScale }) => s + imputeSTL(pr.player) * pr.eraMod * minScale, 0)
   const stlFactor = Math.max(0.94, Math.min(1.06, 1.0 + (LEAGUE_AVG_DEF_INDEX - stlIndex) / LEAGUE_AVG_DEF_INDEX * 0.06))
 
   // Rim protection: BLK-based, slot-discounted, with C/PF necessity penalty
+  // Pre-3pt eras: blocks were barely tracked and less strategically central — reduce weight
+  const isPreThreePt = simEra === '50s' || simEra === '60s' || simEra === '70s'
   const blkScore    = calcBlkScore(entries)
   const BLK_BASELINE = 3.5
   const blkShortfall = BLK_BASELINE - blkScore  // positive = below average = bad defense
-  const blkRate      = blkShortfall > 0 ? 0.035 : 0.015
+  const blkEraScale  = isPreThreePt ? 0.6 : 1.0
+  const blkRate      = (blkShortfall > 0 ? 0.035 : 0.015) * blkEraScale
   const rimFactor    = Math.max(0.86, Math.min(1.08, 1.0 + blkShortfall * blkRate))
 
   // Defensive anchors reduce opponent scoring directly (T1: -2.5%, T2: -1.5%, weighted by minutes)
@@ -986,7 +990,7 @@ export function simulateSeason(
 
   const baseExpectedScore = entries.reduce((s, e) => s + (e.pr.player.PTS ?? 0) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty), 0)
   const expectedTeamScore = Math.max(85, Math.min(132, baseExpectedScore * (1 + avgFGDelta * 3)))
-  const playerDefFactor = calcPlayerDefFactor(entries)
+  const playerDefFactor = calcPlayerDefFactor(entries, simEra)
   const rebFactor = calcRebFactor(entries, simEra)
   const astFactor = calcAstFactor(entries)
   const defBonus = coachDefBonus ?? coachBonus(coachDefGrade)
@@ -1004,7 +1008,7 @@ export function simulateSeason(
   // Pre-3PT eras: high-volume shooters hurt (anachronistic). Modern eras: below baseline hurts more than above helps.
   const spacingDev        = isPreThreePt ? -highVolumeShooterCount : shooterCount - spacingBaseline
   const spacingPerShooter = spacingDev < 0
-    ? (isPreThreePt ? 0.035 : simEra === '20s' || simEra === '10s' ? 0.050 : simEra === '00s' ? 0.050 : simEra === '90s' ? 0.025 : 0.015)
+    ? (isPreThreePt ? 0.035 : simEra === '20s' || simEra === '10s' ? 0.050 : simEra === '00s' ? 0.050 : simEra === '90s' ? 0.035 : 0.015)
     : (simEra === '20s' || simEra === '10s' ? 0.022 : simEra === '00s' ? 0.014 : 0.009)
   const spacingCapNeg     = isPreThreePt ? 0.15 : simEra === '20s' ? 0.25 : simEra === '10s' ? 0.20 : simEra === '00s' ? 0.14 : simEra === '90s' ? 0.10 : 0.06
   const spacingCapPos     = simEra === '20s' ? 0.20 : simEra === '10s' ? 0.16 : simEra === '00s' ? 0.12 : simEra === '90s' ? 0.08 : 0.06
@@ -1135,7 +1139,7 @@ function playoffOppRating(round: number, teamWins: number, teamRaw: number, simE
   const eraDifficulty = ERA_DIFFICULTY[simEra] ?? 1.00
   const offRating = Math.round(baseRating * eraDifficulty)
   // Later rounds face better defenses — mild progressive reduction to team's effective rating
-  const defFactor = [1.00, 0.97, 0.94, 0.91][idx]
+  const defFactor = [1.00, 0.97, 0.94, 0.89][idx]
   return { offRating, defFactor }
 }
 
@@ -1159,7 +1163,7 @@ export function simulatePlayoffs(
     return { pr, assignedMPG, minScale }
   })
 
-  const playerDefFactor = calcPlayerDefFactor(entries)
+  const playerDefFactor = calcPlayerDefFactor(entries, simEra)
   const rebFactor = calcRebFactor(entries, simEra)
   const astFactor = calcAstFactor(entries)
   const defBonus = coachDefBonus ?? coachBonus(coachDefGrade)
@@ -1174,7 +1178,7 @@ export function simulatePlayoffs(
   const spacingBaselinePO   = simEra === '20s' ? 6 : simEra === '10s' ? 5 : simEra === '00s' ? 4 : simEra === '90s' ? 3 : simEra === '80s' ? 2 : 0
   const spacingDevPO        = isPreThreePtPO ? -highVolumeShooterCountPO : shooterCount - spacingBaselinePO
   const spacingPerShooterPO = spacingDevPO < 0
-    ? (isPreThreePtPO ? 0.035 : simEra === '20s' || simEra === '10s' ? 0.050 : simEra === '00s' ? 0.050 : simEra === '90s' ? 0.025 : 0.015)
+    ? (isPreThreePtPO ? 0.035 : simEra === '20s' || simEra === '10s' ? 0.050 : simEra === '00s' ? 0.050 : simEra === '90s' ? 0.035 : 0.015)
     : (simEra === '20s' || simEra === '10s' ? 0.022 : simEra === '00s' ? 0.014 : 0.009)
   const spacingCapNegPO     = isPreThreePtPO ? 0.15 : simEra === '20s' ? 0.25 : simEra === '10s' ? 0.20 : simEra === '00s' ? 0.14 : simEra === '90s' ? 0.10 : 0.06
   const spacingCapPosPO     = simEra === '20s' ? 0.20 : simEra === '10s' ? 0.16 : simEra === '00s' ? 0.12 : simEra === '90s' ? 0.08 : 0.06
@@ -1201,6 +1205,12 @@ export function simulatePlayoffs(
   const expPTS = entries.map(e => (e.pr.player.PTS ?? 0) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty) * (1 + playoffRingBoost(e.pr.player.rings ?? 0)))
   const expREB = entries.map(e => (e.pr.player.REB ?? 0) * e.pr.eraMod * e.minScale * rebSlotMod(e.pr.slot) * (1 - e.pr.fitPenalty) * (1 + playoffRingBoost(e.pr.player.rings ?? 0)))
   const expAST = entries.map(e => (e.pr.player.AST ?? 0) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty) * (1 + playoffRingBoost(e.pr.player.rings ?? 0)))
+  const expSTL = entries.map(e => imputeSTL(e.pr.player) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty))
+  const expBLK = entries.map(e => imputeBLK(e.pr.player) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty) * blkSlotMod(e.pr.slot))
+  const expTOV = entries.map(e => imputeTOV(e.pr.player) * e.pr.eraMod * e.minScale * (1 - e.pr.fitPenalty))
+  const baseFG  = entries.map(e => Math.min(0.75, Math.max(0.25, (e.pr.player.FG_PCT ?? 0.45) * (0.9 + e.pr.eraMod * 0.1))))
+  const baseFG3 = entries.map(e => PRE_THREE_PT_ERAS.includes(simEra) ? null : e.pr.player.FG3_PCT ?? getEstimatedFG3PCT(e.pr.player, simEra))
+  const baseFT  = entries.map(e => Math.min(0.95, Math.max(0.35, e.pr.player.FT_PCT ?? 0.70)))
   const totalExpPTS = expPTS.reduce((a, b) => a + b, 0)
 
   // Accumulators — filled per-game from actual generated lines
@@ -1238,6 +1248,13 @@ export function simulatePlayoffs(
       const gamePTS = expPTS.map(e => Math.max(0, e * (0.6 + Math.random() * 0.8)))
       const gameREB = expREB.map(e => Math.max(0, Math.round(e * (0.6 + Math.random() * 0.8))))
       const gameAST = expAST.map(e => Math.max(0, Math.round(e * (0.6 + Math.random() * 0.8))))
+      const gameSTL = expSTL.map(e => +Math.max(0, e * (0.6 + Math.random() * 0.8)).toFixed(1))
+      const gameBLK = expBLK.map(e => +Math.max(0, e * (0.6 + Math.random() * 0.8)).toFixed(1))
+      const gameTOV = expTOV.map(e => +Math.max(0, e * (0.6 + Math.random() * 0.8)).toFixed(1))
+      const lossPenalty = win ? 0 : 0.03
+      const gameFG  = baseFG.map(b => +Math.min(0.80, Math.max(0.20, b - lossPenalty + (Math.random() - 0.5) * 0.14)).toFixed(3))
+      const gameFG3 = baseFG3.map(b => b == null ? null : +Math.min(0.70, Math.max(0.10, b - lossPenalty + (Math.random() - 0.5) * 0.18)).toFixed(3))
+      const gameFT  = baseFT.map(b => +Math.min(0.99, Math.max(0.30, b - (win ? 0 : 0.02) + (Math.random() - 0.5) * 0.12)).toFixed(3))
 
       // Scale PTS so they sum to teamScore
       const rawPTSTotal = gamePTS.reduce((a, b) => a + b, 0)
@@ -1306,9 +1323,18 @@ export function simulatePlayoffs(
 
       const playerLines = entries.map((e, i) => ({
         personId: e.pr.player.person_id,
+        name: e.pr.player.full_name,
+        slot: e.pr.slot,
+        mpg: Math.round(e.assignedMPG),
         pts: scaledPTS[i],
         reb: gameREB[i],
         ast: gameAST[i],
+        stl: gameSTL[i],
+        blk: gameBLK[i],
+        tov: gameTOV[i],
+        fg: gameFG[i],
+        fg3: gameFG3[i],
+        ft: gameFT[i],
       }))
       if (win) sW++; else sL++
       allGames.push({ win, roundIndex: r, teamScore, oppScore, gameInSeries, leaders, special, playerLines })
