@@ -369,7 +369,7 @@ const ERA_OPP_BASELINE: Record<Era, number> = {
 // Modern eras have deeper, more competitive leagues — opponents are proportionally harder
 const ERA_DIFFICULTY: Partial<Record<Era, number>> = {
   '50s': 1.04, '60s': 1.05, '70s': 1.05, '80s': 1.05,
-  '90s': 1.08, '00s': 1.06, '10s': 1.08, '20s': 1.10,
+  '90s': 1.10, '00s': 1.06, '10s': 1.08, '20s': 1.10,
 }
 
 // Era-appropriate score caps (elite teams in 50s/60s historically hit 120-130 PPG)
@@ -1126,10 +1126,10 @@ export function firstRoundLabel(simEra: Era): string {
 // Finals (round 4): scales with team's raw rating so stronger teams face proportionally harder opponents.
 function playoffOppRating(round: number, teamWins: number, teamRaw: number, simEra: Era): { offRating: number; defFactor: number } {
   const idx = round - 1
-  const winsBase = teamWins >= 60 ? [45, 49, 50, 52][idx]
-                 : teamWins >= 53 ? [46, 50, 54, 53][idx]
-                 : teamWins >= 47 ? [48, 51, 55, 53][idx]
-                 :                  [50, 52, 56, 55][idx]
+  const winsBase = teamWins >= 60 ? [45, 49, 53, 52][idx]
+                 : teamWins >= 53 ? [46, 50, 53, 53][idx]
+                 : teamWins >= 47 ? [48, 51, 53, 53][idx]
+                 :                  [50, 52, 53, 55][idx]
   // Finals opponent scales with team strength — slightly weaker than user's raw rating
   const baseRating = round === 4 ? Math.max(winsBase, Math.round(teamRaw * 0.88)) : winsBase
   const eraDifficulty = ERA_DIFFICULTY[simEra] ?? 1.00
