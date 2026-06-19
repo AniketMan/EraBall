@@ -4297,8 +4297,8 @@ export default function Home() {
                   59% { opacity: 0.97; }
                 }
                 @keyframes crt-scan {
-                  from { background-position: 0 -80px; }
-                  to   { background-position: 0 calc(100vh + 80px); }
+                  from { transform: translateY(-80px); }
+                  to   { transform: translateY(100vh); }
                 }
               `}</style>
               {/* Scanlines */}
@@ -4315,9 +4315,9 @@ export default function Home() {
               {/* Scan bar — 50s/60s tube TV only */}
               {(effectiveEra === '50s' || effectiveEra === '60s') && (
                 <div style={{
-                  position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 10002,
-                  backgroundImage: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.03) 50%, transparent)',
-                  backgroundSize: '100% 80px', backgroundRepeat: 'no-repeat',
+                  position: 'fixed', top: 0, left: 0, right: 0, height: 80,
+                  pointerEvents: 'none', zIndex: 10002, willChange: 'transform',
+                  background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.03) 50%, transparent)',
                   animation: 'crt-scan 3s linear infinite',
                 }} />
               )}
@@ -4399,38 +4399,50 @@ export default function Home() {
           <div style={{
             position: 'fixed', top: popoverPos.top, right: popoverPos.right, zIndex: 9995,
             background: G.surface2, border: `1px solid ${G.border}`,
-            padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10, minWidth: 160,
+            padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 10, minWidth: 160,
           }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <button
+                onClick={() => setMuted(m => !m)}
+                style={{ background: 'none', border: 'none', color: isSilent ? G.grey : G.gold, cursor: 'pointer', padding: 0, display: 'flex', flexShrink: 0 }}
+              >
+                {isSilent ? (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M11 5L6 9H2v6h4l5 4V5z" fill="currentColor"/>
+                    <line x1="23" y1="9" x2="17" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    <line x1="17" y1="9" x2="23" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M11 5L6 9H2v6h4l5 4V5z" fill="currentColor"/>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none"/>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none"/>
+                  </svg>
+                )}
+              </button>
+              <input
+                type="range"
+                className="vol-slider"
+                min="0" max="1" step="0.01"
+                value={muted ? 0 : volume}
+                style={{ '--vol': `${(muted ? 0 : volume) * 100}%` } as React.CSSProperties}
+                onChange={e => {
+                  const v = parseFloat(e.target.value)
+                  if (v === 0) { setMuted(true) }
+                  else { setVolume(v); if (muted) setMuted(false) }
+                }}
+              />
+            </div>
             <button
               onClick={() => setMuted(m => !m)}
-              style={{ background: 'none', border: 'none', color: isSilent ? G.grey : G.gold, cursor: 'pointer', padding: 0, display: 'flex', flexShrink: 0 }}
-            >
-              {isSilent ? (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <path d="M11 5L6 9H2v6h4l5 4V5z" fill="currentColor"/>
-                  <line x1="23" y1="9" x2="17" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                  <line x1="17" y1="9" x2="23" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-              ) : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <path d="M11 5L6 9H2v6h4l5 4V5z" fill="currentColor"/>
-                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none"/>
-                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none"/>
-                </svg>
-              )}
-            </button>
-            <input
-              type="range"
-              className="vol-slider"
-              min="0" max="1" step="0.01"
-              value={muted ? 0 : volume}
-              style={{ '--vol': `${(muted ? 0 : volume) * 100}%` } as React.CSSProperties}
-              onChange={e => {
-                const v = parseFloat(e.target.value)
-                if (v === 0) { setMuted(true) }
-                else { setVolume(v); if (muted) setMuted(false) }
+              style={{
+                background: 'none', border: `1px solid ${isSilent ? G.grey : G.gold}`,
+                color: isSilent ? G.grey : G.gold, cursor: 'pointer',
+                fontSize: 10, letterSpacing: '0.12em', padding: '4px 0', width: '100%',
               }}
-            />
+            >
+              {isSilent ? 'UNMUTE' : 'MUTE'}
+            </button>
           </div>
         </>
       )}
