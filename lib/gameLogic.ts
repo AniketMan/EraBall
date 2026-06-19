@@ -413,12 +413,42 @@ const RATING_STAT_OVERRIDE: Record<string, string> = {
 // Flat base rating overrides: "name:era:team" → exact base rating value.
 // Use when the formula under/over-values a player and a manual correction is needed.
 const BASE_RATING_OVERRIDE: Record<string, number> = {
-  'Alex English:80s:DEN':       57,
-  'Jamal Murray:20s:DEN':       54,
-  'Carmelo Anthony:10s:DEN':    57,
-  'Draymond Green:10s:GSW':     51,
-  'Aaron Gordon:20s:DEN':       47,
-  'Michael Porter Jr.:20s:DEN': 45,
+  // 20s
+  'Shai Gilgeous-Alexander:20s:OKC': 67,
+  'Jalen Brunson:20s:NYK':           55,
+  'Anthony Edwards:20s:MIN':         53,
+  'Jamal Murray:20s:DEN':            54,
+  'Michael Porter Jr.:20s:DEN':      46.5,
+  'Aaron Gordon:20s:DEN':            47,
+  'Austin Reaves:20s:LAL':           44,
+  'Christian Braun:20s:DEN':         32,
+  'Peyton Watson:20s:DEN':           34,
+  // 10s
+  'LeBron James:10s:CLE':            72,
+  'Stephen Curry:10s:GSW':           70,
+  'Russell Westbrook:10s:OKC':       60,
+  'Carmelo Anthony:10s:DEN':         57,
+  'Tim Duncan:10s:SAS':              55,
+  'Kyrie Irving:10s:CLE':            50,
+  'Draymond Green:10s:GSW':          51,
+  'Paul Millsap:10s:ATL':            46.5,
+  'John Wall:10s:WAS':               46,
+  'Tony Parker:10s:SAS':             40,
+  'DeAndre Jordan:10s:LAC':          39,
+  // 00s
+  "Shaquille O'Neal:00s:LAL":        66,
+  'Tim Duncan:00s:SAS':              66,
+  'Kobe Bryant:00s:LAL':             65,
+  // 90s
+  'Michael Jordan:90s:CHI':          72,
+  'Magic Johnson:90s:LAL':           60,
+  'Charles Barkley:90s:PHX':         57,
+  'Kobe Bryant:90s:LAL':             55,
+  // 80s
+  'Larry Bird:80s:BOS':              66,
+  'Alex English:80s:DEN':            57,
+  // 70s
+  'Oscar Robertson:70s:MIL':         56,
 }
 
 // Returns the player with era-specific stats substituted in, falling back to
