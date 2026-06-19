@@ -801,6 +801,30 @@ const V1_NOTES = [
   ]},
 ]
 
+const V1_3_NOTES = [
+  { section: 'NEW ERA THEMES!', items: [
+    'BRAND NEW themes for every era. On by default, can be turned off in the top bar.',
+    '50s: Full greyscale. CRT scanlines, screen flicker, and a sweeping scan bar.',
+    '60s: Desaturated. Warm yellow tint, CRT scanlines, and scan bar.',
+    '70s: Slight desaturation with a faded film contrast grade.',
+    '80s / 90s: CRT scanlines and vignette.',
+    '2000s: Animated film grain, amber tint, and vignette.',
+    '2010s: Light film grain and a subtle golden overlay.',
+    '2020s: Default, no filter.',
+    'Effects preview live on the home screen as you click over eras before confirming.',
+  ]},
+  { section: 'NEW ERA Music', items: [
+    'Each era now has its own era specific background music. Starts the moment you click an era on the home screen.',
+    'Speaker icon at the top bar controls volume.',
+  ]},
+  { section: 'Ratings', items: [
+    'Increased the ratings of numerous players across eras to match their real life impact, and their ranking in that era. Players like 90s MJ, 10s CLE Lebron, Magic, Bird, Alex English, Tim Duncan, Dirk, 10s Draymond and more!',
+  ]},
+  { section: 'Playoffs', items: [
+    'Fixed bug where your team would have more points in a loss in the box score.',
+  ]},
+]
+
 const V1_2_NOTES = [
   { section: 'Simulation', items: [
     'Increased the 2000s era difficulty in the regular season. It was the weakest before.',
@@ -824,6 +848,7 @@ const V1_2_NOTES = [
 ]
 
 function PatchNotesModal({ onClose }: { onClose: () => void }) {
+  const [showV1_2, setShowV1_2] = useState(false)
   const [showV1_1, setShowV1_1] = useState(false)
   const [showV1, setShowV1] = useState(false)
 
@@ -845,12 +870,24 @@ function PatchNotesModal({ onClose }: { onClose: () => void }) {
         <div className="flex items-center justify-between mb-4">
           <div>
             <div style={{ ...BEBAS, fontSize: 24, color: G.white, letterSpacing: '0.05em' }}>What's New</div>
-            <div style={{ fontSize: 11, color: G.gold, letterSpacing: '0.12em', textTransform: 'uppercase' }}>v1.2 · June 18</div>
+            <div style={{ fontSize: 11, color: G.gold, letterSpacing: '0.12em', textTransform: 'uppercase' }}>v1.3 · June 19</div>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: G.greyDark, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>✕</button>
         </div>
 
-        {renderNotes(V1_2_NOTES)}
+        {renderNotes(V1_3_NOTES)}
+
+        {/* v1.2 collapsible */}
+        <div style={{ borderTop: `1px solid ${G.border}`, marginTop: 8, paddingTop: 12 }}>
+          <button
+            onClick={() => setShowV1_2(v => !v)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: 0 }}
+          >
+            <span style={{ fontSize: 11, color: G.greyDark, letterSpacing: '0.12em', textTransform: 'uppercase' }}>V1.2 · June 18</span>
+            <span style={{ fontSize: 10, color: G.greyDark, display: 'inline-block', transform: showV1_2 ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▼</span>
+          </button>
+          {showV1_2 && <div style={{ marginTop: 12 }}>{renderNotes(V1_2_NOTES)}</div>}
+        </div>
 
         {/* v1.1 collapsible */}
         <div style={{ borderTop: `1px solid ${G.border}`, marginTop: 8, paddingTop: 12 }}>
@@ -885,7 +922,7 @@ function PatchNotesModal({ onClose }: { onClose: () => void }) {
   )
 }
 
-function EraSelection({ onEraSelected, onSandboxSelected, onRestart, onLifetimeStats }: { onEraSelected: (era: Era) => void; onSandboxSelected: (era: Era) => void; onRestart: () => void; onLifetimeStats: () => void }) {
+function EraSelection({ onEraSelected, onSandboxSelected, onRestart, onLifetimeStats, onEraPreview, muteBtn, eraThemeBtn }: { onEraSelected: (era: Era) => void; onSandboxSelected: (era: Era) => void; onRestart: () => void; onLifetimeStats: () => void; onEraPreview?: (era: Era) => void; muteBtn?: React.ReactNode; eraThemeBtn?: React.ReactNode }) {
   const [spinning, setSpinning] = useState(false)
   const [era, setEra] = useState<Era | null>(null)
   const [showHelp, setShowHelp] = useState(() => {
@@ -918,6 +955,7 @@ function EraSelection({ onEraSelected, onSandboxSelected, onRestart, onLifetimeS
         setSpinKey(k => k + 1)
         setDisplayEra(picked)
         setEra(picked)
+        onEraPreview?.(picked)
         setTimeout(() => setSpinning(false), 350)
       }
     }
@@ -928,6 +966,7 @@ function EraSelection({ onEraSelected, onSandboxSelected, onRestart, onLifetimeS
     if (spinning) return
     setEra(e)
     setDisplayEra(e)
+    onEraPreview?.(e)
   }
 
   const stepEra = (dir: 1 | -1) => {
@@ -952,9 +991,59 @@ function EraSelection({ onEraSelected, onSandboxSelected, onRestart, onLifetimeS
     return () => window.removeEventListener('keydown', handler)
   })
 
+  // Starfield
+  const canvasRef = React.useRef<HTMLCanvasElement>(null)
+  React.useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    const STAR_COUNT = 150, SPEED = 0.6
+    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight }
+    resize()
+    window.addEventListener('resize', resize)
+    const stars = Array.from({ length: STAR_COUNT }, () => ({
+      x: (Math.random() - 0.5) * window.innerWidth * 2,
+      y: (Math.random() - 0.5) * window.innerHeight * 2,
+      z: Math.random() * window.innerWidth,
+      px: 0, py: 0,
+    }))
+    let animId: number
+    const tick = () => {
+      const W = canvas.width, H = canvas.height, cx = W / 2, cy = H / 2, fl = W * 0.5
+      ctx.fillStyle = 'rgba(0,0,0,0.18)'
+      ctx.fillRect(0, 0, W, H)
+      for (const s of stars) {
+        const sx = (s.x / s.z) * fl + cx
+        const sy = (s.y / s.z) * fl + cy
+        const prog = 1 - s.z / W
+        const r = Math.max(0.3, prog * 2.2)
+        const op = 0.15 + prog * 0.85
+        if (s.px !== 0 && s.py !== 0) {
+          ctx.beginPath(); ctx.moveTo(s.px, s.py); ctx.lineTo(sx, sy)
+          ctx.strokeStyle = `rgba(255,255,255,${op * 0.5})`
+          ctx.lineWidth = r * 0.8; ctx.stroke()
+        }
+        ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(255,255,255,${op})`; ctx.fill()
+        s.px = sx; s.py = sy; s.z -= SPEED
+        if (s.z <= 0 || sx < -50 || sx > W + 50 || sy < -50 || sy > H + 50) {
+          s.x = (Math.random() - 0.5) * W * 2
+          s.y = (Math.random() - 0.5) * H * 2
+          s.z = W; s.px = 0; s.py = 0
+        }
+      }
+      animId = requestAnimationFrame(tick)
+    }
+    tick()
+    return () => { cancelAnimationFrame(animId); window.removeEventListener('resize', resize) }
+  }, [])
+
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: G.black }}>
-      <TopBar onRestart={onRestart} />
+    <div className="min-h-screen flex flex-col" style={{ background: G.black, position: 'relative' }}>
+      <canvas ref={canvasRef} style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }} />
+      <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', flex: 1 }}>
+      <TopBar onRestart={onRestart} right={(eraThemeBtn || muteBtn) ? <div className="flex items-center gap-4">{eraThemeBtn}{muteBtn}</div> : undefined} />
 
       <div className="flex-1 flex flex-col items-center justify-center px-4 gap-10" style={{ overflowX: 'hidden', overflowY: 'auto' }}>
         {/* Selected era display */}
@@ -1084,13 +1173,14 @@ function EraSelection({ onEraSelected, onSandboxSelected, onRestart, onLifetimeS
         try { localStorage.setItem('eraball_seen_help', '1') } catch {}
         setShowHelp(false)
       }} />}
+      </div>
     </div>
   )
 }
 
 // ─── Phase 2: Draft ───────────────────────────────────────────────────────────
-function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandbox, greyscaleBtn }: {
-  simEra: Era; players: Player[]; onDraftComplete: (slots: CourtSlot[], customEras: Era[] | null) => void; onRestart: () => void; startInSandbox?: boolean; greyscaleBtn?: React.ReactNode
+function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandbox, greyscaleBtn, muteBtn }: {
+  simEra: Era; players: Player[]; onDraftComplete: (slots: CourtSlot[], customEras: Era[] | null) => void; onRestart: () => void; startInSandbox?: boolean; greyscaleBtn?: React.ReactNode; muteBtn?: React.ReactNode
 }) {
   const [slots, setSlots] = useState<CourtSlot[]>(emptySlots())
   const [spinning, setSpinning] = useState(false)
@@ -1557,6 +1647,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
             title="Developer mode — pick team/era directly"
           >DEV</button>}
           {greyscaleBtn}
+          {muteBtn}
         </div>
       } />
 
@@ -2226,8 +2317,8 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
 }
 
 // ─── Phase 3: Coach Draft ─────────────────────────────────────────────────────
-function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxMode, greyscaleBtn }: {
-  coaches: Coach[]; onCoachSelected: (coach: Coach) => void; onRestart: () => void; sandboxMode?: boolean; greyscaleBtn?: React.ReactNode
+function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxMode, greyscaleBtn, muteBtn }: {
+  coaches: Coach[]; onCoachSelected: (coach: Coach) => void; onRestart: () => void; sandboxMode?: boolean; greyscaleBtn?: React.ReactNode; muteBtn?: React.ReactNode
 }) {
   const [spinning, setSpinning] = useState(false)
   const [coach, setCoach] = useState<Coach | null>(null)
@@ -2271,7 +2362,7 @@ function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxMode, gr
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: G.black }}>
-      <TopBar onRestart={onRestart} right={greyscaleBtn ? <div className="flex items-center gap-4">{greyscaleBtn}</div> : undefined} />
+      <TopBar onRestart={onRestart} right={(greyscaleBtn || muteBtn) ? <div className="flex items-center gap-4">{greyscaleBtn}{muteBtn}</div> : undefined} />
 
       <div className="flex-1 flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-md">
@@ -2517,7 +2608,7 @@ function StatsTable({ stats, simEra, title, subtitle, teamActualPPG, teamActualO
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >×</button>
-          <PlayerCard player={cardPlayer} activeEra={cardPlayer.era} devMode={devMode} />
+          <PlayerCard player={cardPlayer} activeEra={cardPlayer.era} />
           {gameLog.length > 0 && (
             <div style={{ background: G.surface, border: `1px solid ${G.border}`, borderTop: 'none', padding: '12px 16px' }}>
               <div className="text-xs uppercase tracking-widest mb-2" style={{ color: G.grey }}>Playoff Game Log</div>
@@ -2996,8 +3087,8 @@ function SeasonAwardsPanel({ awards }: { awards: AwardEntry[] }) {
 }
 
 // ─── Phase 4: Simulation ──────────────────────────────────────────────────────
-function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandboxMode, customEraRange }: {
-  slots: CourtSlot[]; coach: Coach; simEra: Era; onRestart: () => void; greyscaleBtn?: React.ReactNode; sandboxMode?: boolean; customEraRange?: Era[] | null
+function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteBtn, sandboxMode, customEraRange }: {
+  slots: CourtSlot[]; coach: Coach; simEra: Era; onRestart: () => void; greyscaleBtn?: React.ReactNode; muteBtn?: React.ReactNode; sandboxMode?: boolean; customEraRange?: Era[] | null
 }) {
   const seasonGames = ERA_SEASON_GAMES[simEra]
   const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
@@ -3337,6 +3428,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
             Coach: <span style={{ color: G.white }}>{coach.name}</span>
           </span>
           {greyscaleBtn}
+          {muteBtn}
         </div>
       } />
 
@@ -4040,12 +4132,24 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, sandb
 }
 
 
+// ─── Era audio map ────────────────────────────────────────────────────────────
+const ERA_AUDIO: Partial<Record<Era, string>> = {
+  '50s': '/audio/50s.mp3',
+  '60s': '/audio/60s.mp3',
+  '70s': '/audio/70s.mp3',
+  '80s': '/audio/80s.mp3',
+  '90s': '/audio/90s.mp3',
+  '00s': '/audio/2000s.mp3',
+  '10s': '/audio/2010s.mp3',
+  '20s': '/audio/2020s.mp3',
+}
+
 // ─── Root ─────────────────────────────────────────────────────────────────────
 export default function Home() {
   const [phase, setPhase] = useState<GamePhase>('era-select')
-  const [simEra, setSimEra] = useState<Era>('90s')
+  const [simEra, setSimEra] = useState<Era>('20s')
   const [startSandbox, setStartSandbox] = useState(false)
-  const [greyscale, setGreyscale] = useState(false)
+  const [greyscale, setGreyscale] = useState(true)
   const [players, setPlayers] = useState<Player[]>([])
   const [coaches, setCoaches] = useState<Coach[]>([])
   const [slots, setSlots] = useState<CourtSlot[]>(emptySlots())
@@ -4053,6 +4157,32 @@ export default function Home() {
   const [draftCustomEras, setDraftCustomEras] = useState<Era[] | null>(null)
   const [showLifetimeStats, setShowLifetimeStats] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [muted, setMuted] = useState(false)
+  const [volume, setVolume] = useState(0.35)
+  const [showVolumePopover, setShowVolumePopover] = useState(false)
+  const [popoverPos, setPopoverPos] = useState({ top: 50, right: 16 })
+  const volumeBtnRef = useRef<HTMLButtonElement | null>(null)
+  const [audioEra, setAudioEra] = useState<Era | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  // Start / swap music whenever the active era changes
+  useEffect(() => {
+    if (!audioEra) return
+    const src = ERA_AUDIO[audioEra]
+    if (!src) return
+    if (audioRef.current) audioRef.current.pause()
+    const audio = new Audio(src)
+    audio.loop = true
+    audio.volume = muted ? 0 : volume
+    audioRef.current = audio
+    audio.play().catch(() => {})
+    return () => { audio.pause() }
+  }, [audioEra])
+
+  // Sync volume + muted to audio element
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = muted ? 0 : volume
+  }, [muted, volume])
 
   useEffect(() => {
     Promise.all([
@@ -4080,7 +4210,9 @@ export default function Home() {
     window.location.href = '/'
   }
 
-  const greyscaleBtn = simEra === '50s' && phase !== 'era-select' ? (
+  const CRT_ERAS: Era[] = ['50s', '60s', '70s', '80s', '90s']
+  const effectiveEra: Era = audioEra ?? simEra
+  const greyscaleBtn = (
     <button
       onClick={() => setGreyscale(g => !g)}
       className="flex items-center gap-1.5 text-xs uppercase tracking-widest px-2 py-1"
@@ -4092,7 +4224,7 @@ export default function Home() {
         letterSpacing: '0.15em',
         transition: 'all 0.15s ease',
       }}
-      title="Toggle 50s era black & white theme"
+      title="Toggle era theme"
     >
       Era Theme
       <span style={{
@@ -4104,16 +4236,204 @@ export default function Home() {
         transition: 'all 0.15s ease',
       }}>{greyscale ? 'ON' : 'OFF'}</span>
     </button>
+  )
+
+  const eraFilter = greyscale ? (
+    effectiveEra === '50s' ? 'grayscale(1)' :
+    effectiveEra === '60s' ? 'saturate(0.82)' :
+    effectiveEra === '70s' ? 'saturate(0.88) contrast(0.94) brightness(0.97)' :
+    effectiveEra === '10s' ? 'saturate(1.15) contrast(1.06) brightness(1.02)' :
+    'none'
+  ) : 'none'
+
+  const isSilent = muted || volume === 0
+  const muteBtn = audioEra !== null ? (
+    <button
+      ref={volumeBtnRef}
+      onClick={() => {
+        if (!showVolumePopover && volumeBtnRef.current) {
+          const r = volumeBtnRef.current.getBoundingClientRect()
+          setPopoverPos({ top: r.bottom + 6, right: Math.max(8, window.innerWidth - r.right) })
+        }
+        setShowVolumePopover(s => !s)
+      }}
+      title="Volume"
+      style={{
+        background: 'none', border: `1px solid ${isSilent ? G.border : G.goldDim}`,
+        color: isSilent ? G.grey : G.gold,
+        width: 28, height: 28,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        cursor: 'pointer', transition: 'border-color 0.15s, color 0.15s', flexShrink: 0,
+      }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = G.grey; e.currentTarget.style.color = G.white }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = isSilent ? G.border : G.goldDim; e.currentTarget.style.color = isSilent ? G.grey : G.gold }}
+    >
+      {isSilent ? (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <path d="M11 5L6 9H2v6h4l5 4V5z" fill="currentColor"/>
+          <line x1="23" y1="9" x2="17" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          <line x1="17" y1="9" x2="23" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+        </svg>
+      ) : (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <path d="M11 5L6 9H2v6h4l5 4V5z" fill="currentColor"/>
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none"/>
+        </svg>
+      )}
+    </button>
   ) : null
 
   return (
-    <div style={{ filter: greyscale ? 'grayscale(1)' : 'none', minHeight: '100vh' }}>
-      {phase === 'era-select' && <EraSelection onEraSelected={era => { setSimEra(era); setStartSandbox(false); setPhase('draft') }} onSandboxSelected={era => { setSimEra(era); setStartSandbox(true); setPhase('draft') }} onRestart={restart} onLifetimeStats={() => setShowLifetimeStats(true)} />}
+    <div style={{ filter: eraFilter, minHeight: '100vh' }}>
+      {typeof document !== 'undefined' && createPortal(
+        <>
+          {greyscale && CRT_ERAS.includes(effectiveEra) && (
+            <>
+              <style>{`
+                @keyframes crt-flicker {
+                  0%, 18%, 22%, 57%, 100% { opacity: 1; }
+                  20% { opacity: 0.94; }
+                  59% { opacity: 0.97; }
+                }
+                @keyframes crt-scan {
+                  from { background-position: 0 -80px; }
+                  to   { background-position: 0 calc(100vh + 80px); }
+                }
+              `}</style>
+              {/* Scanlines */}
+              <div style={{
+                position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 10000,
+                backgroundImage: 'repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 2px, rgba(0,0,0,0.18) 2px, rgba(0,0,0,0.18) 4px)',
+                animation: 'crt-flicker 5s infinite',
+              }} />
+              {/* Vignette */}
+              <div style={{
+                position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 10001,
+                background: 'radial-gradient(ellipse at 50% 50%, transparent 52%, rgba(0,0,0,0.55) 100%)',
+              }} />
+              {/* Scan bar — 50s/60s tube TV only */}
+              {(effectiveEra === '50s' || effectiveEra === '60s') && (
+                <div style={{
+                  position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 10002,
+                  backgroundImage: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.03) 50%, transparent)',
+                  backgroundSize: '100% 80px', backgroundRepeat: 'no-repeat',
+                  animation: 'crt-scan 3s linear infinite',
+                }} />
+              )}
+            </>
+          )}
+          {/* 60s — warm yellow tint */}
+          {greyscale && effectiveEra === '60s' && (
+            <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 10003, background: 'rgba(255, 220, 80, 0.05)' }} />
+          )}
+          {/* 50s–90s — film/VHS grain */}
+          {greyscale && CRT_ERAS.includes(effectiveEra) && (
+            <svg style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10004, mixBlendMode: 'screen' }}>
+              <filter id="grain-crt">
+                <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="4" stitchTiles="stitch">
+                  <animate attributeName="seed" values="3;19;37;52;11;44;28;67;8;41;74;16" dur="1s" calcMode="discrete" repeatCount="indefinite"/>
+                </feTurbulence>
+              </filter>
+              <rect width="100%" height="100%" filter="url(#grain-crt)" opacity="0.09"/>
+            </svg>
+          )}
+          {/* 50s — extra grain layer */}
+          {greyscale && effectiveEra === '50s' && (
+            <svg style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10005, mixBlendMode: 'screen' }}>
+              <filter id="grain-50s">
+                <feTurbulence type="fractalNoise" baseFrequency="0.72" numOctaves="4" stitchTiles="stitch">
+                  <animate attributeName="seed" values="7;23;41;59;13;47;31;68;4;38;72;19" dur="1s" calcMode="discrete" repeatCount="indefinite"/>
+                </feTurbulence>
+              </filter>
+              <rect width="100%" height="100%" filter="url(#grain-50s)" opacity="0.12"/>
+            </svg>
+          )}
+          {/* 2000s — animated film grain + warm amber tint */}
+          {greyscale && effectiveEra === '00s' && (
+            <>
+              <svg style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10000, mixBlendMode: 'screen' }}>
+                <filter id="grain-00s">
+                  <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="4" stitchTiles="stitch">
+                    <animate attributeName="seed" values="0;17;42;8;63;29;71;5;88;34;15;56" dur="1s" calcMode="discrete" repeatCount="indefinite"/>
+                  </feTurbulence>
+                </filter>
+                <rect width="100%" height="100%" filter="url(#grain-00s)" opacity="0.15"/>
+              </svg>
+              <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 10001, background: 'rgba(255, 175, 70, 0.01)' }} />
+              <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 10002, background: 'radial-gradient(ellipse at 50% 50%, transparent 52%, rgba(0,0,0,0.55) 100%)' }} />
+            </>
+          )}
+          {/* 2010s — minor film grain + warm golden tint */}
+          {greyscale && effectiveEra === '10s' && (
+            <>
+              <svg style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10000, mixBlendMode: 'screen' }}>
+                <filter id="grain-10s">
+                  <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="3" stitchTiles="stitch">
+                    <animate attributeName="seed" values="5;22;38;14;59;31;68;3;47;76;19;53" dur="1s" calcMode="discrete" repeatCount="indefinite"/>
+                  </feTurbulence>
+                </filter>
+                <rect width="100%" height="100%" filter="url(#grain-10s)" opacity="0.10"/>
+              </svg>
+              <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 10001, background: 'rgba(255, 200, 90, 0.03)' }} />
+            </>
+          )}
+        </>,
+        document.body
+      )}
+      {phase === 'era-select' && <EraSelection onEraSelected={era => { setSimEra(era); setStartSandbox(false); setPhase('draft') }} onSandboxSelected={era => { setSimEra(era); setStartSandbox(true); setPhase('draft') }} onRestart={restart} onLifetimeStats={() => setShowLifetimeStats(true)} onEraPreview={era => setAudioEra(era)} muteBtn={muteBtn} eraThemeBtn={greyscaleBtn} />}
       {showLifetimeStats && <LifetimeStatsModal onClose={() => setShowLifetimeStats(false)} />}
-      {phase === 'draft' && <DraftScreen simEra={simEra} players={players} onDraftComplete={(s, ce) => { setSlots(s); setDraftCustomEras(ce); setPhase('coach-draft') }} onRestart={restart} startInSandbox={startSandbox} greyscaleBtn={greyscaleBtn} />}
-      {phase === 'coach-draft' && <CoachDraftScreen coaches={coaches} onCoachSelected={c => { setCoach(c); setPhase('simulation') }} onRestart={restart} sandboxMode={startSandbox} greyscaleBtn={greyscaleBtn} />}
-      {phase === 'simulation' && coach && <SimulationScreen slots={slots} coach={coach} simEra={simEra} onRestart={restart} greyscaleBtn={greyscaleBtn} sandboxMode={startSandbox} customEraRange={draftCustomEras} />}
+      {phase === 'draft' && <DraftScreen simEra={simEra} players={players} onDraftComplete={(s, ce) => { setSlots(s); setDraftCustomEras(ce); setPhase('coach-draft') }} onRestart={restart} startInSandbox={startSandbox} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} />}
+      {phase === 'coach-draft' && <CoachDraftScreen coaches={coaches} onCoachSelected={c => { setCoach(c); setPhase('simulation') }} onRestart={restart} sandboxMode={startSandbox} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} />}
+      {phase === 'simulation' && coach && <SimulationScreen slots={slots} coach={coach} simEra={simEra} onRestart={restart} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} sandboxMode={startSandbox} customEraRange={draftCustomEras} />}
 
+      {/* Volume popover */}
+      {showVolumePopover && audioEra !== null && (
+        <>
+          <style>{`
+            .vol-slider{-webkit-appearance:none;appearance:none;width:100%;height:3px;border-radius:2px;outline:none;cursor:pointer;background:linear-gradient(to right,#C9A84C 0%,#C9A84C var(--vol,35%),#333 var(--vol,35%),#333 100%)}
+            .vol-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:12px;height:12px;border-radius:50%;background:#C9A84C;cursor:pointer}
+            .vol-slider::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#C9A84C;cursor:pointer;border:none}
+          `}</style>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 9994 }} onClick={() => setShowVolumePopover(false)} />
+          <div style={{
+            position: 'fixed', top: popoverPos.top, right: popoverPos.right, zIndex: 9995,
+            background: G.surface2, border: `1px solid ${G.border}`,
+            padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10, minWidth: 160,
+          }}>
+            <button
+              onClick={() => setMuted(m => !m)}
+              style={{ background: 'none', border: 'none', color: isSilent ? G.grey : G.gold, cursor: 'pointer', padding: 0, display: 'flex', flexShrink: 0 }}
+            >
+              {isSilent ? (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path d="M11 5L6 9H2v6h4l5 4V5z" fill="currentColor"/>
+                  <line x1="23" y1="9" x2="17" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  <line x1="17" y1="9" x2="23" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path d="M11 5L6 9H2v6h4l5 4V5z" fill="currentColor"/>
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none"/>
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none"/>
+                </svg>
+              )}
+            </button>
+            <input
+              type="range"
+              className="vol-slider"
+              min="0" max="1" step="0.01"
+              value={muted ? 0 : volume}
+              style={{ '--vol': `${(muted ? 0 : volume) * 100}%` } as React.CSSProperties}
+              onChange={e => {
+                const v = parseFloat(e.target.value)
+                if (v === 0) { setMuted(true) }
+                else { setVolume(v); if (muted) setMuted(false) }
+              }}
+            />
+          </div>
+        </>
+      )}
       {/* Bottom-right footer links */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, padding: '16px 20px 32px' }}>
         <a
