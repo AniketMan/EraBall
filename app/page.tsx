@@ -311,7 +311,7 @@ function CoachHeadshot({ name, size }: { name: string; size: number }) {
 }
 
 // ─── Player card ──────────────────────────────────────────────────────────────
-function PlayerCard({ player, onDragStart, displayEra, activeEra }: { player: Player; onDragStart?: () => void; displayEra?: Era; activeEra?: Era }) {
+function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode }: { player: Player; onDragStart?: () => void; displayEra?: Era; activeEra?: Era; devMode?: boolean }) {
   const ts = (calcTS(player) * 100).toFixed(1)
   const imp = (stat: string) => player.imputed_stats?.includes(stat) ?? false
   const fmt = (stat: string, val: string | null | undefined) =>
@@ -442,6 +442,11 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra }: { player: Pl
           return `${seasons} ${seasons === 1 ? 'season' : 'seasons'}`
         })()}
       </div>
+      {devMode && (
+        <div className="mt-1 text-xs text-center" style={{ color: G.gold, opacity: 0.6, letterSpacing: '0.08em' }}>
+          BASE {r.toFixed(1)}
+        </div>
+      )}
       {isSTier && (<>
         <div className="card-sheen-beam" />
         <div className="card-amethyst-sparkles">{Array.from({length:10}).map((_,i)=><span key={i}/>)}</div>
@@ -2066,7 +2071,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                     ? `→ ${slots[pendingSlotIdx].position} — lock or choose another slot`
                     : 'Click a court slot to place'}
                 </GoldLabel>
-                <PlayerCard player={selectedPlayer} displayEra={lockedEra ?? undefined} activeEra={lockedEra ?? undefined} />
+                <PlayerCard player={selectedPlayer} displayEra={lockedEra ?? undefined} activeEra={lockedEra ?? undefined} devMode={devMode} />
                 {pendingSlotIdx !== null && (
                   <Btn onClick={confirmPick} variant="gold" className="w-full py-3">
                     Lock — {slots[pendingSlotIdx].position}
@@ -2083,7 +2088,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                 onClick={() => setRosterCardPlayer(null)}
               >
                 <div onClick={e => e.stopPropagation()} className="w-full max-w-sm space-y-3">
-                  <PlayerCard player={rosterCardPlayer} displayEra={lockedEra ?? undefined} activeEra={lockedEra ?? undefined} />
+                  <PlayerCard player={rosterCardPlayer} displayEra={lockedEra ?? undefined} activeEra={lockedEra ?? undefined} devMode={devMode} />
                   <Btn variant="ghost" className="w-full py-2" onClick={() => setRosterCardPlayer(null)}>
                     Close
                   </Btn>
@@ -2507,7 +2512,7 @@ function StatsTable({ stats, simEra, title, subtitle, teamActualPPG, teamActualO
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >×</button>
-          <PlayerCard player={cardPlayer} activeEra={cardPlayer.era} />
+          <PlayerCard player={cardPlayer} activeEra={cardPlayer.era} devMode={devMode} />
           {gameLog.length > 0 && (
             <div style={{ background: G.surface, border: `1px solid ${G.border}`, borderTop: 'none', padding: '12px 16px' }}>
               <div className="text-xs uppercase tracking-widest mb-2" style={{ color: G.grey }}>Playoff Game Log</div>

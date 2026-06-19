@@ -416,6 +416,7 @@ const BASE_RATING_OVERRIDE: Record<string, number> = {
   'Alex English:80s:DEN':       57,
   'Jamal Murray:20s:DEN':       56,
   'Carmelo Anthony:10s:DEN':    57,
+  'Draymond Green:10s:GSW':     51,
 }
 
 // Returns the player with era-specific stats substituted in, falling back to
@@ -843,7 +844,8 @@ function generateGameScore(
     teamScore = oppScore + 2 + Math.round(Math.abs(randn()) * 7)
   } else if (!win && oppScore <= teamScore) {
     const defScale = Math.min(1.0, playerDefFactor * rebDefEffect * (1 - coachDefBonus * 0.5))
-    oppScore = Math.round(teamScore * defScale + 2 + Math.abs(randn()) * 7)
+    const rawOpp = Math.round(teamScore * defScale + 2 + Math.abs(randn()) * 7)
+    oppScore = Math.max(teamScore + 2, rawOpp)
   }
 
   let ts = Math.min(scoreCap, teamScore)
