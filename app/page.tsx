@@ -34,7 +34,7 @@ const BEBAS = { fontFamily: 'var(--font-bebas), "Bebas Neue", impact, sans-serif
 // ─── Tier backgrounds ─────────────────────────────────────────────────────────
 function tierBg(player: Player): string {
   const r = playerBaseRating(player, player.era as Era)
-  if (r >= 54) return 'linear-gradient(145deg, #0f0620 0%, #1e0c3d 40%, #130826 70%, #0a0415 100%)'  // S: amethyst
+  if (r >= 55) return 'linear-gradient(145deg, #0f0620 0%, #1e0c3d 40%, #130826 70%, #0a0415 100%)'  // S: amethyst
   if (r >= 46) return 'linear-gradient(145deg, #2e2000 0%, #6b4800 28%, #3e2a00 60%, #1c1200 100%)'  // A: gold
   if (r >= 38) return 'linear-gradient(145deg, #001508 0%, #002d12 40%, #001c0a 70%, #000e05 100%)'  // B: emerald
   if (r >= 31) return 'linear-gradient(145deg, #040e1c 0%, #0a1e3a 40%, #061428 70%, #020810 100%)'  // C: sapphire
@@ -317,7 +317,7 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode }: { p
   const fmt = (stat: string, val: string | null | undefined) =>
     val == null ? '—' : imp(stat) ? `~${val}` : val
   const r = playerBaseRating(player, player.era as Era)
-  const isSTier = r >= 54
+  const isSTier = r >= 55
   const isATier = r >= 46 && r < 54
 
   return (
@@ -545,7 +545,7 @@ function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, acti
 
       {confirmed && (() => {
         const cr = playerBaseRating(confirmed, confirmed.era as Era)
-        if (cr >= 54) return (<>
+        if (cr >= 55) return (<>
           <div className="card-sheen-beam" />
           <div className="card-amethyst-sparkles">{Array.from({length:10}).map((_,i)=><span key={i}/>)}</div>
         </>)

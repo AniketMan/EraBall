@@ -414,9 +414,11 @@ const RATING_STAT_OVERRIDE: Record<string, string> = {
 // Use when the formula under/over-values a player and a manual correction is needed.
 const BASE_RATING_OVERRIDE: Record<string, number> = {
   'Alex English:80s:DEN':       57,
-  'Jamal Murray:20s:DEN':       56,
+  'Jamal Murray:20s:DEN':       54,
   'Carmelo Anthony:10s:DEN':    57,
   'Draymond Green:10s:GSW':     51,
+  'Aaron Gordon:20s:DEN':       47,
+  'Michael Porter Jr.:20s:DEN': 45,
 }
 
 // Returns the player with era-specific stats substituted in, falling back to
