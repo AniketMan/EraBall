@@ -376,7 +376,7 @@ const ERA_DIFFICULTY: Partial<Record<Era, number>> = {
 // Era-appropriate score caps (elite teams in 50s/60s historically hit 120-130 PPG)
 const ERA_SCORE_CAP: Record<Era, number> = {
   '50s': 130, '60s': 140, '70s': 130,
-  '80s': 136, '90s': 124, '00s': 122, '10s': 138, '20s': 145,
+  '80s': 136, '90s': 124, '00s': 122, '10s': 138, '20s': 135,
 }
 const ERA_SCORE_FLOOR: Record<Era, number> = {
   '50s': 72, '60s': 80, '70s': 80,
