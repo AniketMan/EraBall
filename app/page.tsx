@@ -1462,6 +1462,39 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
     setRosterPool([]); setAwaitingSpin(false)
   }
 
+  const fillGibbyPreset = () => {
+    const preset: { name: string; era: Era; team: string; slot: SlotPosition }[] = [
+      { name: 'Damian Lillard',       era: '20s', team: 'MIL', slot: 'PG' },
+      { name: 'Gilbert Arenas',       era: '00s', team: 'WAS', slot: 'SG' },
+      { name: 'Magic Johnson',        era: '80s', team: 'LAL', slot: 'SF' },
+      { name: 'Karl Malone',          era: '90s', team: 'UTA', slot: 'PF' },
+      { name: "Shaquille O'Neal",     era: '90s', team: 'LAL', slot: 'C'  },
+      { name: 'Jalen Rose',           era: '00s', team: 'IND', slot: 'B1' },
+      { name: 'Michael Adams',        era: '90s', team: 'WAS', slot: 'B2' },
+      { name: 'Chet Walker',          era: '60s', team: 'CHI', slot: 'B3' },
+      { name: 'Adrian Dantley',       era: '70s', team: 'UTH', slot: 'B4' },
+    ]
+    const newSlots = emptySlots()
+    const drafted = new Set<string>()
+    for (const { name, era, team, slot } of preset) {
+      const match = players.find(p => {
+        if (p.full_name !== name) return false
+        const teamsForEra = (p.all_teams_by_era as Record<string, string[]>)?.[era]
+        return teamsForEra?.includes(team)
+      })
+      if (!match) continue
+      const tagged = applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(match, era, team))))))
+      const slotIdx = SLOT_POSITIONS.indexOf(slot)
+      const { penalty, label } = calcFitPenalty(tagged, slot)
+      newSlots[slotIdx] = { position: slot, player: tagged, fitPenalty: penalty, fitLabel: label }
+      drafted.add(match.person_id)
+    }
+    setSlots(newSlots)
+    setDraftedIds(drafted)
+    setSelectedPlayer(null); setPendingSlotIdx(null); setHighlightEmpty(false)
+    setRosterPool([]); setAwaitingSpin(false)
+  }
+
   const fillBalancedPreset = () => {
     const preset: { name: string; era: Era; team: string; slot: SlotPosition }[] = [
       { name: 'Damian Lillard',  era: '10s', team: 'POR', slot: 'PG' },
@@ -1702,6 +1735,9 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                   </Btn>
                   <Btn onClick={fillShootingTestPreset} variant="ghost" className="w-full py-3">
                     Shooting Test
+                  </Btn>
+                  <Btn onClick={fillGibbyPreset} variant="ghost" className="w-full py-3">
+                    Gibby Roster
                   </Btn>
 
                   <div>

@@ -410,6 +410,14 @@ const RATING_STAT_OVERRIDE: Record<string, string> = {
   'Nikola Vucevic:20s:ORL': '20s:CHI',
 }
 
+// Flat base rating overrides: "name:era:team" → exact base rating value.
+// Use when the formula under/over-values a player and a manual correction is needed.
+const BASE_RATING_OVERRIDE: Record<string, number> = {
+  'Alex English:80s:DEN':       57,
+  'Jamal Murray:20s:DEN':       56,
+  'Carmelo Anthony:10s:DEN':    57,
+}
+
 // Returns the player with era-specific stats substituted in, falling back to
 // career stats if no era data exists. Pass team when a player had multiple
 // teams in the same era (key format: "era:team"). The player's native .era
@@ -519,6 +527,10 @@ export function imputeTOV(player: Player): number {
 }
 
 export function playerBaseRating(player: Player, simEra?: Era): number {
+  // Flat base rating override
+  const flatKey = player.eraTeam ? `${player.full_name}:${player.era}:${player.eraTeam}` : null
+  if (flatKey && BASE_RATING_OVERRIDE[flatKey] != null) return BASE_RATING_OVERRIDE[flatKey]
+
   // Check for a rating-only stat override (display stats unchanged)
   const overrideKey = player.eraTeam ? `${player.full_name}:${player.era}:${player.eraTeam}` : null
   const overrideTarget = overrideKey ? RATING_STAT_OVERRIDE[overrideKey] : null
