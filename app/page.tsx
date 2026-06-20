@@ -3087,8 +3087,8 @@ function SeasonAwardsPanel({ awards }: { awards: AwardEntry[] }) {
 }
 
 // ─── Phase 4: Simulation ──────────────────────────────────────────────────────
-function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteBtn, sandboxMode, customEraRange }: {
-  slots: CourtSlot[]; coach: Coach; simEra: Era; onRestart: () => void; greyscaleBtn?: React.ReactNode; muteBtn?: React.ReactNode; sandboxMode?: boolean; customEraRange?: Era[] | null
+function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteBtn, sandboxMode, customEraRange, eraFilter }: {
+  slots: CourtSlot[]; coach: Coach; simEra: Era; onRestart: () => void; greyscaleBtn?: React.ReactNode; muteBtn?: React.ReactNode; sandboxMode?: boolean; customEraRange?: Era[] | null; eraFilter?: string
 }) {
   const seasonGames = ERA_SEASON_GAMES[simEra]
   const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
@@ -4425,7 +4425,7 @@ export default function Home() {
       {showLifetimeStats && <LifetimeStatsModal onClose={() => setShowLifetimeStats(false)} />}
       {phase === 'draft' && <DraftScreen simEra={simEra} players={players} onDraftComplete={(s, ce) => { setSlots(s); setDraftCustomEras(ce); setPhase('coach-draft') }} onRestart={restart} startInSandbox={startSandbox} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} />}
       {phase === 'coach-draft' && <CoachDraftScreen coaches={coaches} onCoachSelected={c => { setCoach(c); setPhase('simulation') }} onRestart={restart} sandboxMode={startSandbox} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} />}
-      {phase === 'simulation' && coach && <SimulationScreen slots={slots} coach={coach} simEra={simEra} onRestart={restart} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} sandboxMode={startSandbox} customEraRange={draftCustomEras} />}
+      {phase === 'simulation' && coach && <SimulationScreen slots={slots} coach={coach} simEra={simEra} onRestart={restart} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} sandboxMode={startSandbox} customEraRange={draftCustomEras} eraFilter={eraFilter} />}
 
       {/* Volume popover */}
       {showVolumePopover && audioEra !== null && (
