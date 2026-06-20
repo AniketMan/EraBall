@@ -740,12 +740,14 @@ function TopBar({ onRestart, right }: { onRestart: () => void; right?: React.Rea
           <div className="flex items-center gap-2 sm:gap-4" style={{ minWidth: 0 }}>
             <button
               onClick={() => setShowHelp(true)}
-              className="hidden sm:block text-xs uppercase tracking-widest"
+              className="text-xs uppercase tracking-widest"
               style={{ background: 'none', border: `1px solid ${G.border}`, color: G.grey, padding: '4px 12px', cursor: 'pointer', letterSpacing: '0.2em', transition: 'color 0.12s ease, border-color 0.12s ease', flexShrink: 0 }}
               onMouseEnter={e => { e.currentTarget.style.color = G.gold; e.currentTarget.style.borderColor = G.gold }}
               onMouseLeave={e => { e.currentTarget.style.color = G.grey; e.currentTarget.style.borderColor = G.border }}
+              title="How to Play"
             >
-              How to Play
+              <span className="hidden sm:inline">How to Play</span>
+              <span className="sm:hidden" style={{ fontSize: 14, lineHeight: 1 }}>?</span>
             </button>
             <div className="text-xs uppercase tracking-widest" style={{ color: G.grey, minWidth: 0 }}>
               {right ?? <span className="hidden sm:inline">Basketball Draft Simulator</span>}
