@@ -733,22 +733,22 @@ function TopBar({ onRestart, right }: { onRestart: () => void; right?: React.Rea
   return (
     <>
       <div style={{ borderBottom: `1px solid ${G.border}`, background: G.surface }}>
-        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
-          <button onClick={onRestart} className="logo-btn" style={{ ...BEBAS, fontSize: 22, letterSpacing: '0.3em', color: G.gold, cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}>
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 flex items-center justify-between gap-2" style={{ minWidth: 0 }}>
+          <button onClick={onRestart} className="logo-btn" style={{ ...BEBAS, fontSize: 22, letterSpacing: '0.3em', color: G.gold, cursor: 'pointer', background: 'none', border: 'none', padding: 0, flexShrink: 0 }}>
             ERA BALL
           </button>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4" style={{ minWidth: 0 }}>
             <button
               onClick={() => setShowHelp(true)}
-              className="text-xs uppercase tracking-widest"
-              style={{ background: 'none', border: `1px solid ${G.border}`, color: G.grey, padding: '4px 12px', cursor: 'pointer', letterSpacing: '0.2em', transition: 'color 0.12s ease, border-color 0.12s ease' }}
+              className="hidden sm:block text-xs uppercase tracking-widest"
+              style={{ background: 'none', border: `1px solid ${G.border}`, color: G.grey, padding: '4px 12px', cursor: 'pointer', letterSpacing: '0.2em', transition: 'color 0.12s ease, border-color 0.12s ease', flexShrink: 0 }}
               onMouseEnter={e => { e.currentTarget.style.color = G.gold; e.currentTarget.style.borderColor = G.gold }}
               onMouseLeave={e => { e.currentTarget.style.color = G.grey; e.currentTarget.style.borderColor = G.border }}
             >
               How to Play
             </button>
-            <div className="text-xs uppercase tracking-widest" style={{ color: G.grey }}>
-              {right ?? 'Basketball Draft Simulator'}
+            <div className="text-xs uppercase tracking-widest" style={{ color: G.grey, minWidth: 0 }}>
+              {right ?? <span className="hidden sm:inline">Basketball Draft Simulator</span>}
             </div>
           </div>
         </div>
@@ -4255,7 +4255,7 @@ export default function Home() {
         }
         setGreyscale(g => !g)
       }}
-      className="flex items-center gap-1.5 text-xs uppercase tracking-widest px-2 py-1"
+      className="flex items-center gap-1 text-xs uppercase tracking-widest px-2 py-1"
       style={{
         background: 'transparent',
         color: greyscale ? G.white : G.greyDark,
@@ -4266,7 +4266,7 @@ export default function Home() {
       }}
       title="Toggle era theme"
     >
-      Era Theme
+      <span className="hidden sm:inline">Era </span>Theme
       <span style={{
         fontSize: 9, fontWeight: 700, letterSpacing: '0.1em',
         color: greyscale ? G.black : G.greyDark,
