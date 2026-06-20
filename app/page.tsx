@@ -984,8 +984,8 @@ function EraSelection({ onEraSelected, onSandboxSelected, onRestart, onLifetimeS
   // Keyboard arrow navigation
   React.useEffect(() => {
     const handler = (ev: KeyboardEvent) => {
-      if (ev.key === 'ArrowRight') stepEra(1)
-      if (ev.key === 'ArrowLeft')  stepEra(-1)
+      if (ev.key === 'ArrowRight') { ev.preventDefault(); stepEra(1) }
+      if (ev.key === 'ArrowLeft')  { ev.preventDefault(); stepEra(-1) }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
