@@ -895,7 +895,7 @@ const LEAGUE_AVG_AST_INDEX = 22
 // Guards (PG/SG) are now neutral by default — only their excess above average counts —
 // so baselines are reduced ~4 pts vs the raw weighted sum to compensate.
 const ERA_LEAGUE_AVG_REB: Record<Era, number> = {
-  '50s': 66, '60s': 59, '70s': 48, '80s': 43, '90s': 40, '00s': 38, '10s': 34, '20s': 34,
+  '50s': 52, '60s': 47, '70s': 42, '80s': 40, '90s': 38, '00s': 36, '10s': 34, '20s': 34,
 }
 // Fixed guard baselines (post-rebSlotMod). Average guards score exactly at these thresholds → neutral.
 // Only guards who rebound well above their position average (Westbrook, Oscar, Magic) add anything.
