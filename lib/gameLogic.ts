@@ -179,6 +179,7 @@ const PLAYER_ANCHORS: Record<string, AnchorType> = {
   'Metta World Peace':       'def',
   'Joakim Noah':             'def',
   'Walt Frazier':            'def',
+  'Marc Gasol':              'def',
   // Offensive Anchors — T1
   'Michael Jordan':          'off',
   'Nikola Jokic':            'off',
@@ -235,6 +236,7 @@ const PLAYER_ANCHOR_TIERS: Record<string, 2> = {
   'Bruce Bowen':         2,
   'Nate Thurmond':       2,
   'Alvin Robertson':     2,
+  'Marc Gasol':          2,
   // Offensive T2
   'Rajon Rondo':         2,
   'Tony Parker':         2,
