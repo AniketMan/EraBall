@@ -477,7 +477,7 @@ const BASE_RATING_OVERRIDE: Record<string, number> = {
   // 70s
   'Oscar Robertson:70s:MIL':         56,
   // 50s
-  'Wilt Chamberlain:50s:PHW':        92.4,
+  'Wilt Chamberlain:50s:PHW':        78.4,
 }
 
 // Returns the player with era-specific stats substituted in, falling back to
