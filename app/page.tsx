@@ -4150,6 +4150,10 @@ export default function Home() {
   const [simEra, setSimEra] = useState<Era>('20s')
   const [startSandbox, setStartSandbox] = useState(false)
   const [greyscale, setGreyscale] = useState(true)
+  const [lowPerfMode, setLowPerfMode] = useState(false)
+  const [showPerfDisclaimer, setShowPerfDisclaimer] = useState(false)
+  const perfMeasuredRef = React.useRef(false)
+  const perfDisclaimerTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const [players, setPlayers] = useState<Player[]>([])
   const [coaches, setCoaches] = useState<Coach[]>([])
   const [slots, setSlots] = useState<CourtSlot[]>(emptySlots())
@@ -4184,6 +4188,7 @@ export default function Home() {
     if (audioRef.current) audioRef.current.volume = muted ? 0 : volume
   }, [muted, volume])
 
+
   useEffect(() => {
     Promise.all([
       fetch('/players_with_stats.json').then(r => r.json()),
@@ -4192,6 +4197,27 @@ export default function Home() {
       .catch(err => { console.error('Failed to load data:', err); setLoading(false) })
   }, [])
 
+
+  // FPS check — must be before early return to keep hook order stable
+  useEffect(() => {
+    const era = audioEra ?? simEra
+    const grainEras: Era[] = ['50s', '60s', '70s', '80s', '90s', '00s', '10s']
+    if (perfMeasuredRef.current || !greyscale || !grainEras.includes(era)) return
+    let frames = 0, start: number | null = null, animId: number
+    const measure = (now: number) => {
+      if (!start) start = now
+      frames++
+      if (now - start < 3000) { animId = requestAnimationFrame(measure); return }
+      perfMeasuredRef.current = true
+      const fps = frames / ((now - start) / 1000)
+      if (fps < 25) {
+        setLowPerfMode(true)
+        setShowPerfDisclaimer(true)
+      }
+    }
+    animId = requestAnimationFrame(measure)
+    return () => cancelAnimationFrame(animId)
+  }, [greyscale, audioEra, simEra])
 
   if (loading) {
     return (
@@ -4212,9 +4238,15 @@ export default function Home() {
 
   const CRT_ERAS: Era[] = ['50s', '60s', '70s', '80s', '90s']
   const effectiveEra: Era = audioEra ?? simEra
+
   const greyscaleBtn = (
     <button
-      onClick={() => setGreyscale(g => !g)}
+      onClick={() => {
+        if (lowPerfMode && !greyscale) {
+          setShowPerfDisclaimer(true)
+        }
+        setGreyscale(g => !g)
+      }}
       className="flex items-center gap-1.5 text-xs uppercase tracking-widest px-2 py-1"
       style={{
         background: 'transparent',
@@ -4328,7 +4360,7 @@ export default function Home() {
             <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 10003, background: 'rgba(255, 220, 80, 0.05)' }} />
           )}
           {/* 50s–90s — film/VHS grain (50s gets higher opacity instead of a second layer) */}
-          {greyscale && CRT_ERAS.includes(effectiveEra) && (
+          {!lowPerfMode && greyscale && CRT_ERAS.includes(effectiveEra) && (
             <svg style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10004, mixBlendMode: 'screen' }}>
               <filter id="grain-crt">
                 <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="4" stitchTiles="stitch">
@@ -4339,7 +4371,7 @@ export default function Home() {
             </svg>
           )}
           {/* 2000s — animated film grain + warm amber tint */}
-          {greyscale && effectiveEra === '00s' && (
+          {!lowPerfMode && greyscale && effectiveEra === '00s' && (
             <>
               <svg style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10000, mixBlendMode: 'screen' }}>
                 <filter id="grain-00s">
@@ -4354,7 +4386,7 @@ export default function Home() {
             </>
           )}
           {/* 2010s — minor film grain + warm golden tint */}
-          {greyscale && effectiveEra === '10s' && (
+          {!lowPerfMode && greyscale && effectiveEra === '10s' && (
             <>
               <svg style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10000, mixBlendMode: 'screen' }}>
                 <filter id="grain-10s">
@@ -4367,10 +4399,27 @@ export default function Home() {
               <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 10001, background: 'rgba(255, 200, 90, 0.03)' }} />
             </>
           )}
+          {/* Low perf disclaimer */}
+          {showPerfDisclaimer && (
+            <div style={{
+              position: 'fixed', top: 52, left: '50%', transform: 'translateX(-50%)',
+              zIndex: 10010, background: G.surface2, border: `1px solid ${G.gold}`,
+              padding: '8px 14px', maxWidth: 280, display: 'flex', alignItems: 'flex-start', gap: 10,
+              boxShadow: '0 4px 16px rgba(0,0,0,0.6)',
+            }}>
+              <span style={{ fontSize: 11, color: G.greyDark, lineHeight: 1.5, flex: 1 }}>
+                Your device can't run all era effects at full quality. Grain has been disabled automatically — other effects remain on. On desktop, try enabling hardware acceleration in your browser settings.
+              </span>
+              <button
+                onClick={() => setShowPerfDisclaimer(false)}
+                style={{ background: 'none', border: 'none', color: G.greyDark, cursor: 'pointer', fontSize: 14, lineHeight: 1, flexShrink: 0, padding: 0 }}
+              >✕</button>
+            </div>
+          )}
         </>,
         document.body
       )}
-      {phase === 'era-select' && <EraSelection onEraSelected={era => { setSimEra(era); setStartSandbox(false); setPhase('draft') }} onSandboxSelected={era => { setSimEra(era); setStartSandbox(true); setPhase('draft') }} onRestart={restart} onLifetimeStats={() => setShowLifetimeStats(true)} onEraPreview={era => setAudioEra(era)} muteBtn={muteBtn} eraThemeBtn={greyscaleBtn} />}
+      {phase === 'era-select' && <EraSelection onEraSelected={era => { setSimEra(era); setStartSandbox(false); setShowPerfDisclaimer(false); setPhase('draft') }} onSandboxSelected={era => { setSimEra(era); setStartSandbox(true); setShowPerfDisclaimer(false); setPhase('draft') }} onRestart={restart} onLifetimeStats={() => setShowLifetimeStats(true)} onEraPreview={era => setAudioEra(era)} muteBtn={muteBtn} eraThemeBtn={greyscaleBtn} />}
       {showLifetimeStats && <LifetimeStatsModal onClose={() => setShowLifetimeStats(false)} />}
       {phase === 'draft' && <DraftScreen simEra={simEra} players={players} onDraftComplete={(s, ce) => { setSlots(s); setDraftCustomEras(ce); setPhase('coach-draft') }} onRestart={restart} startInSandbox={startSandbox} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} />}
       {phase === 'coach-draft' && <CoachDraftScreen coaches={coaches} onCoachSelected={c => { setCoach(c); setPhase('simulation') }} onRestart={restart} sandboxMode={startSandbox} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} />}
