@@ -4327,7 +4327,7 @@ export default function Home() {
           {greyscale && effectiveEra === '60s' && (
             <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 10003, background: 'rgba(255, 220, 80, 0.05)' }} />
           )}
-          {/* 50s–90s — film/VHS grain */}
+          {/* 50s–90s — film/VHS grain (50s gets higher opacity instead of a second layer) */}
           {greyscale && CRT_ERAS.includes(effectiveEra) && (
             <svg style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10004, mixBlendMode: 'screen' }}>
               <filter id="grain-crt">
@@ -4335,18 +4335,7 @@ export default function Home() {
                   <animate attributeName="seed" values="3;19;37;52;11;44;28;67;8;41;74;16" dur="1s" calcMode="discrete" repeatCount="indefinite"/>
                 </feTurbulence>
               </filter>
-              <rect width="100%" height="100%" filter="url(#grain-crt)" opacity="0.09"/>
-            </svg>
-          )}
-          {/* 50s — extra grain layer */}
-          {greyscale && effectiveEra === '50s' && (
-            <svg style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10005, mixBlendMode: 'screen' }}>
-              <filter id="grain-50s">
-                <feTurbulence type="fractalNoise" baseFrequency="0.72" numOctaves="4" stitchTiles="stitch">
-                  <animate attributeName="seed" values="7;23;41;59;13;47;31;68;4;38;72;19" dur="1s" calcMode="discrete" repeatCount="indefinite"/>
-                </feTurbulence>
-              </filter>
-              <rect width="100%" height="100%" filter="url(#grain-50s)" opacity="0.12"/>
+              <rect width="100%" height="100%" filter="url(#grain-crt)" opacity={effectiveEra === '50s' ? 0.19 : 0.09}/>
             </svg>
           )}
           {/* 2000s — animated film grain + warm amber tint */}
