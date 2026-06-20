@@ -181,6 +181,11 @@ const PLAYER_ANCHORS: Record<string, AnchorType> = {
   'Walt Frazier':            'def',
   'Marc Gasol':              'def',
   'Andrei Kirilenko':        'def',
+  'Wes Unseld':              'def',
+  'Dave DeBusschere':        'def',
+  'Bill Walton':             'def',
+  'Dave Cowens':             'def',
+  'Elmore Smith':            'def',
   // Offensive Anchors — T1
   'Michael Jordan':          'off',
   'Nikola Jokic':            'off',
@@ -198,6 +203,9 @@ const PLAYER_ANCHORS: Record<string, AnchorType> = {
   'Kevin Durant':            'off',
   'Oscar Robertson':         'off',
   'Shaquille O\'Neal':       'off',
+  'Wilt Chamberlain':        'off',
+  'Elgin Baylor':            'off',
+  'Larry Bird':              'off',
   // Offensive Anchors — T2
   'Rajon Rondo':             'off',
   'Tony Parker':             'off',
@@ -213,6 +221,11 @@ const PLAYER_ANCHORS: Record<string, AnchorType> = {
   'Tracy McGrady':           'off',
   'Jerry West':              'off',
   'Dirk Nowitzki':           'off',
+  'George Gervin':           'off',
+  'Pete Maravich':           'off',
+  'Julius Erving':           'off',
+  'Moses Malone':            'off',
+  'Bob Pettit':              'off',
 }
 
 // Era-specific anchor overrides — "name:era" takes priority over PLAYER_ANCHORS.
@@ -239,6 +252,11 @@ const PLAYER_ANCHOR_TIERS: Record<string, 2> = {
   'Alvin Robertson':     2,
   'Marc Gasol':          2,
   'Andrei Kirilenko':    2,
+  'Wes Unseld':          2,
+  'Dave DeBusschere':    2,
+  'Bill Walton':         2,
+  'Dave Cowens':         2,
+  'Elmore Smith':        2,
   // Offensive T2
   'Rajon Rondo':         2,
   'Tony Parker':         2,
@@ -261,6 +279,11 @@ const PLAYER_ANCHOR_TIERS: Record<string, 2> = {
   'Tracy McGrady':       2,
   'Jerry West':          2,
   'Dirk Nowitzki':       2,
+  'George Gervin':       2,
+  'Pete Maravich':       2,
+  'Julius Erving':       2,
+  'Moses Malone':        2,
+  'Bob Pettit':          2,
 }
 
 export function applyAnchors(player: Player): Player {
