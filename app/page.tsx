@@ -4186,8 +4186,13 @@ export default function Home() {
   }, [audioEra])
 
   // Sync volume + muted to audio element — square for perceptual loudness curve
+  // iOS ignores .volume (read-only), so pause/resume for mute instead
   useEffect(() => {
-    if (audioRef.current) audioRef.current.volume = muted ? 0 : Math.pow(volume, 2)
+    const audio = audioRef.current
+    if (!audio) return
+    try { audio.volume = Math.pow(volume, 2) } catch (_) {}
+    if (muted) { audio.pause() }
+    else if (audio.paused) { audio.play().catch(() => {}) }
   }, [muted, volume])
 
 
