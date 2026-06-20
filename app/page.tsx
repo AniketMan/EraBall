@@ -4162,7 +4162,7 @@ export default function Home() {
   const [showLifetimeStats, setShowLifetimeStats] = useState(false)
   const [loading, setLoading] = useState(true)
   const [muted, setMuted] = useState(false)
-  const [volume, setVolume] = useState(0.35)
+  const [volume, setVolume] = useState(0.30)
   const [showVolumePopover, setShowVolumePopover] = useState(false)
   const [popoverPos, setPopoverPos] = useState({ top: 50, right: 16 })
   const volumeBtnRef = useRef<HTMLButtonElement | null>(null)
