@@ -4212,7 +4212,7 @@ export default function Home() {
       if (now - start < 3000) { animId = requestAnimationFrame(measure); return }
       perfMeasuredRef.current = true
       const fps = frames / ((now - start) / 1000)
-      if (fps < 25) {
+      if (fps < 15) {
         setLowPerfMode(true)
         setShowPerfDisclaimer(true)
       }
