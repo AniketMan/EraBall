@@ -4380,16 +4380,20 @@ export default function Home() {
       {showVolumePopover && audioEra !== null && (
         <>
           <style>{`
-            .vol-slider{-webkit-appearance:none;appearance:none;width:100%;height:3px;border-radius:2px;outline:none;cursor:pointer;background:linear-gradient(to right,#C9A84C 0%,#C9A84C var(--vol,35%),#333 var(--vol,35%),#333 100%)}
-            .vol-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:12px;height:12px;border-radius:50%;background:#C9A84C;cursor:pointer}
-            .vol-slider::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#C9A84C;cursor:pointer;border:none}
+            .vol-slider{-webkit-appearance:none;appearance:none;width:100%;height:3px;border-radius:2px;outline:none;cursor:pointer;touch-action:none;background:linear-gradient(to right,#C9A84C 0%,#C9A84C var(--vol,35%),#333 var(--vol,35%),#333 100%)}
+            .vol-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:#C9A84C;cursor:pointer}
+            .vol-slider::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#C9A84C;cursor:pointer;border:none}
           `}</style>
           <div style={{ position: 'fixed', inset: 0, zIndex: 9994 }} onClick={() => setShowVolumePopover(false)} />
-          <div style={{
-            position: 'fixed', top: popoverPos.top, right: popoverPos.right, zIndex: 9995,
-            background: G.surface2, border: `1px solid ${G.border}`,
-            padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 10, minWidth: 160,
-          }}>
+          <div
+            style={{
+              position: 'fixed', top: popoverPos.top, right: popoverPos.right, zIndex: 9995,
+              background: G.surface2, border: `1px solid ${G.border}`,
+              padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 10, minWidth: 160,
+            }}
+            onTouchMove={e => e.stopPropagation()}
+            onTouchStart={e => e.stopPropagation()}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <button
                 onClick={() => setMuted(m => !m)}
