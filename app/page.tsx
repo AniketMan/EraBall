@@ -4209,7 +4209,8 @@ export default function Home() {
   useEffect(() => {
     const era = audioEra ?? simEra
     const grainEras: Era[] = ['50s', '60s', '70s', '80s', '90s', '00s', '10s']
-    if (perfMeasuredRef.current || !greyscale || !grainEras.includes(era)) return
+    const isMobile = typeof window !== 'undefined' && (navigator.maxTouchPoints > 0 || 'ontouchstart' in window)
+    if (isMobile || perfMeasuredRef.current || !greyscale || !grainEras.includes(era)) return
     let frames = 0, start: number | null = null, animId: number
     const measure = (now: number) => {
       if (!start) start = now
