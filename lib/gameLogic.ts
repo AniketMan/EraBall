@@ -180,6 +180,7 @@ const PLAYER_ANCHORS: Record<string, AnchorType> = {
   'Joakim Noah':             'def',
   'Walt Frazier':            'def',
   'Marc Gasol':              'def',
+  'Andrei Kirilenko':        'def',
   // Offensive Anchors — T1
   'Michael Jordan':          'off',
   'Nikola Jokic':            'off',
@@ -237,6 +238,7 @@ const PLAYER_ANCHOR_TIERS: Record<string, 2> = {
   'Nate Thurmond':       2,
   'Alvin Robertson':     2,
   'Marc Gasol':          2,
+  'Andrei Kirilenko':    2,
   // Offensive T2
   'Rajon Rondo':         2,
   'Tony Parker':         2,
