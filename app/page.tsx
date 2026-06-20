@@ -3971,10 +3971,10 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
       )}
 
       {/* Game detail popup */}
-      {selectedGame && (() => {
+      {selectedGame && typeof document !== 'undefined' && (() => {
         const { game: g, roundName, gameNum } = selectedGame
-        return (
-          <div onClick={() => setSelectedGame(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 900, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        return createPortal(
+          <div onClick={() => setSelectedGame(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 10020, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div onClick={e => e.stopPropagation()} style={{ background: G.surface, border: `1px solid ${g.win ? G.goldDim : G.border}`, width: 'min(560px, 95vw)', maxHeight: 'calc(100vh - 40px)', overflowY: 'auto', overflowX: 'hidden' }}>
               {/* Win/loss bar */}
               <div style={{ height: 4, background: g.win ? G.gold : G.red }} />
@@ -4051,7 +4051,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
               </div>
             </div>
           </div>
-        )
+        , document.body)
       })()}
 
       {/* Share card modal */}
