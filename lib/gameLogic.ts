@@ -1294,7 +1294,7 @@ export function simulatePlayoffs(
 
       // Per-game individual stat lines (high variance — 60–140% of expected)
       const gamePTS = expPTS.map(e => Math.max(0, e * (0.6 + Math.random() * 0.8)))
-      const gameREB = expREB.map(e => Math.min(22, Math.max(0, Math.round(e * (0.6 + Math.random() * 0.8)))))
+      const gameREB = expREB.map(e => Math.min(28, Math.max(0, Math.round(e * (0.6 + Math.random() * 0.8)))))
       const gameAST = expAST.map(e => Math.max(0, Math.round(e * (0.6 + Math.random() * 0.8))))
       const gameSTL = expSTL.map(e => +Math.max(0, e * (0.6 + Math.random() * 0.8)).toFixed(1))
       const gameBLK = expBLK.map(e => +Math.max(0, e * (0.6 + Math.random() * 0.8)).toFixed(1))
@@ -1322,7 +1322,7 @@ export function simulatePlayoffs(
         }
         const boostFactor = 1.6 + Math.random() * 0.9
         scaledPTS[starIdx] = Math.round(scaledPTS[starIdx] * boostFactor)
-        gameREB[starIdx] = Math.min(28, Math.round(gameREB[starIdx] * boostFactor))
+        gameREB[starIdx] = Math.min(35, Math.round(gameREB[starIdx] * boostFactor))
         gameAST[starIdx] = Math.round(gameAST[starIdx] * boostFactor)
         const sp = scaledPTS[starIdx], sr = gameREB[starIdx], sa = gameAST[starIdx]
         const isBench = entries[starIdx].pr.slot.startsWith('B')
