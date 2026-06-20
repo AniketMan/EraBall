@@ -1045,7 +1045,7 @@ function EraSelection({ onEraSelected, onSandboxSelected, onRestart, onLifetimeS
     <div className="min-h-screen flex flex-col" style={{ background: G.black, position: 'relative' }}>
       <canvas ref={canvasRef} style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }} />
       <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', flex: 1 }}>
-      <TopBar onRestart={onRestart} right={(eraThemeBtn || muteBtn) ? <div className="flex items-center gap-4">{eraThemeBtn}{muteBtn}</div> : undefined} />
+      <TopBar onRestart={onRestart} right={(eraThemeBtn || muteBtn) ? <div className="flex items-center gap-2 sm:gap-4">{eraThemeBtn}{muteBtn}</div> : undefined} />
 
       <div className="flex-1 flex flex-col items-center justify-center px-4 gap-10" style={{ overflowX: 'hidden', overflowY: 'auto' }}>
         {/* Selected era display */}
@@ -1632,11 +1632,11 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
     <div className="min-h-screen" style={{ background: G.black }}>
       {/* Header bar */}
       <TopBar onRestart={onRestart} right={
-        <div className="flex items-center gap-4">
-          <span style={{ color: G.grey }}>
-            Era: <span style={{ color: G.gold }}>{eraLabel(simEra)}</span>
-            <span className="mx-3" style={{ color: G.border }}>|</span>
-            Picks: <span style={{ color: filledCount === 9 ? G.gold : G.white }}>{filledCount}/9</span>
+        <div className="flex items-center gap-2 sm:gap-4">
+          <span style={{ color: G.grey, whiteSpace: 'nowrap' }}>
+            <span className="hidden sm:inline">Era: </span><span style={{ color: G.gold }}>{eraLabel(simEra)}</span>
+            <span className="mx-1 sm:mx-3" style={{ color: G.border }}>·</span>
+            <span className="hidden sm:inline">Picks: </span><span style={{ color: filledCount === 9 ? G.gold : G.white }}>{filledCount}/9</span>
           </span>
           {isLocalhost && <button
             onClick={() => { setDevMode(d => !d); if (sandboxMode) setSandboxMode(false) }}
@@ -2364,7 +2364,7 @@ function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxMode, gr
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: G.black }}>
-      <TopBar onRestart={onRestart} right={(greyscaleBtn || muteBtn) ? <div className="flex items-center gap-4">{greyscaleBtn}{muteBtn}</div> : undefined} />
+      <TopBar onRestart={onRestart} right={(greyscaleBtn || muteBtn) ? <div className="flex items-center gap-2 sm:gap-4">{greyscaleBtn}{muteBtn}</div> : undefined} />
 
       <div className="flex-1 flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-md">
@@ -3423,11 +3423,11 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
   return (
     <div className="min-h-screen" style={{ background: G.black }}>
       <TopBar onRestart={onRestart} right={
-        <div className="flex items-center gap-4">
-          <span>
-            Era: <span style={{ color: G.white }}>{eraLabel(simEra)}</span>
-            <span className="mx-3" style={{ color: G.border }}>|</span>
-            Coach: <span style={{ color: G.white }}>{coach.name}</span>
+        <div className="flex items-center gap-2 sm:gap-4">
+          <span style={{ whiteSpace: 'nowrap' }}>
+            <span className="hidden sm:inline">Era: </span><span style={{ color: G.white }}>{eraLabel(simEra)}</span>
+            <span className="mx-1 sm:mx-3" style={{ color: G.border }}>·</span>
+            <span className="hidden sm:inline">Coach: </span><span style={{ color: G.white }}>{coach.name.split(' ').slice(-1)[0]}</span>
           </span>
           {greyscaleBtn}
           {muteBtn}
