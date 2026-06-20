@@ -4179,15 +4179,15 @@ export default function Home() {
     if (audioRef.current) audioRef.current.pause()
     const audio = new Audio(src)
     audio.loop = true
-    audio.volume = muted ? 0 : volume
+    audio.volume = muted ? 0 : Math.pow(volume, 2)
     audioRef.current = audio
     audio.play().catch(() => {})
     return () => { audio.pause() }
   }, [audioEra])
 
-  // Sync volume + muted to audio element
+  // Sync volume + muted to audio element — square for perceptual loudness curve
   useEffect(() => {
-    if (audioRef.current) audioRef.current.volume = muted ? 0 : volume
+    if (audioRef.current) audioRef.current.volume = muted ? 0 : Math.pow(volume, 2)
   }, [muted, volume])
 
 
