@@ -3427,7 +3427,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
           <span style={{ whiteSpace: 'nowrap' }}>
             <span className="hidden sm:inline">Era: </span><span style={{ color: G.white }}>{eraLabel(simEra)}</span>
             <span className="mx-1 sm:mx-3" style={{ color: G.border }}>·</span>
-            <span className="hidden sm:inline">Coach: </span><span style={{ color: G.white }}>{coach.name.split(' ').slice(-1)[0]}</span>
+            <span className="hidden sm:inline">Coach: </span><span style={{ color: G.white }}><span className="sm:hidden">{coach.name.split(' ').slice(-1)[0]}</span><span className="hidden sm:inline">{coach.name}</span></span>
           </span>
           {greyscaleBtn}
           {muteBtn}
