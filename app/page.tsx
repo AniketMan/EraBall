@@ -2586,11 +2586,11 @@ function StatsTable({ stats, simEra, title, subtitle, teamActualPPG, teamActualO
   return (
     <>
     {/* Player card modal */}
-    {cardPlayer && (
+    {cardPlayer && typeof document !== 'undefined' && createPortal(
       <div
         style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)',
-          zIndex: 1000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+          zIndex: 9500, display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
           padding: '48px 24px 24px', overflowY: 'auto',
         }}
         className="roster-scroll"
@@ -2638,7 +2638,7 @@ function StatsTable({ stats, simEra, title, subtitle, teamActualPPG, teamActualO
           )}
         </div>
       </div>
-    )}
+    , document.body)}
     <div style={{ background: G.surface, border: `1px solid ${G.border}` }}>
       <div className="px-5 py-3" style={{ borderBottom: `1px solid ${G.border}` }}>
         <div className="text-sm uppercase tracking-widest font-semibold text-white">{title}</div>
@@ -3974,7 +3974,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
       {selectedGame && typeof document !== 'undefined' && (() => {
         const { game: g, roundName, gameNum } = selectedGame
         return createPortal(
-          <div onClick={() => setSelectedGame(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 10020, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div onClick={() => setSelectedGame(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 9500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div onClick={e => e.stopPropagation()} style={{ background: G.surface, border: `1px solid ${g.win ? G.goldDim : G.border}`, width: 'min(560px, 95vw)', maxHeight: 'calc(100vh - 40px)', overflowY: 'auto', overflowX: 'hidden' }}>
               {/* Win/loss bar */}
               <div style={{ height: 4, background: g.win ? G.gold : G.red }} />
