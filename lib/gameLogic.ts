@@ -347,6 +347,7 @@ const SHOOTING_STAR_T2 = new Set([
   'Mike Miller',
   'Dirk Nowitzki',
   'Kentavious Caldwell-Pope',
+  'Kon Knueppel',
 ])
 
 export function applyShootingStar(player: Player): Player {
