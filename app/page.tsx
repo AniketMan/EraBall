@@ -3975,7 +3975,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
         const { game: g, roundName, gameNum } = selectedGame
         return (
           <div onClick={() => setSelectedGame(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 900, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div onClick={e => e.stopPropagation()} style={{ background: G.surface, border: `1px solid ${g.win ? G.goldDim : G.border}`, width: 'min(560px, 95vw)', overflow: 'hidden' }}>
+            <div onClick={e => e.stopPropagation()} style={{ background: G.surface, border: `1px solid ${g.win ? G.goldDim : G.border}`, width: 'min(560px, 95vw)', maxHeight: 'calc(100vh - 40px)', overflowY: 'auto', overflowX: 'hidden' }}>
               {/* Win/loss bar */}
               <div style={{ height: 4, background: g.win ? G.gold : G.red }} />
               {/* Header */}
@@ -4019,9 +4019,9 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
                             <td style={{ padding: '5px 6px', textAlign: 'center', color: isPtsLeader ? G.gold : G.white, fontWeight: isPtsLeader ? 700 : 400 }}>{line.pts}</td>
                             <td style={{ padding: '5px 6px', textAlign: 'center', color: line.reb === g.leaders.reb.val ? G.gold : G.white }}>{line.reb}</td>
                             <td style={{ padding: '5px 6px', textAlign: 'center', color: line.ast === g.leaders.ast.val ? G.gold : G.white }}>{line.ast}</td>
-                            <td style={{ padding: '5px 6px', textAlign: 'center', color: G.greyDark }}>{line.stl}</td>
-                            <td style={{ padding: '5px 6px', textAlign: 'center', color: G.greyDark }}>{line.blk}</td>
-                            <td style={{ padding: '5px 6px', textAlign: 'center', color: G.greyDark }}>{line.tov}</td>
+                            <td style={{ padding: '5px 6px', textAlign: 'center', color: G.greyDark }}>{Math.round(line.stl)}</td>
+                            <td style={{ padding: '5px 6px', textAlign: 'center', color: G.greyDark }}>{Math.round(line.blk)}</td>
+                            <td style={{ padding: '5px 6px', textAlign: 'center', color: G.greyDark }}>{Math.round(line.tov)}</td>
                             <td style={{ padding: '5px 6px', textAlign: 'center', color: G.greyDark }}>{(line.fg * 100).toFixed(1)}%</td>
                             <td style={{ padding: '5px 6px', textAlign: 'center', color: G.greyDark }}>{line.fg3 != null ? `${(line.fg3 * 100).toFixed(1)}%` : '—'}</td>
                             <td style={{ padding: '5px 6px', textAlign: 'center', color: G.greyDark }}>{(line.ft * 100).toFixed(1)}%</td>
