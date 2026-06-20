@@ -2571,8 +2571,8 @@ function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxMode, gr
 // ─── Shared stats table ───────────────────────────────────────────────────────
 const PLAYOFF_ROUND_LABELS = ['First Round', 'Semifinals', 'Conference Finals', 'NBA Finals']
 
-function StatsTable({ stats, simEra, title, subtitle, teamActualPPG, teamActualOppPPG, oppStats, playoffGames }: {
-  stats: PlayerSeasonStats[]; simEra: Era; title: string; subtitle: string; teamActualPPG?: number; teamActualOppPPG?: number; oppStats?: OppTeamStats | null; playoffGames?: import('../lib/types').PlayoffGame[]
+function StatsTable({ stats, simEra, title, subtitle, teamActualPPG, teamActualOppPPG, oppStats, playoffGames, eraFilter }: {
+  stats: PlayerSeasonStats[]; simEra: Era; title: string; subtitle: string; teamActualPPG?: number; teamActualOppPPG?: number; oppStats?: OppTeamStats | null; playoffGames?: import('../lib/types').PlayoffGame[]; eraFilter?: string
 }) {
   const [cardPlayer, setCardPlayer] = useState<Player | null>(null)
 
@@ -2596,7 +2596,7 @@ function StatsTable({ stats, simEra, title, subtitle, teamActualPPG, teamActualO
         className="roster-scroll"
         onClick={e => { if (e.target === e.currentTarget) setCardPlayer(null) }}
       >
-        <div style={{ width: '100%', maxWidth: 360, position: 'relative' }}>
+        <div style={{ width: '100%', maxWidth: 360, position: 'relative', filter: eraFilter ?? 'none' }}>
           <button
             onClick={() => setCardPlayer(null)}
             className="modal-close"
@@ -3615,6 +3615,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
             teamActualPPG={avgTeamScore ?? undefined}
             teamActualOppPPG={avgOppScore ?? undefined}
             oppStats={seasonOppStats}
+            eraFilter={eraFilter}
           />
         )}
 
@@ -3814,6 +3815,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
             teamActualOppPPG={playoffResult.allGames.reduce((sum, g) => sum + g.oppScore, 0) / playoffResult.allGames.length}
             oppStats={playoffOppStats}
             playoffGames={playoffResult.allGames}
+            eraFilter={eraFilter}
           />
         )}
 
@@ -3975,7 +3977,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
         const { game: g, roundName, gameNum } = selectedGame
         return createPortal(
           <div onClick={() => setSelectedGame(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 9500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div onClick={e => e.stopPropagation()} style={{ background: G.surface, border: `1px solid ${g.win ? G.goldDim : G.border}`, width: 'min(560px, 95vw)', maxHeight: 'calc(100vh - 40px)', overflowY: 'auto', overflowX: 'hidden' }}>
+            <div onClick={e => e.stopPropagation()} style={{ background: G.surface, border: `1px solid ${g.win ? G.goldDim : G.border}`, width: 'min(560px, 95vw)', maxHeight: 'calc(100vh - 40px)', overflowY: 'auto', overflowX: 'hidden', filter: eraFilter }}>
               {/* Win/loss bar */}
               <div style={{ height: 4, background: g.win ? G.gold : G.red }} />
               {/* Header */}
