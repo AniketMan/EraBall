@@ -714,7 +714,7 @@ export function calcEraModifier(player: Player, simEra: Era): number {
   // 10s and 20s are the same modern era — only 2% apart in either direction
   if ((player.era === '10s' && simEra === '20s') || (player.era === '20s' && simEra === '10s')) return 0.98
   // Tall centers (6'10"+) or Bam Adebayo going back get reduced penalty (physical size translates)
-  const isTallCenter = playerHeightInches(player) >= 82 || player.full_name === 'Bam Adebayo'
+  const isTallCenter = playerHeightInches(player) >= 82 || player.full_name === 'Bam Adebayo' || player.full_name === 'Zion Williamson'
   const table = playerIdx > simIdx
     ? (isTallCenter ? ERA_MOD_BACKWARD_TALL : ERA_MOD_BACKWARD)
     : ERA_MOD_FORWARD
