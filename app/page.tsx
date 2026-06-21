@@ -4222,7 +4222,7 @@ export default function Home() {
   useEffect(() => {
     const era = audioEra ?? simEra
     const grainEras: Era[] = ['50s', '60s', '70s', '80s', '90s', '00s', '10s']
-    const isMobile = typeof window !== 'undefined' && (navigator.maxTouchPoints > 0 || 'ontouchstart' in window)
+    const isMobile = typeof window !== 'undefined' && ('ontouchstart' in window || /Mobi|Android/i.test(navigator.userAgent))
     if (isMobile || perfMeasuredRef.current || !greyscale || !grainEras.includes(era)) return
     let frames = 0, start: number | null = null, animId: number
     const measure = (now: number) => {
@@ -4231,7 +4231,7 @@ export default function Home() {
       if (now - start < 3000) { animId = requestAnimationFrame(measure); return }
       perfMeasuredRef.current = true
       const fps = frames / ((now - start) / 1000)
-      if (fps < 15) {
+      if (fps < 25) {
         setLowPerfMode(true)
         setShowPerfDisclaimer(true)
       }
