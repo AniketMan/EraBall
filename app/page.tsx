@@ -657,7 +657,7 @@ const HOW_TO_PLAY_STEPS = [
   },
   {
     title: 'Special Players - IMPORTANT',
-    body: 'Special contributors carry special tags. Defensive Anchors (Draymond, Tony Allen, Aaron Gordon, Kawhi, etc.) get a boost to their impact, beyond their stats. Offensive Anchors (LeBron, Jokić, Luka, Embiid, etc.) give an offensive boost to the team. Championship players perform better in the playoffs. The more championships they have, the better performances they will have when the lights are the brightest.',
+    body: 'Special contributors carry special tags. Defensive Anchors (Draymond, Tony Allen, Aaron Gordon, Kawhi, etc.) get a boost to their impact, beyond their stats. Offensive Anchors (LeBron, Jokić, Luka, Embiid, etc.) give an offensive boost to the team. Championship players perform better in the playoffs. The more championships they have, the better performances they will have when the lights are the brightest. Other tags are present such as TIMELESS and Shooting Stars. Check them out!',
   },
   {
     title: 'Draft a Coach',
@@ -4178,7 +4178,7 @@ export default function Home() {
   const [showLifetimeStats, setShowLifetimeStats] = useState(false)
   const [loading, setLoading] = useState(true)
   const [muted, setMuted] = useState(false)
-  const [volume, setVolume] = useState(0.14)
+  const [volume, setVolume] = useState(0.21)
   const [showVolumePopover, setShowVolumePopover] = useState(false)
   const [popoverPos, setPopoverPos] = useState({ top: 50, right: 16 })
   const volumeBtnRef = useRef<HTMLButtonElement | null>(null)
