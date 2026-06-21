@@ -4137,6 +4137,18 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
 
 
 // ─── Era audio map ────────────────────────────────────────────────────────────
+const _audioElements = new Map<string, HTMLAudioElement>()
+
+function getAudioElement(src: string): HTMLAudioElement {
+  if (!_audioElements.has(src)) {
+    const el = new Audio(src)
+    el.loop = true
+    el.preload = 'none'
+    _audioElements.set(src, el)
+  }
+  return _audioElements.get(src)!
+}
+
 const ERA_AUDIO: Partial<Record<Era, string>> = {
   '50s': '/audio/50s.mp3',
   '60s': '/audio/60s.mp3',
@@ -4178,10 +4190,9 @@ export default function Home() {
     if (!audioEra) return
     const src = ERA_AUDIO[audioEra]
     if (!src) return
-    if (audioRef.current) audioRef.current.pause()
-    const audio = new Audio(src)
-    audio.loop = true
-    audio.volume = muted ? 0 : Math.pow(volume, 2)
+    if (audioRef.current && audioRef.current !== getAudioElement(src)) audioRef.current.pause()
+    const audio = getAudioElement(src)
+    try { audio.volume = Math.pow(volume, 2) } catch (_) {}
     audioRef.current = audio
     audio.play().catch(() => {})
     return () => { audio.pause() }
