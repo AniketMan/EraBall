@@ -697,9 +697,10 @@ export function calcFitPenalty(player: Player, slot: SlotPosition): { penalty: 0
 // Backward = modern player in older era (-3% per decade — training/athleticism advantage).
 // Tall centers (6'10"+) going backward: -1.5% per decade (physical dominance translates).
 // 10s↔20s: treated as the same modern era (only 2% apart) in either direction.
-const ERA_MOD_FORWARD       = [1.00, 0.95, 0.90, 0.85, 0.80, 0.75, 0.70, 0.65]
-const ERA_MOD_BACKWARD      = [1.00, 0.97, 0.94, 0.91, 0.88, 0.85, 0.82, 0.79]
-const ERA_MOD_BACKWARD_TALL = [1.00, 0.985, 0.97, 0.955, 0.94, 0.925, 0.91, 0.895]
+const ERA_MOD_FORWARD            = [1.00, 0.95, 0.90, 0.85, 0.80, 0.75, 0.70, 0.65]
+const ERA_MOD_FORWARD_EST_SHOOTER = [1.00, 0.97, 0.93, 0.89, 0.86, 0.82, 0.78, 0.75]
+const ERA_MOD_BACKWARD           = [1.00, 0.97, 0.94, 0.91, 0.88, 0.85, 0.82, 0.79]
+const ERA_MOD_BACKWARD_TALL      = [1.00, 0.985, 0.97, 0.955, 0.94, 0.925, 0.91, 0.895]
 
 function playerHeightInches(player: Player): number {
   const parts = (player.height ?? '').split('-').map(Number)
@@ -717,7 +718,7 @@ export function calcEraModifier(player: Player, simEra: Era): number {
   const isTallCenter = playerHeightInches(player) >= 82 || player.full_name === 'Bam Adebayo' || player.full_name === 'Zion Williamson'
   const table = playerIdx > simIdx
     ? (isTallCenter ? ERA_MOD_BACKWARD_TALL : ERA_MOD_BACKWARD)
-    : ERA_MOD_FORWARD
+    : (isEstimatedShooter(player, simEra) ? ERA_MOD_FORWARD_EST_SHOOTER : ERA_MOD_FORWARD)
   let mod = table[Math.min(dist, table.length - 1)]
   // Extra penalty for modern players (10s/20s) in the 50s/60s — style gap is too severe
   // for the normal backward table to capture (no 3PT, physical defense, different spacing).
