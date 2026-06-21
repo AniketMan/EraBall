@@ -4177,7 +4177,7 @@ export default function Home() {
   const [draftCustomEras, setDraftCustomEras] = useState<Era[] | null>(null)
   const [showLifetimeStats, setShowLifetimeStats] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [muted, setMuted] = useState(false)
+  const [muted, setMuted] = useState(true)
   const [volume, setVolume] = useState(0.22)
   const [showVolumePopover, setShowVolumePopover] = useState(false)
   const [popoverPos, setPopoverPos] = useState({ top: 50, right: 16 })
