@@ -32,8 +32,20 @@ const G = {
 const BEBAS = { fontFamily: 'var(--font-bebas), "Bebas Neue", impact, sans-serif' }
 
 // ─── Tier backgrounds ─────────────────────────────────────────────────────────
-function tierBg(player: Player): string {
+// 50s era theme: a metallic greyscale luminance ladder so tiers stay distinct under
+// the full-greyscale filter (which would otherwise flatten the color gradients into
+// the same muddy grey). Kept in the darker range so white/gold card text stays legible.
+function tierBg(player: Player, fifties = false): string {
   const r = playerBaseRating(player, player.era as Era)
+  if (fifties) {
+    if (r >= 55) return 'linear-gradient(145deg, #727279 0%, #56565d 42%, #484850 72%, #5e5e66 100%)'  // S
+    if (r >= 46) return 'linear-gradient(145deg, #616168 0%, #4a4a50 42%, #3e3e44 72%, #525258 100%)'  // A
+    if (r >= 38) return 'linear-gradient(145deg, #515157 0%, #3c3c42 42%, #323238 72%, #444449 100%)'  // B
+    if (r >= 31) return 'linear-gradient(145deg, #424247 0%, #313136 42%, #28282c 72%, #37373c 100%)'  // C
+    if (r >= 24) return 'linear-gradient(145deg, #343438 0%, #28282b 42%, #202023 72%, #2c2c30 100%)'  // D
+    if (r >= 16) return 'linear-gradient(145deg, #28282b 0%, #1d1d20 42%, #171719 72%, #222225 100%)'  // E
+    return 'linear-gradient(145deg, #1c1c1e 0%, #141416 42%, #0e0e10 72%, #171719 100%)'               // F
+  }
   if (r >= 55) return 'linear-gradient(145deg, #0f0620 0%, #1e0c3d 40%, #130826 70%, #0a0415 100%)'  // S: amethyst
   if (r >= 46) return 'linear-gradient(145deg, #2e2000 0%, #6b4800 28%, #3e2a00 60%, #1c1200 100%)'  // A: gold
   if (r >= 38) return 'linear-gradient(145deg, #001508 0%, #002d12 40%, #001c0a 70%, #000e05 100%)'  // B: emerald
@@ -41,6 +53,18 @@ function tierBg(player: Player): string {
   if (r >= 24) return 'linear-gradient(145deg, #1a0900 0%, #2e1200 40%, #1e0c00 70%, #100600 100%)'  // D: bronze
   if (r >= 16) return 'linear-gradient(145deg, #0e0e0e 0%, #181818 50%, #0e0e0e 100%)'               // E: charcoal
   return '#0a0a0a'                                                                                    // F: flat
+}
+
+// Tier-keyed metallic border for the 50s theme (brighter edge = higher tier)
+function fiftiesTierBorder(player: Player): string {
+  const r = playerBaseRating(player, player.era as Era)
+  if (r >= 55) return '#8a8a92'
+  if (r >= 46) return '#70707a'
+  if (r >= 38) return '#5c5c64'
+  if (r >= 31) return '#4a4a50'
+  if (r >= 24) return '#3a3a40'
+  if (r >= 16) return '#2c2c30'
+  return '#232326'
 }
 
 function eraLabel(era: Era | string): string {
@@ -316,7 +340,7 @@ function CoachHeadshot({ name, size }: { name: string; size: number }) {
 }
 
 // ─── Player card ──────────────────────────────────────────────────────────────
-function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode }: { player: Player; onDragStart?: () => void; displayEra?: Era; activeEra?: Era; devMode?: boolean }) {
+function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode, fifties }: { player: Player; onDragStart?: () => void; displayEra?: Era; activeEra?: Era; devMode?: boolean; fifties?: boolean }) {
   const ts = (calcTS(player) * 100).toFixed(1)
   const imp = (stat: string) => player.imputed_stats?.includes(stat) ?? false
   const fmt = (stat: string, val: string | null | undefined) =>
@@ -330,7 +354,7 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode }: { p
       draggable={!!onDragStart}
       onDragStart={onDragStart}
       className={`select-none transition-all ${onDragStart ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}
-      style={{ position: 'relative', overflow: 'hidden', background: tierBg(player), border: `1px solid ${G.border}`, padding: '16px' }}
+      style={{ position: 'relative', overflow: 'hidden', background: tierBg(player, fifties), border: `1px solid ${fifties ? fiftiesTierBorder(player) : G.border}`, padding: '16px' }}
     >
       <div className="flex items-start gap-3 mb-3">
         <PlayerHeadshot personId={player.person_id} size={80} initial={player.position?.[0]} />
@@ -465,10 +489,10 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode }: { p
 }
 
 // ─── Court slot ───────────────────────────────────────────────────────────────
-function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, activePlayer, simEra, sandboxMode, onRemove }: {
+function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, activePlayer, simEra, sandboxMode, onRemove, fifties }: {
   slot: CourtSlot; onClick: () => void; onDrop: () => void; highlighted: boolean
   pendingPlayer?: Player | null; activePlayer?: Player | null; simEra?: Era
-  sandboxMode?: boolean; onRemove?: () => void
+  sandboxMode?: boolean; onRemove?: () => void; fifties?: boolean
 }) {
   const [dragOver, setDragOver] = useState(false)
   const confirmed = slot.player
@@ -504,7 +528,7 @@ function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, acti
       className={`relative overflow-hidden cursor-pointer select-none court-slot${confirmed ? ' court-slot--filled' : ''}`}
       style={{
         minHeight: 140,
-        background: isPending ? `${G.gold}0a` : confirmed ? tierBg(confirmed) : G.black,
+        background: isPending ? `${G.gold}0a` : confirmed ? tierBg(confirmed, fifties) : G.black,
         border: `1px solid ${fitBorder}`,
         outline: isPending ? `1px solid ${G.goldDim}` : 'none',
         outlineOffset: '-3px',
@@ -1237,9 +1261,10 @@ const TAG_OPTIONS: { key: TagKey; label: string; color: string }[] = [
   { key: 'champion',     label: 'Champion',       color: G.gold },
 ]
 
-function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandbox, greyscaleBtn, muteBtn }: {
-  simEra: Era; players: Player[]; onDraftComplete: (slots: CourtSlot[], customEras: Era[] | null) => void; onRestart: () => void; startInSandbox?: boolean; greyscaleBtn?: React.ReactNode; muteBtn?: React.ReactNode
+function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandbox, greyscaleBtn, muteBtn, themeFilter }: {
+  simEra: Era; players: Player[]; onDraftComplete: (slots: CourtSlot[], customEras: Era[] | null) => void; onRestart: () => void; startInSandbox?: boolean; greyscaleBtn?: React.ReactNode; muteBtn?: React.ReactNode; themeFilter?: string
 }) {
+  const fifties = themeFilter === 'grayscale(1)'
   const [slots, setSlots] = useState<CourtSlot[]>(emptySlots())
   const [spinning, setSpinning] = useState(false)
   const [rosterPool, setRosterPool] = useState<Player[]>([])
@@ -2277,7 +2302,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                     ? `→ ${slots[pendingSlotIdx].position}: lock or choose another slot`
                     : 'Click a court slot to place'}
                 </GoldLabel>
-                <PlayerCard player={selectedPlayer} displayEra={lockedEra ?? undefined} activeEra={lockedEra ?? undefined} devMode={devMode} />
+                <PlayerCard player={selectedPlayer} displayEra={lockedEra ?? undefined} activeEra={lockedEra ?? undefined} devMode={devMode} fifties={fifties} />
                 {pendingSlotIdx !== null && (
                   <Btn onClick={confirmPick} variant="gold" className="w-full py-3">
                     Lock {slots[pendingSlotIdx].position}
@@ -2294,7 +2319,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                 onClick={() => setRosterCardPlayer(null)}
               >
                 <div onClick={e => e.stopPropagation()} className="w-full max-w-sm space-y-3">
-                  <PlayerCard player={rosterCardPlayer} displayEra={lockedEra ?? undefined} activeEra={lockedEra ?? undefined} devMode={devMode} />
+                  <PlayerCard player={rosterCardPlayer} displayEra={lockedEra ?? undefined} activeEra={lockedEra ?? undefined} devMode={devMode} fifties={fifties} />
                   <Btn variant="ghost" className="w-full py-2" onClick={() => setRosterCardPlayer(null)}>
                     Close
                   </Btn>
@@ -2346,7 +2371,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                     activePlayer={selectedPlayer} simEra={simEra}
                     sandboxMode={sandboxMode}
                     onRemove={slot.player ? () => removeSlotPlayer(i) : undefined}
-                    onClick={() => previewSlot(i)} onDrop={() => previewSlot(i)} />
+                    fifties={fifties} onClick={() => previewSlot(i)} onDrop={() => previewSlot(i)} />
                 ))}
               </div>
               <div className="grid grid-cols-2 gap-1.5" style={{ width: '66.67%', margin: '0 auto' }}>
@@ -2357,7 +2382,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                     activePlayer={selectedPlayer} simEra={simEra}
                     sandboxMode={sandboxMode}
                     onRemove={slot.player ? () => removeSlotPlayer(i + 3) : undefined}
-                    onClick={() => previewSlot(i + 3)} onDrop={() => previewSlot(i + 3)} />
+                    fifties={fifties} onClick={() => previewSlot(i + 3)} onDrop={() => previewSlot(i + 3)} />
                 ))}
               </div>
             </div>
@@ -2381,7 +2406,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                   pendingPlayer={pendingSlotIdx === i + 5 ? selectedPlayer : null} simEra={simEra}
                   sandboxMode={sandboxMode}
                   onRemove={slot.player ? () => removeSlotPlayer(i + 5) : undefined}
-                  onClick={() => previewSlot(i + 5)} onDrop={() => previewSlot(i + 5)} />
+                  fifties={fifties} onClick={() => previewSlot(i + 5)} onDrop={() => previewSlot(i + 5)} />
               ))}
             </div>
 
@@ -2677,6 +2702,7 @@ const PLAYOFF_ROUND_LABELS = ['First Round', 'Semifinals', 'Conference Finals', 
 function StatsTable({ stats, simEra, title, subtitle, teamActualPPG, teamActualOppPPG, oppStats, playoffGames, eraFilter }: {
   stats: PlayerSeasonStats[]; simEra: Era; title: string; subtitle: string; teamActualPPG?: number; teamActualOppPPG?: number; oppStats?: OppTeamStats | null; playoffGames?: import('../lib/types').PlayoffGame[]; eraFilter?: string
 }) {
+  const fifties = eraFilter === 'grayscale(1)'
   const [cardPlayer, setCardPlayer] = useState<Player | null>(null)
 
   const gameLog = cardPlayer && playoffGames
@@ -2711,7 +2737,7 @@ function StatsTable({ stats, simEra, title, subtitle, teamActualPPG, teamActualO
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >×</button>
-          <PlayerCard player={cardPlayer} activeEra={cardPlayer.era} />
+          <PlayerCard player={cardPlayer} activeEra={cardPlayer.era} fifties={fifties} />
           {gameLog.length > 0 && (
             <div style={{ background: G.surface, border: `1px solid ${G.border}`, borderTop: 'none', padding: '12px 16px' }}>
               <div className="text-xs uppercase tracking-widest mb-2" style={{ color: G.grey }}>Playoff Game Log</div>
@@ -4548,7 +4574,7 @@ export default function Home() {
       )}
       {phase === 'era-select' && <EraSelection onEraSelected={era => { setSimEra(era); setStartSandbox(false); setShowPerfDisclaimer(false); setPhase('draft') }} onSandboxSelected={era => { setSimEra(era); setStartSandbox(true); setShowPerfDisclaimer(false); setPhase('draft') }} onRestart={restart} onLifetimeStats={() => setShowLifetimeStats(true)} onEraPreview={era => setAudioEra(era)} muteBtn={muteBtn} eraThemeBtn={greyscaleBtn} />}
       {showLifetimeStats && <LifetimeStatsModal onClose={() => setShowLifetimeStats(false)} />}
-      {phase === 'draft' && <DraftScreen simEra={simEra} players={players} onDraftComplete={(s, ce) => { setSlots(s); setDraftCustomEras(ce); setPhase('coach-draft') }} onRestart={restart} startInSandbox={startSandbox} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} />}
+      {phase === 'draft' && <DraftScreen simEra={simEra} players={players} onDraftComplete={(s, ce) => { setSlots(s); setDraftCustomEras(ce); setPhase('coach-draft') }} onRestart={restart} startInSandbox={startSandbox} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} themeFilter={eraFilter} />}
       {phase === 'coach-draft' && <CoachDraftScreen coaches={coaches} onCoachSelected={c => { setCoach(c); setPhase('simulation') }} onRestart={restart} sandboxMode={startSandbox} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} />}
       {phase === 'simulation' && coach && <SimulationScreen slots={slots} coach={coach} simEra={simEra} onRestart={restart} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} sandboxMode={startSandbox} customEraRange={draftCustomEras} eraFilter={eraFilter} />}
 
