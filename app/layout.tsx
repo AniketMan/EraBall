@@ -18,13 +18,13 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://eraball.com"),
-  title: "EraBall — NBA Fantasy Draft & Simulation Across Eras",
+  title: "Era Ball - Basketball Sim Across Eras",
   description: "Draft an all-time NBA roster across every era, pick a coach, and simulate a full season and playoffs. Build your dream team and see how it stacks up in EraBall.",
   keywords: ["EraBall", "NBA", "fantasy draft", "basketball simulation", "NBA draft game", "all-time team builder", "NBA eras"],
   alternates: { canonical: "/" },
   verification: { google: "BsOiE5n6nmDA3hAIMWgiSVAfO563R92K3EdMZF93R6w" },
   openGraph: {
-    title: "EraBall — NBA Fantasy Draft & Simulation Across Eras",
+    title: "Era Ball - Basketball Sim Across Eras",
     description: "Draft an all-time NBA roster across every era, pick a coach, and simulate a full season and playoffs.",
     url: "https://eraball.com",
     siteName: "EraBall",
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "EraBall — NBA Fantasy Draft & Simulation Across Eras",
+    title: "Era Ball - Basketball Sim Across Eras",
     description: "Draft an all-time NBA roster across every era and simulate a full season.",
     images: ["/era-banners/20s.webp"],
   },
