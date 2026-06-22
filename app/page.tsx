@@ -1842,7 +1842,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                         onMouseLeave={e => (e.currentTarget.style.background = G.surface2)}
                       >{label}</button>
                     ))}
-                    <div className="text-xs" style={{ color: G.greyDark, lineHeight: 1.4 }}>Loads every player with this tag, shown in their home era and sorted by base rating.</div>
+                    <div className="text-xs" style={{ color: G.greyDark, lineHeight: 1.4 }}>Loads every player with this tag.</div>
                   </div>
                 ) : (
                   <div className="p-3 space-y-3">
