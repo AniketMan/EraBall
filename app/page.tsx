@@ -1515,24 +1515,29 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
   }
 
   const loadTagPool = (tag: TagKey) => {
-    const tagged = players
-      .map(p => {
-        const era = p.era as Era
-        const team = playerTeamForEra(p, era) ?? p.team_abbreviation
-        return applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, era, team))))))
-      })
-      .filter(p => {
-        switch (tag) {
-          case 'timeless':     return !!p.timeless
-          case 'offAnchor':    return !!p.offAnchor
-          case 'defAnchor':    return !!p.defAnchor
-          case 'shootingStar': return !!p.shootingStar
-          case 'flex':         return !!p.flexPositions
-          case 'champion':     return (p.rings ?? 0) > 0
-          default:             return false
-        }
-      })
-      .sort((a, b) => playerBaseRating(b, b.era as Era) - playerBaseRating(a, a.era as Era))
+    const hasTag = (p: Player) => {
+      switch (tag) {
+        case 'timeless':     return !!p.timeless
+        case 'offAnchor':    return !!p.offAnchor
+        case 'defAnchor':    return !!p.defAnchor
+        case 'shootingStar': return !!p.shootingStar
+        case 'flex':         return !!p.flexPositions
+        case 'champion':     return (p.rings ?? 0) > 0
+        default:             return false
+      }
+    }
+    const tagged: Player[] = []
+    for (const p of players) {
+      const seen = new Set<string>()
+      for (const key of Object.keys(p.stats_by_era ?? {})) {
+        const [era, team] = key.split(':') as [Era, string]
+        if (!era || !team || seen.has(key)) continue
+        seen.add(key)
+        const v = applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, era, team))))))
+        if (hasTag(v)) tagged.push(v)
+      }
+    }
+    tagged.sort((a, b) => playerBaseRating(b, b.era as Era) - playerBaseRating(a, a.era as Era))
     if (tagged.length === 0) { alert(`No players found with the ${TAG_OPTIONS.find(t => t.key === tag)?.label} tag`); return }
     setDraftedIds(ids => {
       setLockedTeam(TAG_OPTIONS.find(t => t.key === tag)?.label ?? tag); setLockedEra(null)
@@ -2776,7 +2781,7 @@ function StatsTable({ stats, simEra, title, subtitle, teamActualPPG, teamActualO
               const ts = simTS(s)
               const gl = (val: number, max: number) => val === max ? G.gold : G.grey
               return (
-                <tr key={s.player.person_id} style={{ borderBottom: `1px solid ${G.borderSub}` }}>
+                <tr key={`${s.player.person_id}-${s.slot}`} style={{ borderBottom: `1px solid ${G.borderSub}` }}>
                   <td className="py-2 px-3">
                     <button
                       onClick={() => setCardPlayer(s.player)}
@@ -3558,7 +3563,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
               </thead>
               <tbody>
                 {pr.map(({ player, slot, base, adjusted, fitPenalty, eraMod }) => (
-                  <tr key={player.person_id} style={{ borderBottom: `1px solid ${G.borderSub}` }}>
+                  <tr key={`${player.person_id}-${slot}`} style={{ borderBottom: `1px solid ${G.borderSub}` }}>
                     <td className="py-2 px-3 text-white font-medium">{player.full_name}</td>
                     <td className="py-2 px-3 text-right" style={{ color: G.grey }}>{slot}</td>
                     <td className="py-2 px-3 text-right" style={{ color: G.grey }}>{dispRating(base)}</td>

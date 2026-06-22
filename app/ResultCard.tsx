@@ -362,7 +362,7 @@ const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
               ]
               return (
                 <div
-                  key={s.player.person_id}
+                  key={`${s.player.person_id}-${s.slot}`}
                   style={{
                     flex: 1,
                     background: tierBg(s.player),
@@ -461,7 +461,7 @@ const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
           }}>
             {bench.map(s => (
               <div
-                key={s.player.person_id}
+                key={`${s.player.person_id}-${s.slot}`}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
