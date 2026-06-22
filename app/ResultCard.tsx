@@ -61,7 +61,7 @@ function eliminationLabel(round: string | undefined): string {
     'First Round':        'FIRST ROUND EXIT',
     'Semifinals':         'SECOND ROUND EXIT',
     'Conference Finals':  'CONFERENCE FINALS EXIT',
-    'NBA Finals':         'NBA FINALS — RUNNER UP',
+    'NBA Finals':         'NBA FINALS RUNNER-UP',
   }
   return map[round] ?? round.toUpperCase()
 }

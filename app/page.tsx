@@ -356,14 +356,14 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode }: { p
               </TagTooltip>
             )}
             {player.defAnchor && (
-              <TagTooltip tip={(player.anchorTier ?? 1) === 1 ? "Elite defensive anchor — Defensive impact beyond the stat sheet. T1 carries a larger boost than T2." : "Solid defensive anchor — Defensive impact beyond the stat sheet. T1 carries a larger boost than T2."}>
+              <TagTooltip tip={(player.anchorTier ?? 1) === 1 ? "Elite defensive anchor. Defensive impact beyond the stat sheet. T1 carries a larger boost than T2." : "Solid defensive anchor. Defensive impact beyond the stat sheet. T1 carries a larger boost than T2."}>
                 <span className="text-xs uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: '#4A9ECC' }}>
                   Defensive Anchor <span style={{ opacity: 0.7 }}>T{player.anchorTier ?? 1}</span>
                 </span>
               </TagTooltip>
             )}
             {player.offAnchor && (
-              <TagTooltip tip={(player.anchorTier ?? 1) === 1 ? "Elite offensive engine — major boost to team scoring and ball movement." : "Strong offensive contributor — elevates the team's offense. T1 anchors carry a larger boost."}>
+              <TagTooltip tip={(player.anchorTier ?? 1) === 1 ? "Elite offensive engine. Major boost to team scoring and ball movement." : "Strong offensive contributor. Elevates the team's offense. T1 anchors carry a larger boost."}>
                 <span className="text-xs uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: G.gold }}>
                   Offensive Anchor <span style={{ opacity: 0.7 }}>T{player.anchorTier ?? 1}</span>
                 </span>
@@ -377,7 +377,7 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode }: { p
               </TagTooltip>
             )}
             {player.timeless && (
-              <TagTooltip tip="Transcendent skill set — minimal era penalties across all decades. Minor penalty only if 6+ eras from home era.">
+              <TagTooltip tip="Transcendent skill set. Minimal era penalties across all decades. Minor penalty only if 6+ eras from home era.">
                 <span className="text-xs uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: '#C084FC' }}>
                   Timeless
                 </span>
@@ -813,7 +813,7 @@ const V1_4_NOTES = [
     'Zion Williamson gets less of an era penalty going backwards.',
     'Chris Paul gets less of an era penalty in the 90s through 2020s.',
     'Kevin Garnett can now play center without a penalty.',
-    'Shaq can play PF with no positional penalty. (Keep in mind PF still matters for spacing in recent eras — he just won\'t take a positional penalty there.)',
+    'Shaq can play PF with no positional penalty. (Keep in mind PF still matters for spacing in recent eras. He just won\'t take a positional penalty there.)',
   ]},
   { section: 'Tags', items: [
     'David Robinson, Moses Malone, and Anthony Davis are now TIMELESS players.',
@@ -830,7 +830,7 @@ const V1_4_NOTES = [
   ]},
   { section: 'Music', items: [
     'Lowered the base music volume.',
-    'Your volume and mute settings now save — no need to adjust them each time you restart.',
+    'Your volume and mute settings now save. No need to adjust them each time you restart.',
   ]},
 ]
 
@@ -864,7 +864,7 @@ const V1_2_NOTES = [
     'Slightly increased difficulty of the 80s.',
     '90s negative spacing penalty increased for the regular season and playoffs to be more realistic for the time.',
     'Finals opponents play better defense in all eras. More difficulty.',
-    'Decreased coaching impact — closed the gap between guru and F/D coaches to be more realistic.',
+    'Decreased coaching impact. Closed the gap between guru and F/D coaches to be more realistic.',
     'Reduced championship bonus for coaches, capped at 8 championships. Phil Jackson is no longer an easy 70+ win season regardless of roster quality.',
     'Pre-3pt era rim protection: Reduced the defensive impact of shot blocking in the 50s/60s/70s. Elite shot blockers gave too high a boost when opponents didn\'t have the same.',
   ]},
@@ -1735,7 +1735,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
               background: devMode ? G.gold : 'transparent',
               border: `1px solid ${devMode ? G.gold : G.border}`,
             }}
-            title="Developer mode — pick team/era directly"
+            title="Developer mode (pick team/era directly)"
           >DEV</button>}
           {greyscaleBtn}
           {muteBtn}
@@ -1807,8 +1807,8 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                       )}
                       {awaitingSpin && !spinning && <div className="text-center text-xs uppercase tracking-[0.2em]" style={{ color: G.goldDim }}>{filledCount === 9 ? 'Draft your coach' : 'Spin for your next pick'}</div>}
                       {!awaitingSpin && !spinning && !respinUsed && rosterPool.length > 0 && <div className="text-center text-xs uppercase tracking-[0.2em]" style={{ color: G.goldDim }}>1 re-spin remaining this draft</div>}
-                      {!awaitingSpin && !spinning && respinUsed && rosterPool.length > 0 && <div className="text-center text-xs uppercase tracking-[0.2em]" style={{ color: G.grey }}>No re-spins left — pick from this roster</div>}
-                      {noPlayersMsg && !spinning && <div className="text-center text-xs uppercase tracking-[0.2em]" style={{ color: G.red }}>All players from this combo drafted — spin again</div>}
+                      {!awaitingSpin && !spinning && respinUsed && rosterPool.length > 0 && <div className="text-center text-xs uppercase tracking-[0.2em]" style={{ color: G.grey }}>No re-spins left. Pick from this roster</div>}
+                      {noPlayersMsg && !spinning && <div className="text-center text-xs uppercase tracking-[0.2em]" style={{ color: G.red }}>All players from this combo drafted. Spin again</div>}
                     </div>
                   </>
                 ) : sandboxTab === 'player' ? (
@@ -1897,7 +1897,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
               <div style={{ border: `1px solid ${G.gold}33`, background: G.surface }}>
                 <div className="px-3 py-2 flex items-center gap-2" style={{ borderBottom: `1px solid ${G.border}`, background: `${G.gold}0a` }}>
                   <span className="text-xs uppercase tracking-widest" style={{ color: G.gold }}>Dev Mode</span>
-                  <span className="text-xs" style={{ color: G.greyDark }}>— pick any team / era directly</span>
+                  <span className="text-xs" style={{ color: G.greyDark }}>pick any team / era directly</span>
                 </div>
                 <div className="p-3 space-y-3">
                   <div>
@@ -1908,7 +1908,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                       className="w-full px-3 py-2 text-sm font-semibold"
                       style={{ background: G.surface2, border: `1px solid ${G.border}`, color: G.white, outline: 'none' }}
                     >
-                      <option value="ALL">— ALL —</option>
+                      <option value="ALL">ALL</option>
                       {allTeams.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
                   </div>
@@ -2059,7 +2059,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                       <div className="px-3 py-2 flex items-center justify-between gap-3">
                         <span className="text-xs" style={{ color: eraFilterLocked ? G.goldDim : G.greyDark, letterSpacing: '0.03em' }}>
                           {eraFilterLocked
-                            ? `Locked — excluding ${ALL_ERAS.length - eraFilter.size} era${ALL_ERAS.length - eraFilter.size !== 1 ? 's' : ''}. Will appear on result card.`
+                            ? `Locked. Excluding ${ALL_ERAS.length - eraFilter.size} era${ALL_ERAS.length - eraFilter.size !== 1 ? 's' : ''}. Will appear on result card.`
                             : 'Select eras, then lock to apply.'}
                         </span>
                         <button
@@ -2085,7 +2085,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                 </div>
                 {eraFilterLocked && isCustomRange && (
                   <div className="text-xs text-center pb-2" style={{ color: G.greyDark }}>
-                    Custom range active — will <span style={{ color: '#CC8844' }}>not count</span> toward lifetime stats
+                    Custom range active. Will <span style={{ color: '#CC8844' }}>not count</span> toward lifetime stats
                   </div>
                 )}
                 {filledCount === 9 ? (
@@ -2114,12 +2114,12 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                 )}
                 {!awaitingSpin && !spinning && respinUsed && rosterPool.length > 0 && (
                   <div className="text-center text-xs uppercase tracking-[0.2em]" style={{ color: G.grey }}>
-                    No re-spins left — pick from this roster
+                    No re-spins left. Pick from this roster
                   </div>
                 )}
                 {noPlayersMsg && !spinning && (
                   <div className="text-center text-xs uppercase tracking-[0.2em]" style={{ color: G.red }}>
-                    All players from this combo drafted — spin again
+                    All players from this combo drafted. Spin again
                   </div>
                 )}
               </>
@@ -2273,13 +2273,13 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
               <div className="space-y-2">
                 <GoldLabel>
                   {pendingSlotIdx !== null
-                    ? `→ ${slots[pendingSlotIdx].position} — lock or choose another slot`
+                    ? `→ ${slots[pendingSlotIdx].position}: lock or choose another slot`
                     : 'Click a court slot to place'}
                 </GoldLabel>
                 <PlayerCard player={selectedPlayer} displayEra={lockedEra ?? undefined} activeEra={lockedEra ?? undefined} devMode={devMode} />
                 {pendingSlotIdx !== null && (
                   <Btn onClick={confirmPick} variant="gold" className="w-full py-3">
-                    Lock — {slots[pendingSlotIdx].position}
+                    Lock {slots[pendingSlotIdx].position}
                   </Btn>
                 )}
               </div>
@@ -2303,7 +2303,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
 
             {rosterPool.length === 0 && !spinning && !awaitingSpin && filledCount === 0 && (
               <div className="text-center py-10 text-xs uppercase tracking-widest" style={{ color: G.greyDark }}>
-                {sandboxMode ? 'Sandbox mode — pick a team and era, then load roster. Or search for a player and load all of that player\'s cards.' : 'Hit Spin to see a roster'}
+                {sandboxMode ? 'Sandbox mode. Pick a team and era, then load roster. Or search for a player and load all of that player\'s cards.' : 'Hit Spin to see a roster'}
               </div>
             )}
           </div>
@@ -2385,36 +2385,29 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
             </div>
 
             {/* Tag key */}
-            <div className="mt-5 flex flex-col gap-2 py-3 px-4" style={{ background: '#0d0d0d', border: `1px solid ${G.border}` }}>
-              <div className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: G.greyDark }}>Player Tag Effects</div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
-                <div className="flex items-start gap-2">
-                  <span className="text-xs font-bold uppercase tracking-wide shrink-0" style={{ color: G.gold }}>Champion</span>
-                  <span className="text-xs leading-tight" style={{ color: G.greyDark }}>Elevates their game in the playoffs. The more championships, the bigger boost.</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-xs font-bold uppercase tracking-wide shrink-0" style={{ color: '#4A9ECC' }}>Def Anchor</span>
-                  <span className="text-xs leading-tight" style={{ color: G.greyDark }}>Defensive impact beyond the stat sheet. T1 carries a larger boost than T2.</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-xs font-bold uppercase tracking-wide shrink-0" style={{ color: G.gold }}>Off Anchor</span>
-                  <span className="text-xs leading-tight" style={{ color: G.greyDark }}>Elevates the team's offense. T1 carries a larger boost than T2.</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-xs font-bold uppercase tracking-wide shrink-0" style={{ color: '#4A9ECC' }}>FLEX</span>
-                  <span className="text-xs leading-tight" style={{ color: G.greyDark }}>Fits multiple positions without penalty.</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-xs font-bold uppercase tracking-wide shrink-0" style={{ color: '#F472B6' }}>Shooting Star</span>
-                  <span className="text-xs leading-tight" style={{ color: G.greyDark }}>Boosts the team spacing. All-time shooters. T1 carries a larger boost than T2.</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-xs font-bold uppercase tracking-wide shrink-0" style={{ color: '#C084FC' }}>Timeless</span>
-                  <span className="text-xs leading-tight" style={{ color: G.greyDark }}>Minimal era penalties across all decades. Minor penalty only if 6+ eras from home era.</span>
-                </div>
+            <div className="mt-5 py-4 px-4" style={{ background: 'linear-gradient(160deg, #111111 0%, #0b0b0b 100%)', border: `1px solid ${G.border}`, borderRadius: 6 }}>
+              <div className="flex items-center gap-2 mb-3">
+                <div style={{ width: 3, height: 14, background: G.gold, borderRadius: 2 }} />
+                <div className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: G.gold }}>Player Tag Effects</div>
               </div>
-              <div className="text-xs mt-1 text-center" style={{ color: G.greyDark, opacity: 0.6, letterSpacing: '0.02em' }}>
-                Scoring isn't everything. Defense, playmaking, and rebounding all shape your season.
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {[
+                  { name: 'Champion',      color: G.gold,     desc: 'Elevates their game in the playoffs. The more championships, the bigger the boost.' },
+                  { name: 'Def Anchor',    color: '#4A9ECC',  desc: 'Defensive impact beyond the stat sheet. T1 carries a larger boost than T2.' },
+                  { name: 'Off Anchor',    color: G.gold,     desc: "Elevates the team's offense. T1 carries a larger boost than T2." },
+                  { name: 'Flex',          color: '#4A9ECC',  desc: 'Fits multiple positions without penalty.' },
+                  { name: 'Shooting Star', color: '#F472B6',  desc: 'Boosts team spacing. All-time shooters. T1 carries a larger boost than T2.' },
+                  { name: 'Timeless',      color: '#C084FC',  desc: 'Minimal era penalties across all decades. Minor penalty only if 6+ eras from home.' },
+                ].map(t => (
+                  <div key={t.name} className="flex items-start gap-2.5 px-3 py-2 transition-all duration-150 hover:-translate-y-0.5 hover:scale-[1.02] cursor-default"
+                    style={{ background: `${t.color}0f`, borderLeft: `2px solid ${t.color}`, borderRadius: 3 }}>
+                    <span className="text-xs font-bold uppercase tracking-wide shrink-0" style={{ color: t.color, letterSpacing: '0.05em', minWidth: 78 }}>{t.name}</span>
+                    <span className="text-xs leading-snug" style={{ color: '#b4b4b4' }}>{t.desc}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="text-xs mt-3 text-center italic" style={{ color: G.grey, opacity: 0.75, letterSpacing: '0.02em' }}>
+                Scoring isn&apos;t everything. Defense, playmaking, and rebounding all shape your season.
               </div>
             </div>
           </div>
@@ -2564,7 +2557,7 @@ function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxMode, gr
                     <div className="flex flex-wrap gap-x-3 mt-1.5" style={{ fontSize: 11, color: G.greyDark }}>
                       <span style={{ color: G.grey }}>{coach.playoffG > 0 ? `${(coach.playoffWLPct * 100).toFixed(1)}% playoffs` : 'No playoffs'}</span>
                       {coach.champ > 0 && <><span>·</span>
-                        <TagTooltip tip={`${Math.min(coach.champ, 8)}× title${coach.champ > 8 ? ' (capped at 8)' : ''} — coaches who've won it all provide a small but real edge to your team. +${(coachChampBonus(coach) * 100).toFixed(1)}% team rating.`}>
+                        <TagTooltip tip={`${Math.min(coach.champ, 8)}× title${coach.champ > 8 ? ' (capped at 8)' : ''}. Coaches who've won it all provide a small but real edge to your team. +${(coachChampBonus(coach) * 100).toFixed(1)}% team rating.`}>
                           <span style={{ color: G.gold }}>{coach.champ}× Champion</span>
                         </TagTooltip>
                       </>}
@@ -3295,7 +3288,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
       setShareImageUrl(out.toDataURL('image/png'))
     } catch (e) {
       console.error('Share card failed:', e)
-      alert('Could not generate image — try again.')
+      alert('Could not generate image. Try again.')
     } finally {
       setSharing(false)
     }
@@ -3439,7 +3432,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
     handleDownload()
     const tweetText = encodeURIComponent(`${SHARE_MSG}\n\n${SITE_URL}`)
     window.open(`https://twitter.com/intent/tweet?text=${tweetText}`, '_blank')
-    setShareHint('Image downloaded — attach it to your tweet using the image icon')
+    setShareHint('Image downloaded. Attach it to your tweet using the image icon')
     setTimeout(() => setShareHint(null), 9000)
   }
 
@@ -3737,7 +3730,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
         {done && !madePlayoffs && (
           <div className="text-center py-6" style={{ background: G.surface, border: `1px solid ${G.border}` }}>
             <div className="text-xs uppercase tracking-[0.3em] mb-2" style={{ color: G.greyDark }}>Missed Playoffs</div>
-            <div className="text-sm" style={{ color: G.grey }}>{wins} wins — below the playoff threshold</div>
+            <div className="text-sm" style={{ color: G.grey }}>{wins} wins, below the playoff threshold</div>
           </div>
         )}
 
@@ -3806,7 +3799,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
                 {/* Special performance */}
                 {currentGame.special && (
                   <div className="text-center px-5 pb-3" style={{ fontSize: 11, color: G.gold, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-                    ★ {currentGame.special.playerName} — {currentGame.special.label}
+                    ★ {currentGame.special.playerName}: {currentGame.special.label}
                   </div>
                 )}
 
@@ -4541,7 +4534,7 @@ export default function Home() {
               boxShadow: '0 4px 16px rgba(0,0,0,0.6)',
             }}>
               <span style={{ fontSize: 11, color: G.greyDark, lineHeight: 1.5, flex: 1 }}>
-                Your device can't run all era effects at full quality. Grain has been disabled automatically — other effects remain on. On desktop, try enabling hardware acceleration in your browser settings.
+                Your device can't run all era effects at full quality. Grain has been disabled automatically. Other effects remain on. On desktop, try enabling hardware acceleration in your browser settings.
               </span>
               <button
                 onClick={() => setShowPerfDisclaimer(false)}

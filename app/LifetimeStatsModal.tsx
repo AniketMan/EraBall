@@ -23,9 +23,9 @@ function eraLabel(era: string) {
   return era === '00s' ? '2000s' : era === '10s' ? '2010s' : era === '20s' ? '2020s' : era
 }
 
-function EraRow({ era, rec, best, worst, champs, pct }: {
+function EraRow({ era, rec, best, worst, champs, pct, isMobile }: {
   era: string; rec: { wins: number; losses: number }; best?: { wins: number; losses: number };
-  worst?: { wins: number; losses: number }; champs: number; pct: string
+  worst?: { wins: number; losses: number }; champs: number; pct: string; isMobile?: boolean
 }) {
   const [hovered, setHovered] = useState(false)
   const [sheenKey, setSheenKey] = useState(0)
@@ -51,8 +51,8 @@ function EraRow({ era, rec, best, worst, champs, pct }: {
         </div>
       </div>
       {champs > 0 && (
-        <div style={{ fontFamily: BEBAS, fontSize: 13, color: G.gold, letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>
-          Championships {champs}×
+        <div style={{ fontFamily: BEBAS, fontSize: 13, color: G.gold, letterSpacing: '0.1em', whiteSpace: 'nowrap', flexShrink: 0 }}>
+          {isMobile ? `Champs ${champs}×` : `Championships ${champs}×`}
         </div>
       )}
     </div>
@@ -105,7 +105,7 @@ function StatBox({ label, value, sub, compact = false }: { label: string; value:
     >
       {hovered && <div key={sheenKey} className="stat-box-sheen" />}
       <div style={{ fontFamily: INTER, fontSize: compact ? 8 : 9, color: G.grey, letterSpacing: compact ? '0' : '0.18em', textTransform: 'uppercase', marginBottom: 4 }}>{label}</div>
-      <div style={{ fontFamily: BEBAS, fontSize: compact ? 22 : 32, color: G.gold, letterSpacing: '0.06em', lineHeight: 1, whiteSpace: 'nowrap' }}>{value}</div>
+      <div style={{ fontFamily: BEBAS, fontSize: compact ? (value.length > 10 ? 14 : value.length > 7 ? 16 : value.length > 5 ? 19 : 22) : (value.length > 9 ? 24 : 32), color: G.gold, letterSpacing: '0.06em', lineHeight: 1, overflowWrap: 'anywhere' }}>{value}</div>
       {sub && <div style={{ fontFamily: INTER, fontSize: 10, color: G.grey, marginTop: 3 }}>{sub}</div>}
     </div>
   )
@@ -203,7 +203,7 @@ export default function LifetimeStatsModal({ onClose }: { onClose: () => void })
                   <HoverCard style={{ background: G.surface, padding: '14px 16px', flex: 1 }}>
                     <div style={{ fontFamily: INTER, fontSize: 9, color: G.grey, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 6 }}>Most Drafted Player</div>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                      <div style={{ fontFamily: BEBAS, fontSize: 24, color: G.gold, letterSpacing: '0.06em', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mostDrafted.name}</div>
+                      <div style={{ fontFamily: BEBAS, fontSize: isMobile ? 18 : 24, color: G.gold, letterSpacing: '0.06em', flex: 1, minWidth: 0, lineHeight: 1.05, wordBreak: 'break-word' }}>{mostDrafted.name}</div>
                       <div style={{ fontFamily: INTER, fontSize: 12, color: G.grey, flexShrink: 0 }}>{mostDrafted.count}×</div>
                     </div>
                   </HoverCard>
@@ -212,7 +212,7 @@ export default function LifetimeStatsModal({ onClose }: { onClose: () => void })
                   <HoverCard style={{ background: G.surface, padding: '14px 16px', flex: 1 }}>
                     <div style={{ fontFamily: INTER, fontSize: 9, color: G.grey, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 6 }}>Most Drafted Coach</div>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                      <div style={{ fontFamily: BEBAS, fontSize: 24, color: G.gold, letterSpacing: '0.06em', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mostDraftedCoach.name}</div>
+                      <div style={{ fontFamily: BEBAS, fontSize: isMobile ? 18 : 24, color: G.gold, letterSpacing: '0.06em', flex: 1, minWidth: 0, lineHeight: 1.05, wordBreak: 'break-word' }}>{mostDraftedCoach.name}</div>
                       <div style={{ fontFamily: INTER, fontSize: 12, color: G.grey, flexShrink: 0 }}>{mostDraftedCoach.count}×</div>
                     </div>
                   </HoverCard>
@@ -232,7 +232,7 @@ export default function LifetimeStatsModal({ onClose }: { onClose: () => void })
                     const champs = stats.championshipsByEra[era] ?? 0
                     const pct = ((rec.wins / (rec.wins + rec.losses)) * 100).toFixed(0)
                     return (
-                      <EraRow key={era} era={era} rec={rec} best={best} worst={worst} champs={champs} pct={pct} />
+                      <EraRow key={era} era={era} rec={rec} best={best} worst={worst} champs={champs} pct={pct} isMobile={isMobile} />
                     )
                   })}
                 </div>
@@ -241,7 +241,7 @@ export default function LifetimeStatsModal({ onClose }: { onClose: () => void })
           )}
 
           <div style={{ borderTop: `1px solid ${G.border}`, paddingTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ fontFamily: INTER, fontSize: 10, color: G.greyDark }}>Stored locally — does not carry over to other devices.</div>
+            <div style={{ fontFamily: INTER, fontSize: 10, color: G.greyDark }}>Stored locally. Does not carry over to other devices.</div>
             {confirming ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 11, color: G.grey }}>Reset all stats?</span>
