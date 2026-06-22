@@ -1023,11 +1023,6 @@ function EraSelection({ onEraSelected, onSandboxSelected, onRestart, onLifetimeS
     if (next !== era) selectEra(next)
   }
 
-  // Prefetch all era banner images so they're cached before the user clicks
-  React.useEffect(() => {
-    ALL_ERAS.forEach(era => { const img = new Image(); img.src = `/era-banners/${era}.webp` })
-  }, [])
-
   // Keyboard arrow navigation
   React.useEffect(() => {
     const handler = (ev: KeyboardEvent) => {
@@ -4277,7 +4272,7 @@ export default function Home() {
   const [coach, setCoach] = useState<Coach | null>(null)
   const [draftCustomEras, setDraftCustomEras] = useState<Era[] | null>(null)
   const [showLifetimeStats, setShowLifetimeStats] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [muted, setMuted] = useState(() => {
     try { return localStorage.getItem('eb-muted') === 'true' } catch { return false }
   })
@@ -4315,12 +4310,18 @@ export default function Home() {
   }, [muted, volume])
 
 
-  useEffect(() => {
+  // Lazy data load: only fetch the (multi-MB) player dataset once the user actually
+  // starts — keeps bandwidth off the flood of visitors who bounce on the landing screen.
+  const dataReqRef = useRef(false)
+  const ensureData = useCallback(() => {
+    if (dataReqRef.current) return
+    dataReqRef.current = true
+    setLoading(true)
     Promise.all([
       fetch('/players_with_stats.json?v=2').then(r => r.json()),
       fetch('/coaches.csv').then(r => r.text()).then(parseCoachesCSV)
     ]).then(([p, c]) => { setPlayers(p); setCoaches(c); setLoading(false) })
-      .catch(err => { console.error('Failed to load data:', err); setLoading(false) })
+      .catch(err => { console.error('Failed to load data:', err); setLoading(false); dataReqRef.current = false })
   }, [])
 
 
@@ -4546,7 +4547,7 @@ export default function Home() {
         </>,
         document.body
       )}
-      {phase === 'era-select' && <EraSelection onEraSelected={era => { setSimEra(era); setStartSandbox(false); setShowPerfDisclaimer(false); setPhase('draft') }} onSandboxSelected={era => { setSimEra(era); setStartSandbox(true); setShowPerfDisclaimer(false); setPhase('draft') }} onRestart={restart} onLifetimeStats={() => setShowLifetimeStats(true)} onEraPreview={era => setAudioEra(era)} muteBtn={muteBtn} eraThemeBtn={greyscaleBtn} />}
+      {phase === 'era-select' && <EraSelection onEraSelected={era => { setSimEra(era); setStartSandbox(false); setShowPerfDisclaimer(false); ensureData(); setPhase('draft') }} onSandboxSelected={era => { setSimEra(era); setStartSandbox(true); setShowPerfDisclaimer(false); ensureData(); setPhase('draft') }} onRestart={restart} onLifetimeStats={() => setShowLifetimeStats(true)} onEraPreview={era => setAudioEra(era)} muteBtn={muteBtn} eraThemeBtn={greyscaleBtn} />}
       {showLifetimeStats && <LifetimeStatsModal onClose={() => setShowLifetimeStats(false)} />}
       {phase === 'draft' && <DraftScreen simEra={simEra} players={players} onDraftComplete={(s, ce) => { setSlots(s); setDraftCustomEras(ce); setPhase('coach-draft') }} onRestart={restart} startInSandbox={startSandbox} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} />}
       {phase === 'coach-draft' && <CoachDraftScreen coaches={coaches} onCoachSelected={c => { setCoach(c); setPhase('simulation') }} onRestart={restart} sandboxMode={startSandbox} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} />}

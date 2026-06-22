@@ -47,8 +47,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${bebasNeue.variable} ${inter.variable} h-full`}>
       <head>
-        {/* Start fetching player data immediately on HTML parse, before JS loads */}
-        <link rel="preload" href="/players_with_stats.json?v=2" as="fetch" crossOrigin="anonymous" />
+        {/* Player data is fetched lazily on first era selection, not on landing,
+            so visitors who bounce never download the multi-MB dataset. */}
       </head>
       <body className="min-h-full bg-black text-white antialiased" style={{ fontFamily: "var(--font-inter), system-ui, sans-serif" }}>
         {children}
