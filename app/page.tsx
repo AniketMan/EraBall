@@ -60,7 +60,7 @@ const COACH_GURUS: Record<string, CoachGuru> = {
   'Nate McMillan':  { defOverride: 'B' },
   "Jerry Sloan*":   { defGuru: true },
   "Mike D'Antoni":  { offGuru: true, defOverride: 'D' },
-  'Don Nelson*':    { offGuru: true, defOverride: 'F' },
+  'Don Nelson*':    { offGuru: true, defOverride: 'C' },
   'Byron Scott':    { defOverride: 'C' },
   'Rick Carlisle':  { offOverride: 'B', defOverride: 'B' },
   'George Karl*':   { defOverride: 'C' },
@@ -82,6 +82,7 @@ const COACH_GURUS: Record<string, CoachGuru> = {
   'Cotton Fitzsimmons': { offOverride: 'B', defOverride: 'C' },
   'Michael Malone':     { offOverride: 'A', defOverride: 'B' },
   'Stephen Silas':      { offOverride: 'F', defOverride: 'F' },
+  'Kenny Atkinson':     { offOverride: 'A', defOverride: 'B' },
 }
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -106,15 +107,18 @@ function parseCoachesCSV(text: string): Coach[] {
     const champ = parseInt(cols[15]) || 0
     const guru = COACH_GURUS[name] ?? {}
     const regG = regW + regL
+    const isHOF = name.endsWith('*')
     const capF = (g: string) => (regG > 200 && g === 'F' ? 'C' : g)
+    // HOF coaches get a minimum grade of B on data-derived grades (manual overrides win)
+    const hofFloor = (g: string) => (isHOF && (g === 'C' || g === 'D' || g === 'F') ? 'B' : g)
     const rawOffGrade = guru.offGuru ? 'A' : guru.offOverride ?? (regWLPct >= 0.600 ? 'A' : regWLPct >= 0.550 ? 'B' : regWLPct >= 0.500 ? 'C' : regWLPct >= 0.450 ? 'D' : 'F')
     const rawDefGrade = guru.defGuru ? 'A' : guru.defOverride ?? (playoffG === 0 ? 'C' : playoffWLPct >= 0.550 ? 'A' : playoffWLPct >= 0.500 ? 'B' : playoffWLPct >= 0.450 ? 'C' : playoffWLPct >= 0.400 ? 'D' : 'F')
-    const offGrade = (guru.offGuru || guru.offOverride ? rawOffGrade : capF(rawOffGrade)) as Coach['offGrade']
-    const defGrade = (guru.defGuru || guru.defOverride ? rawDefGrade : capF(rawDefGrade)) as Coach['defGrade']
+    const offGrade = (guru.offGuru || guru.offOverride ? rawOffGrade : hofFloor(capF(rawOffGrade))) as Coach['offGrade']
+    const defGrade = (guru.defGuru || guru.defOverride ? rawDefGrade : hofFloor(capF(rawDefGrade))) as Coach['defGrade']
     const gradeN = (g: Coach['offGrade']) => ({ A: 4, B: 3, C: 2, D: 1, F: 0 }[g])
     const avg = (gradeN(offGrade) + gradeN(defGrade)) / 2
     const overallGrade = (avg >= 3.5 ? 'A' : avg >= 2.5 ? 'B' : avg >= 1.5 ? 'C' : avg >= 0.5 ? 'D' : 'F') as Coach['overallGrade']
-    if (name && regG >= 50) coaches.push({ name, from, to, years: to - from, regG, regW, regL, regWLPct, playoffG, playoffW, playoffL, playoffWLPct, conf, champ, offGrade, defGrade, overallGrade, offGuru: !!guru.offGuru, defGuru: !!guru.defGuru })
+    if (name && (regG >= 72 || champ > 0)) coaches.push({ name, from, to, years: to - from, regG, regW, regL, regWLPct, playoffG, playoffW, playoffL, playoffWLPct, conf, champ, offGrade, defGrade, overallGrade, offGuru: !!guru.offGuru, defGuru: !!guru.defGuru })
   }
   return coaches
 }
@@ -803,6 +807,33 @@ const V1_NOTES = [
   ]},
 ]
 
+const V1_4_NOTES = [
+  { section: 'Simulation', items: [
+    'Pre-3pt era players who were eligible for an estimated three point rating in modern eras now get a slightly smaller era penalty going forward (like Pete Maravich).',
+    'Zion Williamson gets less of an era penalty going backwards.',
+    'Chris Paul gets less of an era penalty in the 90s through 2020s.',
+    'Kevin Garnett can now play center without a penalty.',
+    'Shaq can play PF with no positional penalty. (Keep in mind PF still matters for spacing in recent eras — he just won\'t take a positional penalty there.)',
+  ]},
+  { section: 'Tags', items: [
+    'David Robinson, Moses Malone, and Anthony Davis are now TIMELESS players.',
+  ]},
+  { section: 'Sandbox', items: [
+    'Added a sort-by-tag option, so you can see every player who carries each tag!',
+  ]},
+  { section: 'Ratings', items: [
+    'HOF coaches now have a floor grade of B. Kenny Atkinson also got a boost.',
+    'Don Nelson\'s defensive grade upgraded to a C.',
+  ]},
+  { section: 'Draft', items: [
+    'Removed coaches with under 72 games played.',
+  ]},
+  { section: 'Music', items: [
+    'Lowered the base music volume.',
+    'Your volume and mute settings now save — no need to adjust them each time you restart.',
+  ]},
+]
+
 const V1_3_NOTES = [
   { section: 'NEW ERA THEMES!', items: [
     'BRAND NEW themes for every era. On by default, can be turned off in the top bar.',
@@ -850,6 +881,7 @@ const V1_2_NOTES = [
 ]
 
 function PatchNotesModal({ onClose }: { onClose: () => void }) {
+  const [showV1_3, setShowV1_3] = useState(false)
   const [showV1_2, setShowV1_2] = useState(false)
   const [showV1_1, setShowV1_1] = useState(false)
   const [showV1, setShowV1] = useState(false)
@@ -872,12 +904,24 @@ function PatchNotesModal({ onClose }: { onClose: () => void }) {
         <div className="flex items-center justify-between mb-4">
           <div>
             <div style={{ ...BEBAS, fontSize: 24, color: G.white, letterSpacing: '0.05em' }}>What's New</div>
-            <div style={{ fontSize: 11, color: G.gold, letterSpacing: '0.12em', textTransform: 'uppercase' }}>v1.3 · June 19</div>
+            <div style={{ fontSize: 11, color: G.gold, letterSpacing: '0.12em', textTransform: 'uppercase' }}>v1.4 · June 21</div>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: G.greyDark, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>✕</button>
         </div>
 
-        {renderNotes(V1_3_NOTES)}
+        {renderNotes(V1_4_NOTES)}
+
+        {/* v1.3 collapsible */}
+        <div style={{ borderTop: `1px solid ${G.border}`, marginTop: 8, paddingTop: 12 }}>
+          <button
+            onClick={() => setShowV1_3(v => !v)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: 0 }}
+          >
+            <span style={{ fontSize: 11, color: G.greyDark, letterSpacing: '0.12em', textTransform: 'uppercase' }}>V1.3 · June 19</span>
+            <span style={{ fontSize: 10, color: G.greyDark, display: 'inline-block', transform: showV1_3 ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▼</span>
+          </button>
+          {showV1_3 && <div style={{ marginTop: 12 }}>{renderNotes(V1_3_NOTES)}</div>}
+        </div>
 
         {/* v1.2 collapsible */}
         <div style={{ borderTop: `1px solid ${G.border}`, marginTop: 8, paddingTop: 12 }}>
@@ -1168,6 +1212,7 @@ function EraSelection({ onEraSelected, onSandboxSelected, onRestart, onLifetimeS
           >
             What's New!
           </button>
+          <div style={{ fontSize: 10, color: G.greyDark, letterSpacing: '0.15em', marginTop: 2 }}>v1.4</div>
         </div>
       </div>
       {showPatchNotes && <PatchNotesModal onClose={() => setShowPatchNotes(false)} />}
@@ -1181,6 +1226,16 @@ function EraSelection({ onEraSelected, onSandboxSelected, onRestart, onLifetimeS
 }
 
 // ─── Phase 2: Draft ───────────────────────────────────────────────────────────
+type TagKey = 'timeless' | 'offAnchor' | 'defAnchor' | 'shootingStar' | 'flex' | 'champion'
+const TAG_OPTIONS: { key: TagKey; label: string; color: string }[] = [
+  { key: 'timeless',     label: 'Timeless',      color: '#C084FC' },
+  { key: 'offAnchor',    label: 'Offensive Anchor', color: G.gold },
+  { key: 'defAnchor',    label: 'Defensive Anchor', color: '#4A9ECC' },
+  { key: 'shootingStar', label: 'Shooting Star',  color: '#F472B6' },
+  { key: 'flex',         label: 'Flex',           color: '#4A9ECC' },
+  { key: 'champion',     label: 'Champion',       color: G.gold },
+]
+
 function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandbox, greyscaleBtn, muteBtn }: {
   simEra: Era; players: Player[]; onDraftComplete: (slots: CourtSlot[], customEras: Era[] | null) => void; onRestart: () => void; startInSandbox?: boolean; greyscaleBtn?: React.ReactNode; muteBtn?: React.ReactNode
 }) {
@@ -1218,7 +1273,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
   const [sandboxEra, setSandboxEra] = useState<Era>(ALL_ERAS[6])
   const [sandboxTeamSearch, setSandboxTeamSearch] = useState('')
   const [sandboxTeamOpen, setSandboxTeamOpen] = useState(false)
-  const [sandboxTab, setSandboxTab] = useState<'spin' | 'team' | 'player'>('team')
+  const [sandboxTab, setSandboxTab] = useState<'spin' | 'team' | 'player' | 'tag'>('team')
   const [sandboxPlayerSearch, setSandboxPlayerSearch] = useState('')
 
   const filledCount = slots.filter(s => s.player !== null).length
@@ -1459,6 +1514,35 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
     })
   }
 
+  const loadTagPool = (tag: TagKey) => {
+    const tagged = players
+      .map(p => {
+        const era = p.era as Era
+        const team = playerTeamForEra(p, era) ?? p.team_abbreviation
+        return applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, era, team))))))
+      })
+      .filter(p => {
+        switch (tag) {
+          case 'timeless':     return !!p.timeless
+          case 'offAnchor':    return !!p.offAnchor
+          case 'defAnchor':    return !!p.defAnchor
+          case 'shootingStar': return !!p.shootingStar
+          case 'flex':         return !!p.flexPositions
+          case 'champion':     return (p.rings ?? 0) > 0
+          default:             return false
+        }
+      })
+      .sort((a, b) => playerBaseRating(b, b.era as Era) - playerBaseRating(a, a.era as Era))
+    if (tagged.length === 0) { alert(`No players found with the ${TAG_OPTIONS.find(t => t.key === tag)?.label} tag`); return }
+    setDraftedIds(ids => {
+      setLockedTeam(TAG_OPTIONS.find(t => t.key === tag)?.label ?? tag); setLockedEra(null)
+      setSpinTeamDisplay(TAG_OPTIONS.find(t => t.key === tag)?.label ?? tag); setSpinEraDisplay(tagged[0].era as Era)
+      setRosterPool(tagged)
+      setSelectedPlayer(null); setPendingSlotIdx(null); setHighlightEmpty(false); setAwaitingSpin(false)
+      return ids
+    })
+  }
+
   const fillBestNine = () => {
     const scored = players.map(p => ({
       p,
@@ -1665,10 +1749,10 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                 <div className="px-3 py-2 flex items-center justify-between" style={{ borderBottom: `1px solid ${G.border}`, background: `${G.gold}0a` }}>
                   <span className="text-xs uppercase tracking-widest" style={{ color: G.gold }}>Sandbox</span>
                   <div className="flex" style={{ border: `1px solid ${G.border}` }}>
-                    {(['Spin', 'Team', 'Player'] as const).map(tab => (
+                    {(['Spin', 'Team', 'Player', 'Tag'] as const).map(tab => (
                       <button
                         key={tab}
-                        onClick={() => setSandboxTab(tab.toLowerCase() as 'spin' | 'team' | 'player')}
+                        onClick={() => setSandboxTab(tab.toLowerCase() as 'spin' | 'team' | 'player' | 'tag')}
                         className="text-xs uppercase tracking-widest px-2 py-1"
                         style={{
                           background: sandboxTab === tab.toLowerCase() ? `${G.gold}22` : 'transparent',
@@ -1739,6 +1823,21 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                     <Btn onClick={loadPlayerVersions} variant="outline" className="w-full py-3">
                       Load Player
                     </Btn>
+                  </div>
+                ) : sandboxTab === 'tag' ? (
+                  <div className="p-3 space-y-2">
+                    <div className="text-xs uppercase tracking-widest mb-1" style={{ color: G.grey }}>Filter by Tag</div>
+                    {TAG_OPTIONS.map(({ key, label, color }) => (
+                      <button
+                        key={key}
+                        onClick={() => loadTagPool(key)}
+                        className="w-full px-3 py-2 text-xs uppercase tracking-widest text-left transition-colors"
+                        style={{ background: G.surface2, border: `1px solid ${G.border}`, color, cursor: 'pointer', letterSpacing: '0.12em' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = `${color}18`)}
+                        onMouseLeave={e => (e.currentTarget.style.background = G.surface2)}
+                      >{label}</button>
+                    ))}
+                    <div className="text-xs" style={{ color: G.greyDark, lineHeight: 1.4 }}>Loads every player with this tag, shown in their home era and sorted by base rating.</div>
                   </div>
                 ) : (
                   <div className="p-3 space-y-3">

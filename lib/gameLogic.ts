@@ -31,6 +31,8 @@ const POSITION_LOCK: Record<string, SlotPosition[]> = {
   'LaMarcus Aldridge':   ['PF', 'C'],
   'Tim Duncan':          ['PF', 'C'],
   'Karl Malone':         ['PF'],
+  'Kevin Garnett':       ['PF', 'C'],
+  'Shaquille O\'Neal':   ['PF', 'C'],
 }
 
 export function applyFlexTag(player: Player): Player {
@@ -314,6 +316,9 @@ const TIMELESS_PLAYERS = new Set([
   'Hakeem Olajuwon',
   'Kawhi Leonard',
   'Charles Barkley',
+  'David Robinson',
+  'Anthony Davis',
+  'Moses Malone',
 ])
 
 export function applyTimeless(player: Player): Player {
@@ -714,6 +719,8 @@ export function calcEraModifier(player: Player, simEra: Era): number {
   if (player.timeless) return dist >= 6 ? 0.95 : 1.0
   // 10s and 20s are the same modern era — only 2% apart in either direction
   if ((player.era === '10s' && simEra === '20s') || (player.era === '20s' && simEra === '10s')) return 0.98
+  // Chris Paul — elite fit in the 90s and any modern era forward
+  if (player.full_name === 'Chris Paul' && (simEra === '90s' || simEra === '00s' || simEra === '10s' || simEra === '20s')) return 1.0
   // Tall centers (6'10"+) or Bam Adebayo going back get reduced penalty (physical size translates)
   const isTallCenter = playerHeightInches(player) >= 82 || player.full_name === 'Bam Adebayo' || player.full_name === 'Zion Williamson'
   const table = playerIdx > simIdx
