@@ -1213,7 +1213,7 @@ function EraSelection({ onEraSelected, onSandboxSelected, onRestart, onLifetimeS
           >
             What's New!
           </button>
-          <div style={{ fontSize: 10, color: G.greyDark, letterSpacing: '0.15em', marginTop: 2 }}>v1.4</div>
+          <div style={{ fontSize: 10, color: G.greyDark, letterSpacing: '0.15em', marginTop: 2 }}>v1.5</div>
         </div>
       </div>
       {showPatchNotes && <PatchNotesModal onClose={() => setShowPatchNotes(false)} />}
