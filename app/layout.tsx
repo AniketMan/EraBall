@@ -48,7 +48,7 @@ export default function RootLayout({
     <html lang="en" className={`${bebasNeue.variable} ${inter.variable} h-full`}>
       <head>
         {/* Start fetching player data immediately on HTML parse, before JS loads */}
-        <link rel="preload" href="/players_with_stats.json" as="fetch" crossOrigin="anonymous" />
+        <link rel="preload" href="/players_with_stats.json?v=2" as="fetch" crossOrigin="anonymous" />
       </head>
       <body className="min-h-full bg-black text-white antialiased" style={{ fontFamily: "var(--font-inter), system-ui, sans-serif" }}>
         {children}

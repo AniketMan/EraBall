@@ -4316,7 +4316,7 @@ export default function Home() {
 
   useEffect(() => {
     Promise.all([
-      fetch('/players_with_stats.json').then(r => r.json()),
+      fetch('/players_with_stats.json?v=2').then(r => r.json()),
       fetch('/coaches.csv').then(r => r.text()).then(parseCoachesCSV)
     ]).then(([p, c]) => { setPlayers(p); setCoaches(c); setLoading(false) })
       .catch(err => { console.error('Failed to load data:', err); setLoading(false) })
