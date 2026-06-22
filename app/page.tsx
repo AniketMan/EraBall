@@ -4177,8 +4177,12 @@ export default function Home() {
   const [draftCustomEras, setDraftCustomEras] = useState<Era[] | null>(null)
   const [showLifetimeStats, setShowLifetimeStats] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [muted, setMuted] = useState(false)
-  const [volume, setVolume] = useState(0.21)
+  const [muted, setMuted] = useState(() => {
+    try { return localStorage.getItem('eb-muted') === 'true' } catch { return false }
+  })
+  const [volume, setVolume] = useState(() => {
+    try { const v = parseFloat(localStorage.getItem('eb-volume') ?? ''); return isNaN(v) ? 0.21 : v } catch { return 0.21 }
+  })
   const [showVolumePopover, setShowVolumePopover] = useState(false)
   const [popoverPos, setPopoverPos] = useState({ top: 50, right: 16 })
   const volumeBtnRef = useRef<HTMLButtonElement | null>(null)
@@ -4194,7 +4198,7 @@ export default function Home() {
     const audio = getAudioElement(src)
     try { audio.volume = Math.pow(volume, 2) } catch (_) {}
     audioRef.current = audio
-    audio.play().catch(() => {})
+    if (!muted) audio.play().catch(() => {})
     return () => { audio.pause() }
   }, [audioEra])
 
@@ -4206,6 +4210,7 @@ export default function Home() {
     try { audio.volume = Math.pow(volume, 2) } catch (_) {}
     if (muted) { audio.pause() }
     else if (audio.paused) { audio.play().catch(() => {}) }
+    try { localStorage.setItem('eb-muted', String(muted)); localStorage.setItem('eb-volume', String(volume)) } catch {}
   }, [muted, volume])
 
 
