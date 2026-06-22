@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Bebas_Neue, Inter } from "next/font/google";
-import { Analytics } from "@vercel/analytics/next";
+import Script from "next/script";
 import "./globals.css";
 
 const bebasNeue = Bebas_Neue({
@@ -34,7 +34,11 @@ export default function RootLayout({
       </head>
       <body className="min-h-full bg-black text-white antialiased" style={{ fontFamily: "var(--font-inter), system-ui, sans-serif" }}>
         {children}
-        <Analytics />
+        <Script
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          data-cf-beacon='{"token": "8bee7d5f26ca468c88a4f87742257a16"}'
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
