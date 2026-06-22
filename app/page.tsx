@@ -83,6 +83,7 @@ const COACH_GURUS: Record<string, CoachGuru> = {
   'Michael Malone':     { offOverride: 'A', defOverride: 'B' },
   'Stephen Silas':      { offOverride: 'F', defOverride: 'F' },
   'Kenny Atkinson':     { offOverride: 'A', defOverride: 'B' },
+  'JJ Redick':          { defOverride: 'B' },
 }
 
 // ─── Data ─────────────────────────────────────────────────────────────────────

@@ -33,6 +33,7 @@ const POSITION_LOCK: Record<string, SlotPosition[]> = {
   'Karl Malone':         ['PF'],
   'Kevin Garnett':       ['PF', 'C'],
   'Shaquille O\'Neal':   ['PF', 'C'],
+  'Dirk Nowitzki':       ['PF', 'C'],
 }
 
 export function applyFlexTag(player: Player): Player {
@@ -466,6 +467,7 @@ const BASE_RATING_OVERRIDE: Record<string, number> = {
   'Draymond Green:10s:GSW':          51,
   'Paul Millsap:10s:ATL':            46.5,
   'John Wall:10s:WAS':               46,
+  'Derrick Rose:10s:CHI':            46,
   'Tony Parker:10s:SAS':             40,
   'DeAndre Jordan:10s:LAC':          39,
   // 00s
