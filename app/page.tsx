@@ -4071,7 +4071,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
                 a.award === 'All-Star'            ? 'ALL-STAR' :
                 a.award === 'Defensive POY'       ? 'DPOY' :
                 a.award === '6th Man of the Year' ? '6MOY' : a.award
-              acc[id].push(short)
+              if (!acc[id].includes(short)) acc[id].push(short)
               return acc
             }, {})}
             finalsMVPId={finalsMVP?.player.person_id ?? null}
