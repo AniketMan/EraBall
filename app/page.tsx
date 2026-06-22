@@ -118,7 +118,7 @@ function parseCoachesCSV(text: string): Coach[] {
     const gradeN = (g: Coach['offGrade']) => ({ A: 4, B: 3, C: 2, D: 1, F: 0 }[g])
     const avg = (gradeN(offGrade) + gradeN(defGrade)) / 2
     const overallGrade = (avg >= 3.5 ? 'A' : avg >= 2.5 ? 'B' : avg >= 1.5 ? 'C' : avg >= 0.5 ? 'D' : 'F') as Coach['overallGrade']
-    if (name && (regG >= 72 || champ > 0)) coaches.push({ name, from, to, years: to - from, regG, regW, regL, regWLPct, playoffG, playoffW, playoffL, playoffWLPct, conf, champ, offGrade, defGrade, overallGrade, offGuru: !!guru.offGuru, defGuru: !!guru.defGuru })
+    if (name && (regG >= 100 || champ > 0)) coaches.push({ name, from, to, years: to - from, regG, regW, regL, regWLPct, playoffG, playoffW, playoffL, playoffWLPct, conf, champ, offGrade, defGrade, overallGrade, offGuru: !!guru.offGuru, defGuru: !!guru.defGuru })
   }
   return coaches
 }
@@ -826,7 +826,7 @@ const V1_4_NOTES = [
     'Don Nelson\'s defensive grade upgraded to a C.',
   ]},
   { section: 'Draft', items: [
-    'Removed coaches with under 72 games played.',
+    'Removed coaches with under 100 games played.',
   ]},
   { section: 'Music', items: [
     'Lowered the base music volume.',
