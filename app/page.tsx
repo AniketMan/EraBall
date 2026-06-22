@@ -972,9 +972,8 @@ function PatchNotesModal({ onClose }: { onClose: () => void }) {
 function EraSelection({ onEraSelected, onSandboxSelected, onRestart, onLifetimeStats, onEraPreview, muteBtn, eraThemeBtn }: { onEraSelected: (era: Era) => void; onSandboxSelected: (era: Era) => void; onRestart: () => void; onLifetimeStats: () => void; onEraPreview?: (era: Era) => void; muteBtn?: React.ReactNode; eraThemeBtn?: React.ReactNode }) {
   const [spinning, setSpinning] = useState(false)
   const [era, setEra] = useState<Era | null>(null)
-  const [showHelp, setShowHelp] = useState(() => {
-    try { return !localStorage.getItem('eraball_seen_help') } catch { return true }
-  })
+  const [showHelp, setShowHelp] = useState(false)
+  useEffect(() => { try { if (!localStorage.getItem('eraball_seen_help')) setShowHelp(true) } catch {} }, [])
   const [displayEra, setDisplayEra] = useState<Era | null>(null)
   const [spinKey, setSpinKey] = useState(0)
   const [spinPhase, setSpinPhase] = useState<'fast' | 'slow' | 'land'>('fast')
@@ -4273,12 +4272,17 @@ export default function Home() {
   const [draftCustomEras, setDraftCustomEras] = useState<Era[] | null>(null)
   const [showLifetimeStats, setShowLifetimeStats] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [muted, setMuted] = useState(() => {
-    try { return localStorage.getItem('eb-muted') === 'true' } catch { return false }
-  })
-  const [volume, setVolume] = useState(() => {
-    try { const v = parseFloat(localStorage.getItem('eb-volume') ?? ''); return isNaN(v) ? 0.21 : v } catch { return 0.21 }
-  })
+  const [muted, setMuted] = useState(false)
+  const [volume, setVolume] = useState(0.21)
+  // Read saved audio prefs after mount (not in the useState initializer) so server
+  // and client render identically — reading localStorage during render breaks hydration.
+  useEffect(() => {
+    try {
+      setMuted(localStorage.getItem('eb-muted') === 'true')
+      const v = parseFloat(localStorage.getItem('eb-volume') ?? '')
+      if (!isNaN(v)) setVolume(v)
+    } catch {}
+  }, [])
   const [showVolumePopover, setShowVolumePopover] = useState(false)
   const [popoverPos, setPopoverPos] = useState({ top: 50, right: 16 })
   const volumeBtnRef = useRef<HTMLButtonElement | null>(null)
