@@ -2159,7 +2159,10 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                       if (posFilter === 'C') return primary === 'center'
                       return false
                     }
+                    const versionKey = (p: Player) => `${p.person_id}-${p.era}-${p.eraTeam ?? ''}`
+                    const placedKeys = new Set(slots.filter(s => s.player).map(s => versionKey(s.player!)))
                     const sorted = [...rosterPool]
+                    .filter(p => !placedKeys.has(versionKey(p)))
                     .filter(p => !posFilter || posMatch(p))
                     .sort((a, b) => {
                       if (sortBy === 'SPECIAL') {
