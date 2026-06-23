@@ -19,6 +19,10 @@ const FLEX_PLAYERS: Record<string, SlotPosition[]> = {
   'Nikola Jokic':            ['PG', 'PF', 'C'],
 
   'Larry Bird':              ['PG', 'SG', 'SF', 'PF'],
+
+  'Magic Johnson':           ['PG', 'SG', 'SF', 'PF'],
+  'Luka Doncic':             ['PG', 'SG', 'SF', 'PF'],
+  'Jayson Tatum':            ['SG', 'SF', 'PF'],
 }
 
 // ─── Position lock ─────────────────────────────────────────────────────────────
@@ -27,6 +31,8 @@ const FLEX_PLAYERS: Record<string, SlotPosition[]> = {
 const POSITION_LOCK: Record<string, SlotPosition[]> = {
   'Tracy McGrady':       ['SG', 'SF'],
   'Peyton Watson':       ['SF', 'PF'],
+  'Scottie Pippen':      ['SG', 'SF', 'PF'],
+  'Kevin Durant':        ['SG', 'SF', 'PF'],
   'Joel Embiid':         ['PF', 'C'],
   'LaMarcus Aldridge':   ['PF', 'C'],
   'Tim Duncan':          ['PF', 'C'],
