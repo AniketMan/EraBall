@@ -70,6 +70,7 @@ const PLAYER_RINGS: Record<string, number> = {
   'Dennis Johnson': 3, 'John Paxson': 3, 'Bill Cartwright': 3,
   'James Jones': 3,
   // 2
+  'Hakeem Olajuwon': 2,
   'Wilt Chamberlain': 2, 'Isiah Thomas': 2, 'Joe Dumars': 2, 'Kevin Durant': 2,
   'Chris Bosh': 2, 'Bill Laimbeer': 2, 'Ray Allen': 2,
   'Kawhi Leonard': 2, 'Jrue Holiday': 2, 'Rajon Rondo': 2,
@@ -81,6 +82,7 @@ const PLAYER_RINGS: Record<string, number> = {
   'Bob McAdoo': 2, 'Bob Dandridge': 2,
   'Mike Miller': 2, 'Norris Cole': 2,
   // 1
+  'Clyde Drexler': 1,
   'Jerry West': 1, 'Oscar Robertson': 1, 'Julius Erving': 1, 'Moses Malone': 1,
   'Paul Pierce': 1, 'Kevin Garnett': 1, 'Kyrie Irving': 1, 'Dirk Nowitzki': 1,
   'Jason Kidd': 1, 'Chauncey Billups': 1, 'Rasheed Wallace': 1, 'Ben Wallace': 1,
