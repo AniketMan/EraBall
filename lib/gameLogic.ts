@@ -70,6 +70,7 @@ const PLAYER_RINGS: Record<string, number> = {
   'Dennis Johnson': 3, 'John Paxson': 3, 'Bill Cartwright': 3,
   'James Jones': 3,
   // 2
+  'Hakeem Olajuwon': 2,
   'Wilt Chamberlain': 2, 'Isiah Thomas': 2, 'Joe Dumars': 2, 'Kevin Durant': 2,
   'Chris Bosh': 2, 'Bill Laimbeer': 2, 'Ray Allen': 2,
   'Kawhi Leonard': 2, 'Jrue Holiday': 2, 'Rajon Rondo': 2,
@@ -81,6 +82,7 @@ const PLAYER_RINGS: Record<string, number> = {
   'Bob McAdoo': 2, 'Bob Dandridge': 2,
   'Mike Miller': 2, 'Norris Cole': 2,
   // 1
+  'Clyde Drexler': 1,
   'Jerry West': 1, 'Oscar Robertson': 1, 'Julius Erving': 1, 'Moses Malone': 1,
   'Paul Pierce': 1, 'Kevin Garnett': 1, 'Kyrie Irving': 1, 'Dirk Nowitzki': 1,
   'Jason Kidd': 1, 'Chauncey Billups': 1, 'Rasheed Wallace': 1, 'Ben Wallace': 1,
@@ -915,9 +917,7 @@ function generateGameScore(
   if (win && teamScore <= oppScore) {
     teamScore = oppScore + 2 + Math.round(Math.abs(randn()) * 7)
   } else if (!win && oppScore <= teamScore) {
-    const defScale = Math.min(1.0, playerDefFactor * rebDefEffect * (1 - coachDefBonus * 0.5))
-    const rawOpp = Math.round(teamScore * defScale + 2 + Math.abs(randn()) * 7)
-    oppScore = Math.max(teamScore + 2, rawOpp)
+    oppScore = teamScore + 2 + Math.round(Math.abs(randn()) * 8)
   }
 
   let ts = Math.min(scoreCap, teamScore)
@@ -1362,6 +1362,18 @@ export function simulatePlayoffs(
         scaledPTS[starIdx] = Math.round(scaledPTS[starIdx] * boostFactor)
         gameREB[starIdx] = Math.min(35, Math.round(gameREB[starIdx] * boostFactor))
         gameAST[starIdx] = Math.min(25, Math.round(gameAST[starIdx] * boostFactor))
+        // Scale non-star players down to keep total within era score cap
+        const capLimit = ERA_SCORE_CAP[simEra]
+        const boostedTotal = scaledPTS.reduce((a, b) => a + b, 0)
+        if (boostedTotal > capLimit) {
+          const excess = boostedTotal - capLimit
+          const nonStarTotal = scaledPTS.reduce((s, p, i) => i === starIdx ? s : s + p, 0)
+          if (nonStarTotal > 0) {
+            scaledPTS.forEach((_, i) => {
+              if (i !== starIdx) scaledPTS[i] = Math.max(0, Math.round(scaledPTS[i] - excess * (scaledPTS[i] / nonStarTotal)))
+            })
+          }
+        }
         const sp = scaledPTS[starIdx], sr = gameREB[starIdx], sa = gameAST[starIdx]
         const isBench = entries[starIdx].pr.slot.startsWith('B')
         // 20-25 pts on a starter is within normal range — not a special performance
@@ -1422,8 +1434,10 @@ export function simulatePlayoffs(
         fg3: gameFG3[i],
         ft: gameFT[i],
       }))
+      const displayTeamScore = scaledPTS.reduce((a, b) => a + b, 0)
+      const displayOppScore = (!win && oppScore <= displayTeamScore) ? displayTeamScore + 2 + Math.round(Math.abs(randn()) * 5) : oppScore
       if (win) sW++; else sL++
-      allGames.push({ win, roundIndex: r, teamScore, oppScore, gameInSeries, leaders, special, playerLines })
+      allGames.push({ win, roundIndex: r, teamScore: displayTeamScore, oppScore: displayOppScore, gameInSeries, leaders, special, playerLines })
     }
 
     const advanced = sW === winsNeeded

@@ -353,3 +353,53 @@ body {
   border-color: #555555 !important;
   background: rgba(255, 255, 255, 0.07) !important;
 }
+
+.footer-link {
+  opacity: 0.7;
+  transition: opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.footer-link:hover {
+  opacity: 1 !important;
+  color: #ffffff !important;
+  border-color: #888888 !important;
+}
+
+@keyframes era-theme-bounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-5px); }
+}
+@keyframes era-theme-arrow-bounce {
+  0%, 100% { transform: translateY(0) rotate(180deg); }
+  50%       { transform: translateY(-3px) rotate(180deg); }
+}
+.era-theme-prompt {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  z-index: 100;
+  animation: era-theme-bounce 1.6s ease-in-out infinite;
+  white-space: nowrap;
+}
+.era-theme-prompt-arrow {
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 7px solid #C9A030;
+  margin-bottom: 2px;
+}
+.era-theme-prompt-text {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border: 1px solid rgba(201, 160, 48, 0.6);
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.85);
+  color: #C9A030;
+}

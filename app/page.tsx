@@ -996,9 +996,8 @@ function PatchNotesModal({ onClose }: { onClose: () => void }) {
 function EraSelection({ onEraSelected, onSandboxSelected, onRestart, onLifetimeStats, onEraPreview, muteBtn, eraThemeBtn }: { onEraSelected: (era: Era) => void; onSandboxSelected: (era: Era) => void; onRestart: () => void; onLifetimeStats: () => void; onEraPreview?: (era: Era) => void; muteBtn?: React.ReactNode; eraThemeBtn?: React.ReactNode }) {
   const [spinning, setSpinning] = useState(false)
   const [era, setEra] = useState<Era | null>(null)
-  const [showHelp, setShowHelp] = useState(() => {
-    try { return !localStorage.getItem('eraball_seen_help') } catch { return true }
-  })
+  const [showHelp, setShowHelp] = useState(false)
+  useEffect(() => { try { if (!localStorage.getItem('eraball_seen_help')) setShowHelp(true) } catch {} }, [])
   const [displayEra, setDisplayEra] = useState<Era | null>(null)
   const [spinKey, setSpinKey] = useState(0)
   const [spinPhase, setSpinPhase] = useState<'fast' | 'slow' | 'land'>('fast')
@@ -1046,11 +1045,6 @@ function EraSelection({ onEraSelected, onSandboxSelected, onRestart, onLifetimeS
     const next = ALL_ERAS[Math.max(0, Math.min(ALL_ERAS.length - 1, idx + dir))]
     if (next !== era) selectEra(next)
   }
-
-  // Prefetch all era banner images so they're cached before the user clicks
-  React.useEffect(() => {
-    ALL_ERAS.forEach(era => { const img = new Image(); img.src = `/era-banners/${era}.webp` })
-  }, [])
 
   // Keyboard arrow navigation
   React.useEffect(() => {
@@ -1126,7 +1120,7 @@ function EraSelection({ onEraSelected, onSandboxSelected, onRestart, onLifetimeS
                 {/* Era banner image — overlay gradient divs replace CSS mask for universal browser support */}
                 <img
                   key={displayEra}
-                  src={`/era-banners/${displayEra}.webp`}
+                  src={`${R2}/${displayEra}.webp`}
                   alt=""
                   className="era-banner-img"
                   onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
@@ -4276,15 +4270,17 @@ function getAudioElement(src: string): HTMLAudioElement {
   return _audioElements.get(src)!
 }
 
+const R2 = 'https://pub-c85456ef7b454894a21cc859fee77b58.r2.dev'
+
 const ERA_AUDIO: Partial<Record<Era, string>> = {
-  '50s': '/audio/50s.mp3',
-  '60s': '/audio/60s.mp3',
-  '70s': '/audio/70s.mp3',
-  '80s': '/audio/80s.mp3',
-  '90s': '/audio/90s.mp3',
-  '00s': '/audio/2000s.mp3',
-  '10s': '/audio/2010s.mp3',
-  '20s': '/audio/2020s.mp3',
+  '50s': `${R2}/50s.mp3`,
+  '60s': `${R2}/60s.mp3`,
+  '70s': `${R2}/70s.mp3`,
+  '80s': `${R2}/80s.mp3`,
+  '90s': `${R2}/90s.mp3`,
+  '00s': `${R2}/2000s.mp3`,
+  '10s': `${R2}/2010s.mp3`,
+  '20s': `${R2}/2020s.mp3`,
 }
 
 // ─── Root ─────────────────────────────────────────────────────────────────────
@@ -4292,7 +4288,8 @@ export default function Home() {
   const [phase, setPhase] = useState<GamePhase>('era-select')
   const [simEra, setSimEra] = useState<Era>('20s')
   const [startSandbox, setStartSandbox] = useState(false)
-  const [greyscale, setGreyscale] = useState(true)
+  const [greyscale, setGreyscale] = useState(false)
+  const [hasUsedTheme, setHasUsedTheme] = useState(false)
   const [lowPerfMode, setLowPerfMode] = useState(false)
   const [showPerfDisclaimer, setShowPerfDisclaimer] = useState(false)
   const perfMeasuredRef = React.useRef(false)
@@ -4303,13 +4300,24 @@ export default function Home() {
   const [coach, setCoach] = useState<Coach | null>(null)
   const [draftCustomEras, setDraftCustomEras] = useState<Era[] | null>(null)
   const [showLifetimeStats, setShowLifetimeStats] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [muted, setMuted] = useState(() => {
-    try { return localStorage.getItem('eb-muted') === 'true' } catch { return false }
-  })
-  const [volume, setVolume] = useState(() => {
-    try { const v = parseFloat(localStorage.getItem('eb-volume') ?? ''); return isNaN(v) ? 0.21 : v } catch { return 0.21 }
-  })
+  const [loading, setLoading] = useState(false)
+  const [muted, setMuted] = useState(false)
+  const [volume, setVolume] = useState(0.21)
+  // Read saved audio prefs after mount (not in the useState initializer) so server
+  // and client render identically — reading localStorage during render breaks hydration.
+  useEffect(() => {
+    try {
+      setMuted(localStorage.getItem('eb-muted') === 'true')
+      const v = parseFloat(localStorage.getItem('eb-volume') ?? '')
+      if (!isNaN(v)) setVolume(v)
+      if (localStorage.getItem('eb-theme-used') === '1') setHasUsedTheme(true)
+      if (localStorage.getItem('eb-theme') === 'on') setGreyscale(true)
+    } catch {}
+  }, [])
+  const [isMobileDevice, setIsMobileDevice] = useState(false)
+  useEffect(() => {
+    setIsMobileDevice('ontouchstart' in window || /Mobi|Android/i.test(navigator.userAgent))
+  }, [])
   const [showVolumePopover, setShowVolumePopover] = useState(false)
   const [popoverPos, setPopoverPos] = useState({ top: 50, right: 16 })
   const volumeBtnRef = useRef<HTMLButtonElement | null>(null)
@@ -4341,12 +4349,18 @@ export default function Home() {
   }, [muted, volume])
 
 
-  useEffect(() => {
+  // Lazy data load: only fetch the (multi-MB) player dataset once the user actually
+  // starts — keeps bandwidth off the flood of visitors who bounce on the landing screen.
+  const dataReqRef = useRef(false)
+  const ensureData = useCallback(() => {
+    if (dataReqRef.current) return
+    dataReqRef.current = true
+    setLoading(true)
     Promise.all([
-      fetch('/players_with_stats.json?v=2').then(r => r.json()),
+      fetch('https://pub-c85456ef7b454894a21cc859fee77b58.r2.dev/players_with_stats.json').then(r => r.json()),
       fetch('/coaches.csv').then(r => r.text()).then(parseCoachesCSV)
     ]).then(([p, c]) => { setPlayers(p); setCoaches(c); setLoading(false) })
-      .catch(err => { console.error('Failed to load data:', err); setLoading(false) })
+      .catch(err => { console.error('Failed to load data:', err); setLoading(false); dataReqRef.current = false })
   }, [])
 
 
@@ -4393,34 +4407,49 @@ export default function Home() {
   const effectiveEra: Era = audioEra ?? simEra
 
   const greyscaleBtn = (
-    <button
-      onClick={() => {
-        if (lowPerfMode && !greyscale) {
-          setShowPerfDisclaimer(true)
-        }
-        setGreyscale(g => !g)
-      }}
-      className="flex items-center gap-1 text-xs uppercase tracking-widest px-2 py-1"
-      style={{
-        background: 'transparent',
-        color: greyscale ? G.white : G.greyDark,
-        border: `1px solid ${greyscale ? G.grey : G.border}`,
-        cursor: 'pointer',
-        letterSpacing: '0.15em',
-        transition: 'all 0.15s ease',
-      }}
-      title="Toggle era theme"
-    >
-      <span className="hidden sm:inline">Era </span>Theme
-      <span style={{
-        fontSize: 9, fontWeight: 700, letterSpacing: '0.1em',
-        color: greyscale ? G.black : G.greyDark,
-        background: greyscale ? G.white : G.border,
-        padding: '1px 4px',
-        borderRadius: 2,
-        transition: 'all 0.15s ease',
-      }}>{greyscale ? 'ON' : 'OFF'}</span>
-    </button>
+    <div style={{ position: 'relative' }}>
+      <button
+        onClick={() => {
+          if (!hasUsedTheme) {
+            setHasUsedTheme(true)
+            try { localStorage.setItem('eb-theme-used', '1') } catch {}
+          }
+          if (lowPerfMode && !greyscale) {
+            setShowPerfDisclaimer(true)
+          }
+          setGreyscale(g => {
+            try { localStorage.setItem('eb-theme', g ? 'off' : 'on') } catch {}
+            return !g
+          })
+        }}
+        className="flex items-center gap-1 text-xs uppercase tracking-widest px-2 py-1"
+        style={{
+          background: 'transparent',
+          color: greyscale ? G.white : G.greyDark,
+          border: `1px solid ${greyscale ? G.grey : G.border}`,
+          cursor: 'pointer',
+          letterSpacing: '0.15em',
+          transition: 'all 0.15s ease',
+        }}
+        title="Toggle era theme"
+      >
+        <span className="hidden sm:inline">Era </span>Theme
+        <span style={{
+          fontSize: 9, fontWeight: 700, letterSpacing: '0.1em',
+          color: greyscale ? G.black : G.greyDark,
+          background: greyscale ? G.white : G.border,
+          padding: '1px 4px',
+          borderRadius: 2,
+          transition: 'all 0.15s ease',
+        }}>{greyscale ? 'ON' : 'OFF'}</span>
+      </button>
+      {!hasUsedTheme && (
+        <div className="era-theme-prompt">
+          <div className="era-theme-prompt-arrow" />
+          <div className="era-theme-prompt-text">Try Era Themes!</div>
+        </div>
+      )}
+    </div>
   )
 
   const eraFilter = greyscale ? (
@@ -4436,6 +4465,7 @@ export default function Home() {
     <button
       ref={volumeBtnRef}
       onClick={() => {
+        if (isMobileDevice) { setMuted(m => !m); return }
         if (!showVolumePopover && volumeBtnRef.current) {
           const r = volumeBtnRef.current.getBoundingClientRect()
           setPopoverPos({ top: r.bottom + 6, right: Math.max(8, window.innerWidth - r.right) })
@@ -4572,14 +4602,14 @@ export default function Home() {
         </>,
         document.body
       )}
-      {phase === 'era-select' && <EraSelection onEraSelected={era => { setSimEra(era); setStartSandbox(false); setShowPerfDisclaimer(false); setPhase('draft') }} onSandboxSelected={era => { setSimEra(era); setStartSandbox(true); setShowPerfDisclaimer(false); setPhase('draft') }} onRestart={restart} onLifetimeStats={() => setShowLifetimeStats(true)} onEraPreview={era => setAudioEra(era)} muteBtn={muteBtn} eraThemeBtn={greyscaleBtn} />}
+      {phase === 'era-select' && <EraSelection onEraSelected={era => { setSimEra(era); setStartSandbox(false); setShowPerfDisclaimer(false); ensureData(); setPhase('draft') }} onSandboxSelected={era => { setSimEra(era); setStartSandbox(true); setShowPerfDisclaimer(false); ensureData(); setPhase('draft') }} onRestart={restart} onLifetimeStats={() => setShowLifetimeStats(true)} onEraPreview={era => setAudioEra(era)} muteBtn={muteBtn} eraThemeBtn={greyscaleBtn} />}
       {showLifetimeStats && <LifetimeStatsModal onClose={() => setShowLifetimeStats(false)} />}
       {phase === 'draft' && <DraftScreen simEra={simEra} players={players} onDraftComplete={(s, ce) => { setSlots(s); setDraftCustomEras(ce); setPhase('coach-draft') }} onRestart={restart} startInSandbox={startSandbox} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} themeFilter={eraFilter} />}
       {phase === 'coach-draft' && <CoachDraftScreen coaches={coaches} onCoachSelected={c => { setCoach(c); setPhase('simulation') }} onRestart={restart} sandboxMode={startSandbox} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} />}
       {phase === 'simulation' && coach && <SimulationScreen slots={slots} coach={coach} simEra={simEra} onRestart={restart} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} sandboxMode={startSandbox} customEraRange={draftCustomEras} eraFilter={eraFilter} />}
 
       {/* Volume popover */}
-      {showVolumePopover && audioEra !== null && (
+      {showVolumePopover && audioEra !== null && !isMobileDevice && (
         <>
           <style>{`
             .vol-slider{-webkit-appearance:none;appearance:none;width:100%;height:3px;border-radius:2px;outline:none;cursor:pointer;touch-action:none;background:linear-gradient(to right,#C9A84C 0%,#C9A84C var(--vol,35%),#333 var(--vol,35%),#333 100%)}
@@ -4647,6 +4677,7 @@ export default function Home() {
           href="https://eshanbhattdesign.com"
           target="_blank"
           rel="noopener noreferrer"
+          className="footer-link"
           style={{
             fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
             color: G.greyDark, border: `1px solid ${G.border}`,
@@ -4654,8 +4685,6 @@ export default function Home() {
             textDecoration: 'none', opacity: 0.7,
             transition: 'opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease',
           }}
-          onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = G.white; e.currentTarget.style.borderColor = G.grey }}
-          onMouseLeave={e => { e.currentTarget.style.opacity = '0.7'; e.currentTarget.style.color = G.greyDark; e.currentTarget.style.borderColor = G.border }}
         >
           eshanbhattdesign.com
         </a>
@@ -4663,6 +4692,7 @@ export default function Home() {
           href="https://x.com/Eshan_Design"
           target="_blank"
           rel="noopener noreferrer"
+          className="footer-link"
           style={{
             fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
             color: G.greyDark, border: `1px solid ${G.border}`,
@@ -4670,10 +4700,8 @@ export default function Home() {
             textDecoration: 'none', opacity: 0.7,
             transition: 'opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease',
           }}
-          onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = G.white; e.currentTarget.style.borderColor = G.grey }}
-          onMouseLeave={e => { e.currentTarget.style.opacity = '0.7'; e.currentTarget.style.color = G.greyDark; e.currentTarget.style.borderColor = G.border }}
         >
-          Suggestions or bugs? DM me
+          Suggestions or bugs? DM me on Twitter
         </a>
       </div>
 
