@@ -4656,7 +4656,8 @@ export default function Home() {
             fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
             color: G.greyDark, border: `1px solid ${G.border}`,
             padding: '6px 12px', background: G.surface,
-            textDecoration: 'none',
+            textDecoration: 'none', opacity: 0.7,
+            transition: 'opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease',
           }}
         >
           eshanbhattdesign.com
@@ -4670,7 +4671,8 @@ export default function Home() {
             fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
             color: G.greyDark, border: `1px solid ${G.border}`,
             padding: '6px 12px', background: G.surface,
-            textDecoration: 'none',
+            textDecoration: 'none', opacity: 0.7,
+            transition: 'opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease',
           }}
         >
           Suggestions or bugs? DM me on Twitter
