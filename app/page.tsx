@@ -4288,6 +4288,10 @@ export default function Home() {
       if (localStorage.getItem('eb-theme') === 'on') setGreyscale(true)
     } catch {}
   }, [])
+  const [isMobileDevice, setIsMobileDevice] = useState(false)
+  useEffect(() => {
+    setIsMobileDevice('ontouchstart' in window || /Mobi|Android/i.test(navigator.userAgent))
+  }, [])
   const [showVolumePopover, setShowVolumePopover] = useState(false)
   const [popoverPos, setPopoverPos] = useState({ top: 50, right: 16 })
   const volumeBtnRef = useRef<HTMLButtonElement | null>(null)
@@ -4435,6 +4439,7 @@ export default function Home() {
     <button
       ref={volumeBtnRef}
       onClick={() => {
+        if (isMobileDevice) { setMuted(m => !m); return }
         if (!showVolumePopover && volumeBtnRef.current) {
           const r = volumeBtnRef.current.getBoundingClientRect()
           setPopoverPos({ top: r.bottom + 6, right: Math.max(8, window.innerWidth - r.right) })
@@ -4578,7 +4583,7 @@ export default function Home() {
       {phase === 'simulation' && coach && <SimulationScreen slots={slots} coach={coach} simEra={simEra} onRestart={restart} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} sandboxMode={startSandbox} customEraRange={draftCustomEras} eraFilter={eraFilter} />}
 
       {/* Volume popover */}
-      {showVolumePopover && audioEra !== null && (
+      {showVolumePopover && audioEra !== null && !isMobileDevice && (
         <>
           <style>{`
             .vol-slider{-webkit-appearance:none;appearance:none;width:100%;height:3px;border-radius:2px;outline:none;cursor:pointer;touch-action:none;background:linear-gradient(to right,#C9A84C 0%,#C9A84C var(--vol,35%),#333 var(--vol,35%),#333 100%)}
