@@ -915,9 +915,7 @@ function generateGameScore(
   if (win && teamScore <= oppScore) {
     teamScore = oppScore + 2 + Math.round(Math.abs(randn()) * 7)
   } else if (!win && oppScore <= teamScore) {
-    const defScale = Math.min(1.0, playerDefFactor * rebDefEffect * (1 - coachDefBonus * 0.5))
-    const rawOpp = Math.round(teamScore * defScale + 2 + Math.abs(randn()) * 7)
-    oppScore = Math.max(teamScore + 2, rawOpp)
+    oppScore = teamScore + 2 + Math.round(Math.abs(randn()) * 8)
   }
 
   let ts = Math.min(scoreCap, teamScore)
@@ -1422,8 +1420,9 @@ export function simulatePlayoffs(
         fg3: gameFG3[i],
         ft: gameFT[i],
       }))
+      const displayTeamScore = scaledPTS.reduce((a, b) => a + b, 0)
       if (win) sW++; else sL++
-      allGames.push({ win, roundIndex: r, teamScore, oppScore, gameInSeries, leaders, special, playerLines })
+      allGames.push({ win, roundIndex: r, teamScore: displayTeamScore, oppScore, gameInSeries, leaders, special, playerLines })
     }
 
     const advanced = sW === winsNeeded
