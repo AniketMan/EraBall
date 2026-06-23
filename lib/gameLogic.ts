@@ -1423,8 +1423,9 @@ export function simulatePlayoffs(
         ft: gameFT[i],
       }))
       const displayTeamScore = scaledPTS.reduce((a, b) => a + b, 0)
+      const displayOppScore = (!win && oppScore <= displayTeamScore) ? displayTeamScore + 2 + Math.round(Math.abs(randn()) * 5) : oppScore
       if (win) sW++; else sL++
-      allGames.push({ win, roundIndex: r, teamScore: displayTeamScore, oppScore, gameInSeries, leaders, special, playerLines })
+      allGames.push({ win, roundIndex: r, teamScore: displayTeamScore, oppScore: displayOppScore, gameInSeries, leaders, special, playerLines })
     }
 
     const advanced = sW === winsNeeded
