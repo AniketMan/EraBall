@@ -4262,7 +4262,8 @@ export default function Home() {
   const [phase, setPhase] = useState<GamePhase>('era-select')
   const [simEra, setSimEra] = useState<Era>('20s')
   const [startSandbox, setStartSandbox] = useState(false)
-  const [greyscale, setGreyscale] = useState(true)
+  const [greyscale, setGreyscale] = useState(false)
+  const [hasUsedTheme, setHasUsedTheme] = useState(false)
   const [lowPerfMode, setLowPerfMode] = useState(false)
   const [showPerfDisclaimer, setShowPerfDisclaimer] = useState(false)
   const perfMeasuredRef = React.useRef(false)
@@ -4283,6 +4284,7 @@ export default function Home() {
       setMuted(localStorage.getItem('eb-muted') === 'true')
       const v = parseFloat(localStorage.getItem('eb-volume') ?? '')
       if (!isNaN(v)) setVolume(v)
+      if (localStorage.getItem('eb-theme-used') === '1') setHasUsedTheme(true)
     } catch {}
   }, [])
   const [showVolumePopover, setShowVolumePopover] = useState(false)
@@ -4374,34 +4376,46 @@ export default function Home() {
   const effectiveEra: Era = audioEra ?? simEra
 
   const greyscaleBtn = (
-    <button
-      onClick={() => {
-        if (lowPerfMode && !greyscale) {
-          setShowPerfDisclaimer(true)
-        }
-        setGreyscale(g => !g)
-      }}
-      className="flex items-center gap-1 text-xs uppercase tracking-widest px-2 py-1"
-      style={{
-        background: 'transparent',
-        color: greyscale ? G.white : G.greyDark,
-        border: `1px solid ${greyscale ? G.grey : G.border}`,
-        cursor: 'pointer',
-        letterSpacing: '0.15em',
-        transition: 'all 0.15s ease',
-      }}
-      title="Toggle era theme"
-    >
-      <span className="hidden sm:inline">Era </span>Theme
-      <span style={{
-        fontSize: 9, fontWeight: 700, letterSpacing: '0.1em',
-        color: greyscale ? G.black : G.greyDark,
-        background: greyscale ? G.white : G.border,
-        padding: '1px 4px',
-        borderRadius: 2,
-        transition: 'all 0.15s ease',
-      }}>{greyscale ? 'ON' : 'OFF'}</span>
-    </button>
+    <div style={{ position: 'relative' }}>
+      <button
+        onClick={() => {
+          if (!hasUsedTheme) {
+            setHasUsedTheme(true)
+            try { localStorage.setItem('eb-theme-used', '1') } catch {}
+          }
+          if (lowPerfMode && !greyscale) {
+            setShowPerfDisclaimer(true)
+          }
+          setGreyscale(g => !g)
+        }}
+        className="flex items-center gap-1 text-xs uppercase tracking-widest px-2 py-1"
+        style={{
+          background: 'transparent',
+          color: greyscale ? G.white : G.greyDark,
+          border: `1px solid ${greyscale ? G.grey : G.border}`,
+          cursor: 'pointer',
+          letterSpacing: '0.15em',
+          transition: 'all 0.15s ease',
+        }}
+        title="Toggle era theme"
+      >
+        <span className="hidden sm:inline">Era </span>Theme
+        <span style={{
+          fontSize: 9, fontWeight: 700, letterSpacing: '0.1em',
+          color: greyscale ? G.black : G.greyDark,
+          background: greyscale ? G.white : G.border,
+          padding: '1px 4px',
+          borderRadius: 2,
+          transition: 'all 0.15s ease',
+        }}>{greyscale ? 'ON' : 'OFF'}</span>
+      </button>
+      {!hasUsedTheme && (
+        <div className="era-theme-prompt">
+          <div className="era-theme-prompt-arrow" />
+          <div className="era-theme-prompt-text">Try Era Themes!</div>
+        </div>
+      )}
+    </div>
   )
 
   const eraFilter = greyscale ? (
