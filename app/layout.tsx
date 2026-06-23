@@ -19,7 +19,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL("https://eraball.com"),
   title: "Era Ball - Basketball Sim Across Eras",
-  description: "Build an all-time NBA roster from legends across every basketball decade — 50s through 2020s. Draft players, pick a coach, and simulate a full NBA season and playoffs.",
+  description: "Build an all-time NBA roster from legends across every basketball decade, 50s through 2020s. Draft players, pick a coach, and simulate a full NBA season and playoffs.",
   keywords: ["EraBall", "NBA", "basketball", "fantasy draft", "basketball simulation", "NBA draft game", "all-time NBA team", "basketball eras", "NBA legends"],
   alternates: { canonical: "/" },
   verification: { google: "BsOiE5n6nmDA3hAIMWgiSVAfO563R92K3EdMZF93R6w" },
