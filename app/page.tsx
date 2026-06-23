@@ -1096,7 +1096,7 @@ function EraSelection({ onEraSelected, onSandboxSelected, onRestart, onLifetimeS
                 {/* Era banner image — overlay gradient divs replace CSS mask for universal browser support */}
                 <img
                   key={displayEra}
-                  src={`/era-banners/${displayEra}.webp`}
+                  src={`${R2}/${displayEra}.webp`}
                   alt=""
                   className="era-banner-img"
                   onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
@@ -4244,15 +4244,17 @@ function getAudioElement(src: string): HTMLAudioElement {
   return _audioElements.get(src)!
 }
 
+const R2 = 'https://pub-c85456ef7b454894a21cc859fee77b58.r2.dev'
+
 const ERA_AUDIO: Partial<Record<Era, string>> = {
-  '50s': '/audio/50s.mp3',
-  '60s': '/audio/60s.mp3',
-  '70s': '/audio/70s.mp3',
-  '80s': '/audio/80s.mp3',
-  '90s': '/audio/90s.mp3',
-  '00s': '/audio/2000s.mp3',
-  '10s': '/audio/2010s.mp3',
-  '20s': '/audio/2020s.mp3',
+  '50s': `${R2}/50s.mp3`,
+  '60s': `${R2}/60s.mp3`,
+  '70s': `${R2}/70s.mp3`,
+  '80s': `${R2}/80s.mp3`,
+  '90s': `${R2}/90s.mp3`,
+  '00s': `${R2}/2000s.mp3`,
+  '10s': `${R2}/2010s.mp3`,
+  '20s': `${R2}/2020s.mp3`,
 }
 
 // ─── Root ─────────────────────────────────────────────────────────────────────
@@ -4322,7 +4324,7 @@ export default function Home() {
     dataReqRef.current = true
     setLoading(true)
     Promise.all([
-      fetch('/players_with_stats.json?v=2').then(r => r.json()),
+      fetch('https://pub-c85456ef7b454894a21cc859fee77b58.r2.dev/players_with_stats.json').then(r => r.json()),
       fetch('/coaches.csv').then(r => r.text()).then(parseCoachesCSV)
     ]).then(([p, c]) => { setPlayers(p); setCoaches(c); setLoading(false) })
       .catch(err => { console.error('Failed to load data:', err); setLoading(false); dataReqRef.current = false })

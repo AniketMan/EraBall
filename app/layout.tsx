@@ -29,13 +29,13 @@ export const metadata: Metadata = {
     url: "https://eraball.com",
     siteName: "EraBall",
     type: "website",
-    images: [{ url: "/era-banners/20s.webp", alt: "EraBall" }],
+    images: [{ url: "https://pub-c85456ef7b454894a21cc859fee77b58.r2.dev/20s.webp", alt: "EraBall" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Era Ball - Basketball Sim Across Eras",
     description: "Draft an all-time NBA roster across every era and simulate a full season.",
-    images: ["/era-banners/20s.webp"],
+    images: ["https://pub-c85456ef7b454894a21cc859fee77b58.r2.dev/20s.webp"],
   },
 };
 
