@@ -4285,6 +4285,7 @@ export default function Home() {
       const v = parseFloat(localStorage.getItem('eb-volume') ?? '')
       if (!isNaN(v)) setVolume(v)
       if (localStorage.getItem('eb-theme-used') === '1') setHasUsedTheme(true)
+      if (localStorage.getItem('eb-theme') === 'on') setGreyscale(true)
     } catch {}
   }, [])
   const [showVolumePopover, setShowVolumePopover] = useState(false)
@@ -4386,7 +4387,10 @@ export default function Home() {
           if (lowPerfMode && !greyscale) {
             setShowPerfDisclaimer(true)
           }
-          setGreyscale(g => !g)
+          setGreyscale(g => {
+            try { localStorage.setItem('eb-theme', g ? 'off' : 'on') } catch {}
+            return !g
+          })
         }}
         className="flex items-center gap-1 text-xs uppercase tracking-widest px-2 py-1"
         style={{
