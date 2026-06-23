@@ -4651,15 +4651,13 @@ export default function Home() {
           href="https://eshanbhattdesign.com"
           target="_blank"
           rel="noopener noreferrer"
+          className="footer-link"
           style={{
             fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
             color: G.greyDark, border: `1px solid ${G.border}`,
             padding: '6px 12px', background: G.surface,
-            textDecoration: 'none', opacity: 0.7,
-            transition: 'opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease',
+            textDecoration: 'none',
           }}
-          onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = G.white; e.currentTarget.style.borderColor = G.grey }}
-          onMouseLeave={e => { e.currentTarget.style.opacity = '0.7'; e.currentTarget.style.color = G.greyDark; e.currentTarget.style.borderColor = G.border }}
         >
           eshanbhattdesign.com
         </a>
@@ -4667,17 +4665,15 @@ export default function Home() {
           href="https://x.com/Eshan_Design"
           target="_blank"
           rel="noopener noreferrer"
+          className="footer-link"
           style={{
             fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
             color: G.greyDark, border: `1px solid ${G.border}`,
             padding: '6px 12px', background: G.surface,
-            textDecoration: 'none', opacity: 0.7,
-            transition: 'opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease',
+            textDecoration: 'none',
           }}
-          onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = G.white; e.currentTarget.style.borderColor = G.grey }}
-          onMouseLeave={e => { e.currentTarget.style.opacity = '0.7'; e.currentTarget.style.color = G.greyDark; e.currentTarget.style.borderColor = G.border }}
         >
-          Suggestions or bugs? DM me
+          Suggestions or bugs? DM me on Twitter
         </a>
       </div>
 
