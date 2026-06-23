@@ -1362,6 +1362,18 @@ export function simulatePlayoffs(
         scaledPTS[starIdx] = Math.round(scaledPTS[starIdx] * boostFactor)
         gameREB[starIdx] = Math.min(35, Math.round(gameREB[starIdx] * boostFactor))
         gameAST[starIdx] = Math.min(25, Math.round(gameAST[starIdx] * boostFactor))
+        // Scale non-star players down to keep total within era score cap
+        const capLimit = ERA_SCORE_CAP[simEra]
+        const boostedTotal = scaledPTS.reduce((a, b) => a + b, 0)
+        if (boostedTotal > capLimit) {
+          const excess = boostedTotal - capLimit
+          const nonStarTotal = scaledPTS.reduce((s, p, i) => i === starIdx ? s : s + p, 0)
+          if (nonStarTotal > 0) {
+            scaledPTS.forEach((_, i) => {
+              if (i !== starIdx) scaledPTS[i] = Math.max(0, Math.round(scaledPTS[i] - excess * (scaledPTS[i] / nonStarTotal)))
+            })
+          }
+        }
         const sp = scaledPTS[starIdx], sr = gameREB[starIdx], sa = gameAST[starIdx]
         const isBench = entries[starIdx].pr.slot.startsWith('B')
         // 20-25 pts on a starter is within normal range — not a special performance
