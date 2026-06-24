@@ -658,6 +658,16 @@ export function playerBaseRating(player: Player, simEra?: Era): number {
   )
 }
 
+export type PlayerTier = 's' | 'a' | 'b' | 'c' | 'd'
+export const CAP_QUOTAS: Record<PlayerTier, number> = { s: 2, a: 2, b: 2, c: 2, d: 1 }
+export function playerTier(base: number): PlayerTier {
+  if (base >= 65) return 's'
+  if (base >= 50) return 'a'
+  if (base >= 40) return 'b'
+  if (base >= 30) return 'c'
+  return 'd'
+}
+
 export function calcFitPenalty(player: Player, slot: SlotPosition): { penalty: 0 | 0.10 | 0.25; label: CourtSlot['fitLabel'] } {
   if (slot.startsWith('B')) {
     return { penalty: 0, label: 'Position Fit' }
