@@ -57,6 +57,16 @@ export default function RootLayout({
           data-cf-beacon='{"token": "8bee7d5f26ca468c88a4f87742257a16"}'
           strategy="afterInteractive"
         />
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-2JGPLMGPZC"
+          strategy="afterInteractive"
+        />
+        <Script id="ga4-init" strategy="afterInteractive">{`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-2JGPLMGPZC');
+        `}</Script>
       </body>
     </html>
   );
