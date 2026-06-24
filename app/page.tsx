@@ -1209,7 +1209,7 @@ function EraSelection({ onEraSelected, onSandboxSelected, onRestart, onLifetimeS
           </button>
           <div style={{ fontSize: 10, color: G.greyDark, letterSpacing: '0.15em', marginTop: 2 }}>v1.4</div>
           <div style={{ fontSize: 9, color: '#CC8844', letterSpacing: '0.04em', marginTop: 8, maxWidth: 280, lineHeight: 1.6, textAlign: 'center' }}>
-            Known issue: players in Southeast Asia may see blank team names on spin. Fix is in progress — expected by June 25. In the meantime, a VPN resolves it. Apologies for the disruption!
+            Known issue: players in Southeast Asia or other unknown blocked countries may see blank team names on spin, and the game is unplayable. Fix is in progress! Expected by June 25 at the latest. In the meantime, a VPN temporarily resolves it. Apologies for the disruption!
           </div>
         </div>
       </div>
