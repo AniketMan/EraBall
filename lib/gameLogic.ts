@@ -370,6 +370,27 @@ export function applyShootingStar(player: Player): Player {
   return player
 }
 
+// ─── Glass Cleaner ─────────────────────────────────────────────────────────────
+// Dominant rebounders whose glass work meaningfully lifts team rebFactor.
+const GLASS_CLEANER_PLAYERS = new Set([
+  'Dennis Rodman',
+  'Ben Wallace',
+  'Moses Malone',
+  'Andre Drummond',
+  'DeAndre Jordan',
+  'Steven Adams',
+  'Wes Unseld',
+  'Bob Pettit',
+  'Nate Thurmond',
+  'Kevin Love',
+  'Clint Capela',
+])
+
+export function applyGlassCleaner(player: Player): Player {
+  if (!GLASS_CLEANER_PLAYERS.has(player.full_name)) return player
+  return { ...player, glassClean: true }
+}
+
 function playoffRingBoost(rings: number): number {
   if (rings >= 9)  return 0.13
   if (rings >= 6)  return 0.10
@@ -731,6 +752,8 @@ export function calcEraModifier(player: Player, simEra: Era): number {
   if ((player.era === '10s' && simEra === '20s') || (player.era === '20s' && simEra === '10s')) return 0.98
   // Chris Paul — elite fit in the 90s and any modern era forward
   if (player.full_name === 'Chris Paul' && (simEra === '90s' || simEra === '00s' || simEra === '10s' || simEra === '20s')) return 1.0
+  // Zach Randolph — elite backward fit; physical low-post game translates to any older era
+  if (player.full_name === 'Zach Randolph' && playerIdx > simIdx) return 1.0
   // Tall centers (6'10"+) or Bam Adebayo going back get reduced penalty (physical size translates)
   const isTallCenter = playerHeightInches(player) >= 82 || player.full_name === 'Bam Adebayo' || player.full_name === 'Zion Williamson'
   const table = playerIdx > simIdx
@@ -1005,7 +1028,8 @@ export function calcRebFactor(entries: { pr: PlayerRating; minScale: number }[],
   const leagueAvg = ERA_LEAGUE_AVG_REB[simEra]
   const eraScale  = leagueAvg / ERA_LEAGUE_AVG_REB['20s']  // scale C/PF expectations relative to modern
   const rebIndex  = entries.reduce((s, { pr, minScale }) => {
-    const contrib = (pr.player.REB ?? 0) * pr.eraMod * minScale * rebSlotMod(pr.slot)
+    const gcMult = pr.player.glassClean ? 1.50 : 1.0
+    const contrib = (pr.player.REB ?? 0) * pr.eraMod * minScale * rebSlotMod(pr.slot) * gcMult
     // Guards are neutral by default — only surplus above positional average contributes
     if (pr.slot === 'PG') return s + Math.max(0, contrib - PG_REB_THRESHOLD)
     if (pr.slot === 'SG') return s + Math.max(0, contrib - SG_REB_THRESHOLD)
