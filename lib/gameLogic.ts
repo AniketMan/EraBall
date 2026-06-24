@@ -40,6 +40,8 @@ const POSITION_LOCK: Record<string, SlotPosition[]> = {
   'Kevin Garnett':       ['PF', 'C'],
   'Shaquille O\'Neal':   ['PF', 'C'],
   'Dirk Nowitzki':       ['PF', 'C'],
+  'Kareem Abdul-Jabbar': ['PF', 'C'],
+  'Brandon Ingram':      ['SG', 'SF', 'PF'],
 }
 
 export function applyFlexTag(player: Player): Player {
@@ -485,6 +487,7 @@ const BASE_RATING_OVERRIDE: Record<string, number> = {
   'Aaron Gordon:20s:DEN':            47,
   'Austin Reaves:20s:LAL':           44,
   'Christian Braun:20s:DEN':         32,
+  'Jared McCain:20s:OKC':            35,
   'Peyton Watson:20s:DEN':           34,
   // 10s
   'LeBron James:10s:CLE':            72,
@@ -661,10 +664,10 @@ export function playerBaseRating(player: Player, simEra?: Era): number {
 export type PlayerTier = 's' | 'a' | 'b' | 'c' | 'd'
 export const CAP_QUOTAS: Record<PlayerTier, number> = { s: 2, a: 2, b: 2, c: 2, d: 1 }
 export function playerTier(base: number): PlayerTier {
-  if (base >= 65) return 's'
-  if (base >= 50) return 'a'
-  if (base >= 40) return 'b'
-  if (base >= 30) return 'c'
+  if (base >= 55) return 's'
+  if (base >= 46) return 'a'
+  if (base >= 38) return 'b'
+  if (base >= 31) return 'c'
   return 'd'
 }
 

@@ -15,9 +15,12 @@ const G = {
   border:    '#252525',
   white:     '#FFFFFF',
   black:     '#000000',
+  purple:    '#9b6dff',
 }
 const BEBAS = '"Bebas Neue", Impact, sans-serif'
 const INTER = 'Inter, system-ui, sans-serif'
+
+type TabMode = 'normal' | 'salary_cap'
 
 function eraLabel(era: string) {
   return era === '00s' ? '2000s' : era === '10s' ? '2010s' : era === '20s' ? '2020s' : era
@@ -111,12 +114,104 @@ function StatBox({ label, value, sub, compact = false }: { label: string; value:
   )
 }
 
+function StatsPanel({ stats, isMobile }: { stats: LifetimeStats; isMobile: boolean }) {
+  const winPct = stats.totalWins + stats.totalLosses > 0
+    ? ((stats.totalWins / (stats.totalWins + stats.totalLosses)) * 100).toFixed(1)
+    : '—'
+
+  const mostDrafted = Object.values(stats.playerDraftCounts).sort((a, b) => b.count - a.count)[0]
+  const mostDraftedCoach = Object.values(stats.coachDraftCounts).sort((a, b) => b.count - a.count)[0]
+  const favoriteEra = Object.entries(stats.eraSpinCount).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]
+  const erasWithRecord = ALL_ERAS.filter(e => stats.recordByEra[e])
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* Top row */}
+      <div style={{ display: 'flex', gap: 8 }}>
+        <StatBox label="Drafts Completed" value={String(stats.draftsCompleted)} compact={isMobile} />
+        <StatBox label="All-Time Record" value={`${stats.totalWins}–${stats.totalLosses}`} sub={`${winPct}% win rate`} compact={isMobile} />
+        <StatBox label="Championships" value={String(stats.championshipsTotal)} compact={isMobile} />
+      </div>
+
+      {/* Second row */}
+      <div style={{ display: 'flex', flexWrap: isMobile ? 'wrap' : 'nowrap', gap: 8 }}>
+        <StatBox
+          label="Best Record"
+          value={stats.bestRecord ? `${stats.bestRecord.wins}–${stats.bestRecord.losses}` : '—'}
+          sub={stats.bestRecord ? eraLabel(stats.bestRecord.era) : undefined}
+          compact={isMobile}
+        />
+        <StatBox
+          label="Worst Record"
+          value={stats.worstRecord ? `${stats.worstRecord.wins}–${stats.worstRecord.losses}` : '—'}
+          sub={stats.worstRecord ? eraLabel(stats.worstRecord.era) : undefined}
+          compact={isMobile}
+        />
+        <StatBox
+          label="Highest Rating"
+          value={stats.highestTeamRating ? String(stats.highestTeamRating.rating) : '—'}
+          sub={stats.highestTeamRating ? eraLabel(stats.highestTeamRating.era) : undefined}
+          compact={isMobile}
+        />
+        <StatBox
+          label="Favorite Era"
+          value={favoriteEra ? eraLabel(favoriteEra[0]) : '—'}
+          sub={favoriteEra ? `${favoriteEra[1]} played` : undefined}
+          compact={isMobile}
+        />
+      </div>
+
+      {/* Most drafted player + coach */}
+      <div style={{ display: 'flex', flexWrap: isMobile ? 'wrap' : 'nowrap', gap: 8 }}>
+        {mostDrafted && (
+          <HoverCard style={{ background: G.surface, padding: '14px 16px', flex: 1 }}>
+            <div style={{ fontFamily: INTER, fontSize: 9, color: G.grey, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 6 }}>Most Drafted Player</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+              <div style={{ fontFamily: BEBAS, fontSize: isMobile ? 18 : 24, color: G.gold, letterSpacing: '0.06em', flex: 1, minWidth: 0, lineHeight: 1.05, wordBreak: 'break-word' }}>{mostDrafted.name}</div>
+              <div style={{ fontFamily: INTER, fontSize: 12, color: G.grey, flexShrink: 0 }}>{mostDrafted.count}×</div>
+            </div>
+          </HoverCard>
+        )}
+        {mostDraftedCoach && (
+          <HoverCard style={{ background: G.surface, padding: '14px 16px', flex: 1 }}>
+            <div style={{ fontFamily: INTER, fontSize: 9, color: G.grey, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 6 }}>Most Drafted Coach</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+              <div style={{ fontFamily: BEBAS, fontSize: isMobile ? 18 : 24, color: G.gold, letterSpacing: '0.06em', flex: 1, minWidth: 0, lineHeight: 1.05, wordBreak: 'break-word' }}>{mostDraftedCoach.name}</div>
+              <div style={{ fontFamily: INTER, fontSize: 12, color: G.grey, flexShrink: 0 }}>{mostDraftedCoach.count}×</div>
+            </div>
+          </HoverCard>
+        )}
+      </div>
+
+      {/* Record by era */}
+      {erasWithRecord.length > 0 && (
+        <div style={{ background: G.surface, border: `1px solid ${G.border}` }}>
+          <div style={{ padding: '12px 16px', borderBottom: `1px solid ${G.border}`, fontFamily: INTER, fontSize: 9, color: G.grey, letterSpacing: '0.18em', textTransform: 'uppercase' }}>
+            Record by Era
+          </div>
+          {erasWithRecord.map(era => {
+            const rec = stats.recordByEra[era]!
+            const best = stats.bestRecordByEra[era]
+            const worst = stats.worstRecordByEra[era]
+            const champs = stats.championshipsByEra[era] ?? 0
+            const pct = ((rec.wins / (rec.wins + rec.losses)) * 100).toFixed(0)
+            return (
+              <EraRow key={era} era={era} rec={rec} best={best} worst={worst} champs={champs} pct={pct} isMobile={isMobile} />
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function LifetimeStatsModal({ onClose }: { onClose: () => void }) {
+  const [tab, setTab] = useState<TabMode>('normal')
   const [stats, setStats] = useState<LifetimeStats | null>(null)
   const [confirming, setConfirming] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
 
-  useEffect(() => { setStats(getLifetimeStats()) }, [])
+  useEffect(() => { setStats(getLifetimeStats(tab)) }, [tab])
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640)
     check()
@@ -126,16 +221,7 @@ export default function LifetimeStatsModal({ onClose }: { onClose: () => void })
 
   if (!stats) return null
 
-  const winPct = stats.totalWins + stats.totalLosses > 0
-    ? ((stats.totalWins / (stats.totalWins + stats.totalLosses)) * 100).toFixed(1)
-    : '—'
-
-  const mostDrafted = Object.values(stats.playerDraftCounts).sort((a, b) => b.count - a.count)[0]
-  const mostDraftedCoach = Object.values(stats.coachDraftCounts).sort((a, b) => b.count - a.count)[0]
-
-  const favoriteEra = Object.entries(stats.eraSpinCount).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]
-
-  const erasWithRecord = ALL_ERAS.filter(e => stats.recordByEra[e])
+  const isEmpty = stats.draftsCompleted === 0
 
   return (
     <div
@@ -152,100 +238,52 @@ export default function LifetimeStatsModal({ onClose }: { onClose: () => void })
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: G.grey, fontSize: 18, cursor: 'pointer' }}>✕</button>
         </div>
 
-        <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        {/* Tabs */}
+        <div style={{ display: 'flex', gap: 8, padding: '12px 24px 0', borderBottom: `1px solid ${G.border}` }}>
+          {(['normal', 'salary_cap'] as TabMode[]).map(t => (
+            <button
+              key={t}
+              onClick={() => { setTab(t); setConfirming(false) }}
+              style={{
+                padding: '8px 16px',
+                marginBottom: -1,
+                border: `1px solid ${tab === t ? (t === 'salary_cap' ? G.purple : G.gold) : 'transparent'}`,
+                borderBottom: tab === t ? `1px solid ${G.black}` : `1px solid transparent`,
+                background: 'transparent',
+                color: tab === t ? (t === 'salary_cap' ? G.purple : G.gold) : G.grey,
+                fontFamily: INTER,
+                fontWeight: 700,
+                fontSize: 11,
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+                transition: 'color 0.15s, border-color 0.15s',
+              }}
+            >
+              {t === 'normal' ? 'Normal Draft' : 'Salary Cap Draft'}
+            </button>
+          ))}
+        </div>
 
-          {stats.draftsCompleted === 0 ? (
+        <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {isEmpty ? (
             <div style={{ textAlign: 'center', padding: '48px 0' }}>
               <div style={{ fontFamily: BEBAS, fontSize: 22, color: G.gold, letterSpacing: '0.12em', marginBottom: 10 }}>No runs completed yet</div>
-              <div style={{ fontFamily: INTER, fontSize: 13, color: G.grey, lineHeight: 1.6 }}>Play a full draft to start tracking your stats.</div>
+              <div style={{ fontFamily: INTER, fontSize: 13, color: G.grey, lineHeight: 1.6 }}>
+                Play a {tab === 'salary_cap' ? 'Salary Cap Draft' : 'Normal Draft'} to start tracking your stats.
+              </div>
               <div style={{ fontFamily: INTER, fontSize: 11, color: G.greyDark, marginTop: 14, lineHeight: 1.6 }}>Stats are stored locally on this device<br />and do not carry over to other devices.</div>
             </div>
           ) : (
-            <>
-              {/* Top row */}
-              <div style={{ display: 'flex', gap: 8 }}>
-                <StatBox label="Drafts Completed" value={String(stats.draftsCompleted)} compact={isMobile} />
-                <StatBox label="All-Time Record" value={`${stats.totalWins}–${stats.totalLosses}`} sub={`${winPct}% win rate`} compact={isMobile} />
-                <StatBox label="Championships" value={String(stats.championshipsTotal)} compact={isMobile} />
-              </div>
-
-              {/* Second row — 2×2 grid on mobile */}
-              <div style={{ display: 'flex', flexWrap: isMobile ? 'wrap' : 'nowrap', gap: 8 }}>
-                <StatBox
-                  label="Best Record"
-                  value={stats.bestRecord ? `${stats.bestRecord.wins}–${stats.bestRecord.losses}` : '—'}
-                  sub={stats.bestRecord ? eraLabel(stats.bestRecord.era) : undefined}
-                  compact={isMobile}
-                />
-                <StatBox
-                  label="Worst Record"
-                  value={stats.worstRecord ? `${stats.worstRecord.wins}–${stats.worstRecord.losses}` : '—'}
-                  sub={stats.worstRecord ? eraLabel(stats.worstRecord.era) : undefined}
-                  compact={isMobile}
-                />
-                <StatBox
-                  label="Highest Rating"
-                  value={stats.highestTeamRating ? String(stats.highestTeamRating.rating) : '—'}
-                  sub={stats.highestTeamRating ? eraLabel(stats.highestTeamRating.era) : undefined}
-                  compact={isMobile}
-                />
-                <StatBox
-                  label="Favorite Era"
-                  value={favoriteEra ? eraLabel(favoriteEra[0]) : '—'}
-                  sub={favoriteEra ? `${favoriteEra[1]} played` : undefined}
-                  compact={isMobile}
-                />
-              </div>
-
-              {/* Most drafted player + coach */}
-              <div style={{ display: 'flex', flexWrap: isMobile ? 'wrap' : 'nowrap', gap: 8 }}>
-                {mostDrafted && (
-                  <HoverCard style={{ background: G.surface, padding: '14px 16px', flex: 1 }}>
-                    <div style={{ fontFamily: INTER, fontSize: 9, color: G.grey, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 6 }}>Most Drafted Player</div>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                      <div style={{ fontFamily: BEBAS, fontSize: isMobile ? 18 : 24, color: G.gold, letterSpacing: '0.06em', flex: 1, minWidth: 0, lineHeight: 1.05, wordBreak: 'break-word' }}>{mostDrafted.name}</div>
-                      <div style={{ fontFamily: INTER, fontSize: 12, color: G.grey, flexShrink: 0 }}>{mostDrafted.count}×</div>
-                    </div>
-                  </HoverCard>
-                )}
-                {mostDraftedCoach && (
-                  <HoverCard style={{ background: G.surface, padding: '14px 16px', flex: 1 }}>
-                    <div style={{ fontFamily: INTER, fontSize: 9, color: G.grey, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 6 }}>Most Drafted Coach</div>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                      <div style={{ fontFamily: BEBAS, fontSize: isMobile ? 18 : 24, color: G.gold, letterSpacing: '0.06em', flex: 1, minWidth: 0, lineHeight: 1.05, wordBreak: 'break-word' }}>{mostDraftedCoach.name}</div>
-                      <div style={{ fontFamily: INTER, fontSize: 12, color: G.grey, flexShrink: 0 }}>{mostDraftedCoach.count}×</div>
-                    </div>
-                  </HoverCard>
-                )}
-              </div>
-
-              {/* Record by era */}
-              {erasWithRecord.length > 0 && (
-                <div style={{ background: G.surface, border: `1px solid ${G.border}` }}>
-                  <div style={{ padding: '12px 16px', borderBottom: `1px solid ${G.border}`, fontFamily: INTER, fontSize: 9, color: G.grey, letterSpacing: '0.18em', textTransform: 'uppercase' }}>
-                    Record by Era
-                  </div>
-                  {erasWithRecord.map(era => {
-                    const rec = stats.recordByEra[era]!
-                    const best = stats.bestRecordByEra[era]
-                    const worst = stats.worstRecordByEra[era]
-                    const champs = stats.championshipsByEra[era] ?? 0
-                    const pct = ((rec.wins / (rec.wins + rec.losses)) * 100).toFixed(0)
-                    return (
-                      <EraRow key={era} era={era} rec={rec} best={best} worst={worst} champs={champs} pct={pct} isMobile={isMobile} />
-                    )
-                  })}
-                </div>
-              )}
-            </>
+            <StatsPanel stats={stats} isMobile={isMobile} />
           )}
 
           <div style={{ borderTop: `1px solid ${G.border}`, paddingTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ fontFamily: INTER, fontSize: 10, color: G.greyDark }}>Stored locally. Does not carry over to other devices.</div>
             {confirming ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 11, color: G.grey }}>Reset all stats?</span>
-                <button onClick={() => { clearLifetimeStats(); setStats(getLifetimeStats()); setConfirming(false) }}
+                <span style={{ fontSize: 11, color: G.grey }}>Reset {tab === 'salary_cap' ? 'Salary Cap' : 'Normal Draft'} stats?</span>
+                <button onClick={() => { clearLifetimeStats(tab); setStats(getLifetimeStats(tab)); setConfirming(false) }}
                   style={{ padding: '4px 12px', background: '#CC333322', color: '#CC3333', border: '1px solid #CC3333', cursor: 'pointer', fontSize: 11, letterSpacing: '0.06em' }}>
                   Confirm
                 </button>

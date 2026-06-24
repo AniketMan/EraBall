@@ -17,7 +17,10 @@ export interface LifetimeStats {
   highestTeamRating:  { rating: number; era: string } | null
 }
 
-const KEY = 'eraball_lifetime_stats'
+const KEYS: Record<'normal' | 'salary_cap', string> = {
+  normal:     'eraball_lifetime_stats',
+  salary_cap: 'eraball_lifetime_stats_cap',
+}
 
 function defaults(): LifetimeStats {
   return {
@@ -27,16 +30,16 @@ function defaults(): LifetimeStats {
   }
 }
 
-export function getLifetimeStats(): LifetimeStats {
+export function getLifetimeStats(mode: 'normal' | 'salary_cap' = 'normal'): LifetimeStats {
   try {
-    const raw = localStorage.getItem(KEY)
+    const raw = localStorage.getItem(KEYS[mode])
     if (!raw) return defaults()
     return { ...defaults(), ...JSON.parse(raw) }
   } catch { return defaults() }
 }
 
-function save(s: LifetimeStats) {
-  try { localStorage.setItem(KEY, JSON.stringify(s)) } catch {}
+function save(s: LifetimeStats, mode: 'normal' | 'salary_cap') {
+  try { localStorage.setItem(KEYS[mode], JSON.stringify(s)) } catch {}
 }
 
 export function recordRunComplete(params: {
@@ -47,9 +50,10 @@ export function recordRunComplete(params: {
   teamRating: number
   players: { personId: string; name: string }[]
   coach: string
+  mode?: 'normal' | 'salary_cap'
 }) {
-  const s = getLifetimeStats()
-  const { era, wins, losses, champion, teamRating, players, coach } = params
+  const { era, wins, losses, champion, teamRating, players, coach, mode = 'normal' } = params
+  const s = getLifetimeStats(mode)
 
   s.draftsCompleted++
   s.totalWins += wins
@@ -92,9 +96,9 @@ export function recordRunComplete(params: {
   existingCoach.count++
   s.coachDraftCounts[coach] = existingCoach
 
-  save(s)
+  save(s, mode)
 }
 
-export function clearLifetimeStats() {
-  try { localStorage.removeItem(KEY) } catch {}
+export function clearLifetimeStats(mode: 'normal' | 'salary_cap' = 'normal') {
+  try { localStorage.removeItem(KEYS[mode]) } catch {}
 }
