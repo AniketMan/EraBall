@@ -1559,23 +1559,32 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
         // Land
         const filteredCombos = spinShouldFilter ? validCombos.filter(c => spinEraFilter.has(c.era)) : validCombos
         if (filteredCombos.length === 0) { setSpinning(false); return }
-        // Salary cap guarantee: if tiers are still needed, bias combos toward those that have one
+        // Salary cap guarantee: bias toward the highest missing tier (S/A are rare; B/C/D are everywhere).
+        // Build pickableCombos by expanding tier priority until we find combos, then pick one
+        // that actually has the required tier in its real player pool.
+        const TIER_PRIORITY: PlayerTier[] = ['s', 'a', 'b', 'c', 'd']
         let pickableCombos = filteredCombos
+        let guaranteeTiers: string[] = []
         if (salaryCapMode && neededTiers.length > 0) {
-          const capCombos = filteredCombos.filter(({ team, era }) =>
-            players.some(p => {
-              const eraTeams = p.all_teams_by_era?.[era] as string[] | undefined
-              const onTeam = eraTeams ? eraTeams.includes(team) : playerTeamForEra(p, era) === team
-              if (!onTeam || !playerMatchesEra(p, era) || draftedIds.has(p.person_id)) return false
-              const base = playerBaseRating(withEraStats(p, era, team), simEra)
-              return (neededTiers as string[]).includes(playerTier(base))
-            })
-          )
-          if (capCombos.length > 0) pickableCombos = capCombos
+          const priorityNeeded = TIER_PRIORITY.filter(t => (neededTiers as string[]).includes(t))
+          for (let i = 0; i < priorityNeeded.length; i++) {
+            const tierSet = priorityNeeded.slice(0, i + 1)
+            const capCombos = filteredCombos.filter(({ team, era }) =>
+              players.some(p => {
+                const eraTeams = p.all_teams_by_era?.[era] as string[] | undefined
+                const onTeam = eraTeams ? eraTeams.includes(team) : playerTeamForEra(p, era) === team
+                if (!onTeam || !playerMatchesEra(p, era) || draftedIds.has(p.person_id)) return false
+                const base = playerBaseRating(withEraStats(p, era, team), simEra)
+                return tierSet.includes(playerTier(base))
+              })
+            )
+            if (capCombos.length > 0) { pickableCombos = capCombos; guaranteeTiers = tierSet; break }
+          }
         }
         // Shuffle pickableCombos so retries don't re-pick the same combo
         const shuffled = [...pickableCombos].sort(() => Math.random() - 0.5)
-        // Try combos until we find one whose actual pool contains a needed-tier player
+        // Try combos until we find one whose actual pool contains the guaranteed tier
+        const checkTiers = guaranteeTiers.length > 0 ? guaranteeTiers : (neededTiers as string[])
         let chosen = shuffled[0]
         if (salaryCapMode && neededTiers.length > 0) {
           for (const combo of shuffled) {
@@ -1586,7 +1595,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
             })
             const hasNeeded = testPool.some(p => {
               const base = playerBaseRating(withEraStats(p, combo.era, combo.team), simEra)
-              return (neededTiers as string[]).includes(playerTier(base))
+              return checkTiers.includes(playerTier(base))
             })
             if (hasNeeded && testPool.length >= 3) { chosen = combo; break }
           }
@@ -1606,7 +1615,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
             })
             const currentHasNeeded = currentPool.length >= 3 && currentPool.some(p => {
               const base = playerBaseRating(withEraStats(p, era, team), simEra)
-              return (neededTiers as string[]).includes(playerTier(base))
+              return checkTiers.includes(playerTier(base))
             })
             if (!currentHasNeeded) {
               for (const combo of shuffled) {
@@ -1618,7 +1627,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                 })
                 const hasNeeded = testPool.length >= 3 && testPool.some(p => {
                   const base = playerBaseRating(withEraStats(p, combo.era, combo.team), simEra)
-                  return (neededTiers as string[]).includes(playerTier(base))
+                  return checkTiers.includes(playerTier(base))
                 })
                 if (hasNeeded) { team = combo.team; era = combo.era; break }
               }
