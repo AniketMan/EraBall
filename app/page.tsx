@@ -1418,7 +1418,7 @@ const TAG_OPTIONS: { key: TagKey; label: string; color: string }[] = [
 ]
 
 function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandbox, salaryCapMode, greyscaleBtn, muteBtn, themeFilter }: {
-  simEra: Era; players: Player[]; onDraftComplete: (slots: CourtSlot[], customEras: Era[] | null) => void; onRestart: () => void; startInSandbox?: boolean; salaryCapMode?: boolean; greyscaleBtn?: React.ReactNode; muteBtn?: React.ReactNode; themeFilter?: string
+  simEra: Era; players: Player[]; onDraftComplete: (slots: CourtSlot[], customEras: Era[] | null, wasSandbox: boolean) => void; onRestart: () => void; startInSandbox?: boolean; salaryCapMode?: boolean; greyscaleBtn?: React.ReactNode; muteBtn?: React.ReactNode; themeFilter?: string
 }) {
   const fifties = themeFilter === 'grayscale(1)'
   const [slots, setSlots] = useState<CourtSlot[]>(emptySlots())
@@ -1813,9 +1813,11 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
     if (versions.length === 0) { alert(`No era stats found for ${match.full_name}`); return }
     versions.sort((a, b) => ALL_ERAS.indexOf(a.era as Era) - ALL_ERAS.indexOf(b.era as Era))
     setDraftedIds(ids => {
+      const available = versions.filter(p => !ids.has(p.person_id))
+      if (available.length === 0) { alert(`${match.full_name} is already on your roster.`); return ids }
       setLockedTeam(match.full_name); setLockedEra(null)
-      setSpinTeamDisplay(match.full_name); setSpinEraDisplay(versions[0].era as Era)
-      setRosterPool(versions)
+      setSpinTeamDisplay(match.full_name); setSpinEraDisplay(available[0].era as Era)
+      setRosterPool(available)
       setSelectedPlayer(null); setPendingSlotIdx(null); setHighlightEmpty(false); setAwaitingSpin(false)
       return ids
     })
@@ -1849,9 +1851,11 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
     tagged.sort((a, b) => playerBaseRating(b, b.era as Era) - playerBaseRating(a, a.era as Era))
     if (tagged.length === 0) { alert(`No players found with the ${TAG_OPTIONS.find(t => t.key === tag)?.label} tag`); return }
     setDraftedIds(ids => {
+      const available = tagged.filter(p => !ids.has(p.person_id))
+      if (available.length === 0) { alert('All players with this tag are already on your roster.'); return ids }
       setLockedTeam(TAG_OPTIONS.find(t => t.key === tag)?.label ?? tag); setLockedEra(null)
-      setSpinTeamDisplay(TAG_OPTIONS.find(t => t.key === tag)?.label ?? tag); setSpinEraDisplay(tagged[0].era as Era)
-      setRosterPool(tagged)
+      setSpinTeamDisplay(TAG_OPTIONS.find(t => t.key === tag)?.label ?? tag); setSpinEraDisplay(available[0].era as Era)
+      setRosterPool(available)
       setSelectedPlayer(null); setPendingSlotIdx(null); setHighlightEmpty(false); setAwaitingSpin(false)
       return ids
     })
@@ -2079,7 +2083,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                 </div>
                 {filledCount === 9 && (
                   <div className="p-3">
-                    <Btn onClick={() => onDraftComplete(slots, eraFilterLocked && eraFilter.size < ALL_ERAS.length ? [...eraFilter].sort((a, b) => ALL_ERAS.indexOf(a) - ALL_ERAS.indexOf(b)) : null)} variant="gold" className="w-full py-4 text-base">
+                    <Btn onClick={() => onDraftComplete(slots, eraFilterLocked && eraFilter.size < ALL_ERAS.length ? [...eraFilter].sort((a, b) => ALL_ERAS.indexOf(a) - ALL_ERAS.indexOf(b)) : null, sandboxMode)} variant="gold" className="w-full py-4 text-base">
                       Draft Coach
                     </Btn>
                   </div>
@@ -2421,7 +2425,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                   </div>
                 )}
                 {filledCount === 9 ? (
-                  <Btn onClick={() => onDraftComplete(slots, eraFilterLocked && eraFilter.size < ALL_ERAS.length ? [...eraFilter].sort((a, b) => ALL_ERAS.indexOf(a) - ALL_ERAS.indexOf(b)) : null)} variant="gold" className="w-full py-4 text-base">
+                  <Btn onClick={() => onDraftComplete(slots, eraFilterLocked && eraFilter.size < ALL_ERAS.length ? [...eraFilter].sort((a, b) => ALL_ERAS.indexOf(a) - ALL_ERAS.indexOf(b)) : null, sandboxMode)} variant="gold" className="w-full py-4 text-base">
                     Draft Coach
                   </Btn>
                 ) : (
@@ -4916,6 +4920,7 @@ export default function Home() {
   const [phase, setPhase] = useState<GamePhase>('era-select')
   const [simEra, setSimEra] = useState<Era>('20s')
   const [startSandbox, setStartSandbox] = useState(false)
+  const [draftWasSandbox, setDraftWasSandbox] = useState(false)
   const [salaryCapMode, setSalaryCapMode] = useState(false)
   const [greyscale, setGreyscale] = useState(false)
   const [hasUsedTheme, setHasUsedTheme] = useState(false)
@@ -5254,9 +5259,9 @@ export default function Home() {
           ))}
         </div>
       )}
-      {phase === 'draft' && <DraftScreen simEra={simEra} players={players} onDraftComplete={(s, ce) => { setSlots(s); setDraftCustomEras(ce); setPhase('coach-draft') }} onRestart={restart} startInSandbox={startSandbox} salaryCapMode={salaryCapMode} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} themeFilter={eraFilter} />}
-      {phase === 'coach-draft' && <CoachDraftScreen coaches={coaches} onCoachSelected={c => { setCoach(c); setPhase('simulation') }} onRestart={restart} sandboxMode={startSandbox} salaryCapMode={salaryCapMode} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} />}
-      {phase === 'simulation' && coach && <SimulationScreen slots={slots} coach={coach} simEra={simEra} onRestart={restart} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} sandboxMode={startSandbox} salaryCapMode={salaryCapMode} customEraRange={draftCustomEras} eraFilter={eraFilter} onAchievementsUnlocked={setUnlockedAchievements} />}
+      {phase === 'draft' && <DraftScreen simEra={simEra} players={players} onDraftComplete={(s, ce, wasSandbox) => { setSlots(s); setDraftCustomEras(ce); setDraftWasSandbox(wasSandbox); setPhase('coach-draft') }} onRestart={restart} startInSandbox={startSandbox} salaryCapMode={salaryCapMode} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} themeFilter={eraFilter} />}
+      {phase === 'coach-draft' && <CoachDraftScreen coaches={coaches} onCoachSelected={c => { setCoach(c); setPhase('simulation') }} onRestart={restart} sandboxMode={draftWasSandbox} salaryCapMode={salaryCapMode} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} />}
+      {phase === 'simulation' && coach && <SimulationScreen slots={slots} coach={coach} simEra={simEra} onRestart={restart} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} sandboxMode={draftWasSandbox} salaryCapMode={salaryCapMode} customEraRange={draftCustomEras} eraFilter={eraFilter} onAchievementsUnlocked={setUnlockedAchievements} />}
 
       {/* Volume popover */}
       {showVolumePopover && audioEra !== null && !isMobileDevice && (
