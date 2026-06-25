@@ -3638,10 +3638,10 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
   const runBatch = (n = 10) => {
     const runs: BatchRun[] = []
     for (let i = 0; i < n; i++) {
-      const { games: allGames } = simulateSeason(simRaw, pr, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'), salaryCapMode ? 0.85 : 1.0)
+      const { games: allGames } = simulateSeason(simRaw, pr, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'), salaryCapMode ? 0.90 : 1.0)
       const w = allGames.filter(Boolean).length
       const l = allGames.length - w
-      const playoff = simulatePlayoffs(simRaw, pr, w, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'), salaryCapMode ? 0.85 : 1.0)
+      const playoff = simulatePlayoffs(simRaw, pr, w, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'), salaryCapMode ? 0.90 : 1.0)
       runs.push({ wins: w, losses: l, roundsWon: playoff.rounds.filter(r => r.advanced).length, champion: playoff.champion })
     }
     setBatchResults(runs)
@@ -3649,7 +3649,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
 
   const startSim = () => {
     setSimStarted(true); setGames([]); setDone(false); setSeasonStats([])
-    const { games: allGames, seasonStats: stats, avgTeamScore: ats, avgOppScore: aos, teamAnalysis: ta } = simulateSeason(simRaw, pr, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'), salaryCapMode ? 0.85 : 1.0)
+    const { games: allGames, seasonStats: stats, avgTeamScore: ats, avgOppScore: aos, teamAnalysis: ta } = simulateSeason(simRaw, pr, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'), salaryCapMode ? 0.90 : 1.0)
     setSeasonStats(stats)
     setAvgTeamScore(ats)
     setAvgOppScore(aos)
@@ -3669,7 +3669,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
     setPlayoffRevealIndex(-1)
     setPlayoffDone(false)
     setAutoAdvance(false)
-    const result = simulatePlayoffs(simRaw, pr, wins, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'), salaryCapMode ? 0.85 : 1.0)
+    const result = simulatePlayoffs(simRaw, pr, wins, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'), salaryCapMode ? 0.90 : 1.0)
     setPlayoffResult(result)
     const poAvgOpp = result.allGames.reduce((s, g) => s + g.oppScore, 0) / result.allGames.length
     const { stl: poTeamSTL, blk: poTeamBLK } = calcTeamDefTotals(pr)
