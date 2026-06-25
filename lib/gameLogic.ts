@@ -323,12 +323,10 @@ export const DUO_PAIRS: Record<string, string> = {
   'Dwyane Wade':             'LeBron James',
   'Stephen Curry':           'Klay Thompson',
   'Klay Thompson':           'Stephen Curry',
+  'Draymond Green':          'Stephen Curry',
   'Nikola Jokic':            'Jamal Murray',
   'Jamal Murray':            'Nikola Jokic',
-  'Draymond Green':          'Stephen Curry',
-  'Stephen Curry':           'Draymond Green',
   'Aaron Gordon':            'Nikola Jokic',
-  'Nikola Jokic':            'Aaron Gordon',
   'Bill Russell':            'John Havlicek',
   'John Havlicek':           'Bill Russell',
 }
