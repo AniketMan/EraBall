@@ -1519,7 +1519,25 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
           )
           if (capCombos.length > 0) pickableCombos = capCombos
         }
-        const { team, era } = pickableCombos[Math.floor(Math.random() * pickableCombos.length)]
+        // Shuffle pickableCombos so retries don't re-pick the same combo
+        const shuffled = [...pickableCombos].sort(() => Math.random() - 0.5)
+        // Try combos until we find one whose actual pool contains a needed-tier player
+        let chosen = shuffled[0]
+        if (salaryCapMode && neededTiers.length > 0) {
+          for (const combo of shuffled) {
+            const testPool = players.filter(p => {
+              const eraTeams = p.all_teams_by_era?.[combo.era] as string[] | undefined
+              const onTeam = eraTeams ? eraTeams.includes(combo.team) : playerTeamForEra(p, combo.era) === combo.team
+              return onTeam && playerMatchesEra(p, combo.era) && !draftedIds.has(p.person_id)
+            })
+            const hasNeeded = testPool.some(p => {
+              const base = playerBaseRating(withEraStats(p, combo.era, combo.team), simEra)
+              return (neededTiers as string[]).includes(playerTier(base))
+            })
+            if (hasNeeded && testPool.length >= 3) { chosen = combo; break }
+          }
+        }
+        const { team, era } = chosen
         setSpinPhase('land')
         setSpinTeamDisplay(team); setSpinEraDisplay(era)
         setSpinKey(k => k + 1)
