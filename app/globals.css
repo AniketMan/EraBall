@@ -374,6 +374,33 @@ body {
 }
 
 
+
+/* ── Footer links ─────────────────────────────────────────────────────────── */
+.footer-links-wrapper {
+  align-items: flex-end;
+}
+.footer-links-label {
+  text-align: right;
+}
+.footer-links-social {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+@media (max-width: 640px) {
+  .footer-links-wrapper {
+    align-items: center;
+  }
+  .footer-links-label {
+    text-align: center;
+  }
+  .footer-links-social {
+    flex-direction: row;
+    justify-content: center;
+  }
+}
+
 @keyframes era-theme-bounce {
   0%, 100% { transform: translateY(0); }
   50%       { transform: translateY(-5px); }

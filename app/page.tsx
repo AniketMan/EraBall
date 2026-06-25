@@ -2282,6 +2282,17 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
             ) : (
               /* ── Normal spin panel ── */
               <>
+                {salaryCapMode && (
+                  <div className="block sm:hidden" style={{ padding: '16px 16px 12px', textAlign: 'center', borderBottom: `1px solid ${G.border}` }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: '0.25em', textTransform: 'uppercase', color: G.gold, marginBottom: 8 }}>Salary Cap Draft</div>
+                    <div style={{ fontSize: 12, lineHeight: 1.6, letterSpacing: '0.04em', color: G.greyDark, marginBottom: 8 }}>
+                      Build a team within tier limits. Draft <span style={{ color: '#9b6dff' }}>2 S</span> - <span style={{ color: '#C9A84C' }}>2 A</span> - <span style={{ color: '#4caf78' }}>2 B</span> - <span style={{ color: '#5b8fd4' }}>2 C</span> - <span style={{ color: '#c47a35' }}>1 D</span> tier players.
+                    </div>
+                    <div style={{ fontSize: 11, lineHeight: 1.7, letterSpacing: '0.04em', color: G.greyDark }}>
+                      Every spin guarantees at least one player from a tier you still need, but you can pick anyone from the roster. Build around your strengths.
+                    </div>
+                  </div>
+                )}
                 {salaryCapMode && (() => {
                   const TIER_COL: Record<PlayerTier, string> = { s: '#9b6dff', a: '#C9A84C', b: '#4caf78', c: '#5b8fd4', d: '#c47a35' }
                   const TIER_DESC: Record<PlayerTier, string> = { s: 'Superstars', a: 'Stars', b: 'Starters', c: 'Rotation', d: 'Role / Spec' }
@@ -2642,7 +2653,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
             )}
 
             {salaryCapMode && (
-              <div className="text-center py-6 px-4" style={{ color: G.greyDark, borderBottom: `1px solid ${G.border}` }}>
+              <div className="hidden sm:block text-center py-6 px-4" style={{ color: G.greyDark, borderBottom: `1px solid ${G.border}` }}>
                 <div style={{ maxWidth: 320, margin: '0 auto' }}>
                   <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '0.25em', textTransform: 'uppercase', color: G.gold, marginBottom: 10 }}>Salary Cap Draft</div>
                   <div style={{ fontSize: 13, lineHeight: 1.6, letterSpacing: '0.04em', color: G.greyDark, marginBottom: 12 }}>
@@ -5310,12 +5321,14 @@ export default function Home() {
         </>
       )}
       {/* Bottom-right footer links */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, padding: '16px 20px 32px' }}>
-        <span style={{ fontSize: 10, color: G.greyDark, letterSpacing: '0.06em', textTransform: 'uppercase', opacity: 0.55, marginBottom: 2 }}>
+      <div className="footer-links-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '16px 20px 32px' }}>
+        <span className="footer-links-label" style={{ fontSize: 10, color: G.greyDark, letterSpacing: '0.06em', textTransform: 'uppercase', opacity: 0.55, marginBottom: 2 }}>
           Suggestions or Bugs? Join the Discord or DM me on Twitter:
         </span>
-        <FooterLink href="https://discord.gg/gFAp5adX" label="Discord" color={G.greyDark} border={G.border} opacity={0.7} />
-        <FooterLink href="https://x.com/Eshan_Design" label="Twitter" color={G.greyDark} border={G.border} opacity={0.7} />
+        <div className="footer-links-social">
+          <FooterLink href="https://discord.gg/gFAp5adX" label="Discord" color={G.greyDark} border={G.border} opacity={0.7} />
+          <FooterLink href="https://x.com/Eshan_Design" label="Twitter" color={G.greyDark} border={G.border} opacity={0.7} />
+        </div>
         <FooterLink href="https://ko-fi.com/eshanb" label="Support the game" color={G.gold} border={G.goldDim} opacity={0.85} />
         <FooterLink href="https://eshanbhattdesign.com" label="eshanbhattdesign.com" color={G.greyDark} border={G.border} opacity={0.7} />
       </div>
