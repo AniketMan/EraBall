@@ -1170,7 +1170,7 @@ export function simulateSeason(
   const eraDifficulty = ERA_DIFFICULTY[simEra] ?? 1.00
   const OPP_BASELINE = 43 * eraDifficulty * (difficultyMod ?? 1.0)
   const OPP_SPREAD   = 6
-  const GAME_NOISE   = 8
+  const GAME_NOISE   = 6
 
   // Per-player entries with minutes info (no stat accumulation needed)
   const entries = playerRatings.map(pr => {
