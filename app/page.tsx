@@ -862,6 +862,60 @@ const V1_NOTES = [
   ]},
 ]
 
+const V1_5_NOTES = [
+  { section: 'New Mode: Salary Cap', items: [
+    'Build a team within tier limits. Draft 2 S – 2 A – 2 B – 2 C – 1 D tier players.',
+    'Every spin guarantees at least one player from a tier you still need, but you can pick anyone from the roster. Build around your strengths.',
+    'Only B or higher graded coaches.',
+  ]},
+  { section: 'Leaderboard', items: [
+    'Added a leaderboard (no login required) for both game modes and each era.',
+    'Once a season is complete you have the option to input a custom Team Name. If the score is high enough it will show on the leaderboard, and players can click on the team to see their roster.',
+    'Score is based on Reg Season/Playoff win %, Team rating, Result, coach, and point differential.',
+  ]},
+  { section: 'Simulation', items: [
+    'Less unrealistic stat showings in the playoffs (players sometimes would get 30 rebounds or assists in super rare special performances).',
+    'Won\'t see insane 170+ games anymore in the 2020s.',
+    'Players like Aaron Gordon, Zach Randolph, and Zion Williamson go back in time with less of an era penalty.',
+  ]},
+  { section: 'Lifetime Stats', items: [
+    'Your simulated lifetime stats are broken up into the 2 game modes now: Normal Draft and Salary Cap draft.',
+    'Added more player specific stats: Most Successful Player (Rings), Most benched player.',
+  ]},
+  { section: 'Achievements', items: [
+    'New section on the home screen tracks your achievements. Specific challenges of different rarity. Try to get them all! Will be adding more as time goes on.',
+  ]},
+  { section: 'Visuals', items: [
+    'PLAYOFFS: The playoffs visuals have been overhauled. Less scrolling is needed. You can click through the playoff rounds, and can open box scores for each game.',
+    'In the 50s era theme only, the card tiers look different, more readable, and with the tier rank on them as well.',
+    'Main Menu: "Begin Draft" → Normal Draft, "Salary Cap" → Salary Cap Draft.',
+  ]},
+  { section: 'Tags', items: [
+    'NEW TAG – GLASS CLEANER: Highlights rebound specialists who were undervalued in the previous system. Gives a boost to the team\'s rebounding impact.',
+    'NEW TAG – DYNAMIC DUO: Highlights dynamic duos through NBA history. They get a boost to their base rating (some players have multiple duos, the boosts stack). Getting big threes is a huge boost to some.',
+    'Dynamic duos include players like Kobe/Shaq, LeBron/Wade, Bird/McHale, Isiah/Dumars and many more.',
+    'Hakeem now correctly shows he has the Champions tag.',
+    'Luka, Magic, and Tatum are now FLEX players.',
+    'Yao Ming gets a Defensive Anchor T1.',
+    'Pistol Pete is now TIMELESS.',
+  ]},
+  { section: 'Ratings', items: [
+    '2010s CHI Derrick Rose gets a slight buff to Gold (A).',
+    '2020s OKC Jared McCain gets a slight buff to Sapphire (C).',
+  ]},
+  { section: 'Positions', items: [
+    'Kareem can play PF with no positional penalty (spacing still counts for modern eras, shooting bigs are huge).',
+    'Brandon Ingram can play SG/SF/PF with no positional penalty.',
+  ]},
+  { section: 'Bugs', items: [
+    'Stats now add up correctly in the playoffs with special performances.',
+    'Players in Southeast Asian countries who were blocked from getting team data can now play again! Fixed for all countries.',
+  ]},
+  { section: 'Misc', items: [
+    'Era themes are now off by default and save your chosen setting locally.',
+  ]},
+]
+
 const V1_4_NOTES = [
   { section: 'Simulation', items: [
     'Pre-3pt era players who were eligible for an estimated three point rating in modern eras now get a slightly smaller era penalty going forward (like Pete Maravich).',
@@ -936,6 +990,7 @@ const V1_2_NOTES = [
 ]
 
 function PatchNotesModal({ onClose }: { onClose: () => void }) {
+  const [showV1_4, setShowV1_4] = useState(false)
   const [showV1_3, setShowV1_3] = useState(false)
   const [showV1_2, setShowV1_2] = useState(false)
   const [showV1_1, setShowV1_1] = useState(false)
@@ -959,12 +1014,24 @@ function PatchNotesModal({ onClose }: { onClose: () => void }) {
         <div className="flex items-center justify-between mb-4">
           <div>
             <div style={{ ...BEBAS, fontSize: 24, color: G.white, letterSpacing: '0.05em' }}>What's New</div>
-            <div style={{ fontSize: 11, color: G.gold, letterSpacing: '0.12em', textTransform: 'uppercase' }}>v1.4 · June 21</div>
+            <div style={{ fontSize: 11, color: G.gold, letterSpacing: '0.12em', textTransform: 'uppercase' }}>v1.5 · June 24</div>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: G.greyDark, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>✕</button>
         </div>
 
-        {renderNotes(V1_4_NOTES)}
+        {renderNotes(V1_5_NOTES)}
+
+        {/* v1.4 collapsible */}
+        <div style={{ borderTop: `1px solid ${G.border}`, marginTop: 8, paddingTop: 12 }}>
+          <button
+            onClick={() => setShowV1_4(v => !v)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: 0 }}
+          >
+            <span style={{ fontSize: 11, color: G.greyDark, letterSpacing: '0.12em', textTransform: 'uppercase' }}>V1.4 · June 21</span>
+            <span style={{ fontSize: 10, color: G.greyDark, display: 'inline-block', transform: showV1_4 ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▼</span>
+          </button>
+          {showV1_4 && <div style={{ marginTop: 12 }}>{renderNotes(V1_4_NOTES)}</div>}
+        </div>
 
         {/* v1.3 collapsible */}
         <div style={{ borderTop: `1px solid ${G.border}`, marginTop: 8, paddingTop: 12 }}>
