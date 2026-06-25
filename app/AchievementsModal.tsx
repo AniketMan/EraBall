@@ -95,8 +95,12 @@ export default function AchievementsModal({ onClose }: { onClose: () => void }) 
 
         {/* Grid */}
         <div style={{ padding: '20px 24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10 }}>
-          {/* Unlocked first */}
-          {[...items].sort((a, b) => Number(b.unlocked) - Number(a.unlocked)).map(({ achievement, unlocked }) => (
+          {[...items].sort((a, b) => {
+            const RARITY_RANK: Record<AchievementRarity, number> = { legendary: 0, epic: 1, rare: 2, common: 3 }
+            const rarityDiff = RARITY_RANK[a.achievement.rarity] - RARITY_RANK[b.achievement.rarity]
+            if (rarityDiff !== 0) return rarityDiff
+            return Number(b.unlocked) - Number(a.unlocked)
+          }).map(({ achievement, unlocked }) => (
             <AchievementCard key={achievement.id} achievement={achievement} unlocked={unlocked} />
           ))}
         </div>

@@ -52,6 +52,7 @@ interface ResultCardProps {
   finalsMVPId?: string | null
   finalsMVPStats?: PlayerSeasonStats | null
   sandboxMode?: boolean
+  salaryCapMode?: boolean
   customEraRange?: Era[] | null
 }
 
@@ -156,7 +157,7 @@ function StatRow({ lbl, val, lead }: { lbl: string; val: string; lead: boolean }
 }
 
 const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
-  function ResultCard({ simEra, wins, losses, seasonStats, coach, teamRating, headshots, playoffOutcome, playerAwards = {}, finalsMVPId, finalsMVPStats, sandboxMode, customEraRange }, ref) {
+  function ResultCard({ simEra, wins, losses, seasonStats, coach, teamRating, headshots, playoffOutcome, playerAwards = {}, finalsMVPId, finalsMVPStats, sandboxMode, salaryCapMode, customEraRange }, ref) {
     const starters = seasonStats.filter(s => !s.slot.startsWith('B'))
     const bench    = seasonStats.filter(s =>  s.slot.startsWith('B'))
 
@@ -222,6 +223,11 @@ const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
               {sandboxMode && (
                 <div style={{ fontFamily: BEBAS, fontSize: 28, color: C.gold, letterSpacing: '0.18em', lineHeight: 1, marginBottom: 8 }}>
                   Sandbox Mode
+                </div>
+              )}
+              {salaryCapMode && (
+                <div style={{ fontFamily: BEBAS, fontSize: 28, color: C.gold, letterSpacing: '0.18em', lineHeight: 1, marginBottom: 8 }}>
+                  Salary Cap Mode
                 </div>
               )}
               {customEraRange && (() => {
