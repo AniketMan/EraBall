@@ -250,15 +250,10 @@ export default function LifetimeStatsModal({ onClose }: { onClose: () => void })
         scale: 2, useCORS: true, backgroundColor: '#000000', logging: false,
       })
       const url = canvas.toDataURL('image/png')
-      if (navigator.share) {
-        const blob = await (await fetch(url)).blob()
-        await navigator.share({ files: [new File([blob], 'eraball-stats.png', { type: 'image/png' })] })
-      } else {
-        const a = document.createElement('a')
-        a.download = 'eraball-stats.png'
-        a.href = url
-        a.click()
-      }
+      const a = document.createElement('a')
+      a.download = 'eraball-stats.png'
+      a.href = url
+      a.click()
     } catch (e) { console.error(e) }
     finally { setSharing(false) }
   }
