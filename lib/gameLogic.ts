@@ -332,29 +332,42 @@ export const DUO_PAIRS: Record<string, string[]> = {
   'Karl Malone':             ['John Stockton'],
   'Hakeem Olajuwon':         ['Clyde Drexler'],
   'Clyde Drexler':           ['Hakeem Olajuwon'],
-  "Shaquille O'Neal":        ['Kobe Bryant', 'Anfernee Hardaway'],
+  "Shaquille O'Neal":        ['Kobe Bryant', 'Anfernee Hardaway', 'Dwyane Wade'],
   'Anfernee Hardaway':       ["Shaquille O'Neal"],
   // 00s
   'Kobe Bryant':             ["Shaquille O'Neal"],
   'Tracy McGrady':           ['Yao Ming'],
   'Yao Ming':                ['Tracy McGrady'],
-  'Tim Duncan':              ['Tony Parker'],
+  'Tim Duncan':              ['Tony Parker', 'David Robinson'],
+  'David Robinson':          ['Tim Duncan'],
   'Tony Parker':             ['Tim Duncan'],
   'Dirk Nowitzki':           ['Jason Terry'],
   'Jason Terry':             ['Dirk Nowitzki'],
   // 10s
   'Kevin Durant':            ['Russell Westbrook'],
   'Russell Westbrook':       ['Kevin Durant'],
-  'LeBron James':            ['Dwyane Wade', 'Kyrie Irving'],
-  'Dwyane Wade':             ['LeBron James'],
+  'LeBron James':            ['Dwyane Wade', 'Kyrie Irving', 'Kevin Love', 'Anthony Davis'],
+  'Dwyane Wade':             ['LeBron James', "Shaquille O'Neal"],
   'Kyrie Irving':            ['LeBron James'],
+  'Kevin Love':              ['LeBron James'],
+  'Chris Paul':              ['Blake Griffin', 'Deandre Jordan'],
+  'Blake Griffin':           ['Chris Paul'],
+  'Deandre Jordan':          ['Chris Paul'],
+  'James Harden':            ['Clint Capela'],
+  'Clint Capela':            ['James Harden'],
   'Stephen Curry':           ['Klay Thompson', 'Draymond Green'],
-  'Klay Thompson':           ['Stephen Curry'],
-  'Draymond Green':          ['Stephen Curry'],
+  'Klay Thompson':           ['Stephen Curry', 'Draymond Green'],
+  'Draymond Green':          ['Stephen Curry', 'Klay Thompson'],
   // 20s
   'Nikola Jokic':            ['Jamal Murray', 'Aaron Gordon'],
-  'Jamal Murray':            ['Nikola Jokic'],
-  'Aaron Gordon':            ['Nikola Jokic'],
+  'Jamal Murray':            ['Nikola Jokic', 'Aaron Gordon'],
+  'Aaron Gordon':            ['Nikola Jokic', 'Jamal Murray'],
+  'Anthony Davis':           ['LeBron James'],
+  'Jayson Tatum':            ['Jaylen Brown'],
+  'Jaylen Brown':            ['Jayson Tatum'],
+  'Jalen Brunson':           ['Josh Hart', 'Mikal Bridges'],
+  'Josh Hart':               ['Jalen Brunson', 'Mikal Bridges'],
+  'Mikal Bridges':           ['Jalen Brunson', 'Josh Hart'],
 }
 
 export function applyDuo(player: Player): Player {
@@ -386,6 +399,7 @@ const TIMELESS_PLAYERS = new Set([
   'David Robinson',
   'Anthony Davis',
   'Moses Malone',
+  'Pete Maravich',
 ])
 
 export function applyTimeless(player: Player): Player {

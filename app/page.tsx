@@ -345,7 +345,7 @@ function CoachHeadshot({ name, size }: { name: string; size: number }) {
 }
 
 // ─── Player card ──────────────────────────────────────────────────────────────
-function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode, fifties, duoActive }: { player: Player; onDragStart?: () => void; displayEra?: Era; activeEra?: Era; devMode?: boolean; fifties?: boolean; duoActive?: boolean }) {
+function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode, fifties, duoActiveCount }: { player: Player; onDragStart?: () => void; displayEra?: Era; activeEra?: Era; devMode?: boolean; fifties?: boolean; duoActiveCount?: number }) {
   const ts = (calcTS(player) * 100).toFixed(1)
   const imp = (stat: string) => player.imputed_stats?.includes(stat) ?? false
   const fmt = (stat: string, val: string | null | undefined) =>
@@ -429,8 +429,8 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode, fifti
               </TagTooltip>
             )}
             {player.duoPartners && (
-              <TagTooltip tip={duoActive ? `Dynamic Duo active. +5 rating boost.` : `Draft ${player.duoPartners.join(' or ')} to activate the Dynamic Duo bonus (+5 rating).`}>
-                <span className="text-xs uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: duoActive ? '#4ECDC4' : '#444444', letterSpacing: '0.08em' }}>
+              <TagTooltip tip={(duoActiveCount ?? 0) > 0 ? `Dynamic Duo active. +${(duoActiveCount ?? 0) * 5} rating boost.` : `Draft ${player.duoPartners.join(' or ')} to activate the Dynamic Duo bonus (+5 per partner).`}>
+                <span className="text-xs uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: (duoActiveCount ?? 0) > 0 ? '#4ECDC4' : '#444444', letterSpacing: '0.08em' }}>
                   Dynamic Duo
                 </span>
               </TagTooltip>
@@ -2424,7 +2424,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                     ? `→ ${slots[pendingSlotIdx].position}: lock or choose another slot`
                     : 'Click a court slot to place'}
                 </GoldLabel>
-                <PlayerCard player={selectedPlayer} displayEra={lockedEra ?? undefined} activeEra={lockedEra ?? undefined} devMode={devMode} fifties={fifties} duoActive={!!selectedPlayer.duoPartners && slots.some(s => s.player && selectedPlayer.duoPartners!.includes(s.player.full_name))} />
+                <PlayerCard player={selectedPlayer} displayEra={lockedEra ?? undefined} activeEra={lockedEra ?? undefined} devMode={devMode} fifties={fifties} duoActiveCount={selectedPlayer.duoPartners ? slots.filter(s => s.player && selectedPlayer.duoPartners!.includes(s.player.full_name)).length : 0} />
                 {pendingSlotIdx !== null && (
                   <Btn onClick={confirmPick} variant="gold" className="w-full py-3">
                     Lock {slots[pendingSlotIdx].position}
@@ -2441,7 +2441,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                 onClick={() => setRosterCardPlayer(null)}
               >
                 <div onClick={e => e.stopPropagation()} className="w-full max-w-sm space-y-3">
-                  <PlayerCard player={rosterCardPlayer} displayEra={lockedEra ?? undefined} activeEra={lockedEra ?? undefined} devMode={devMode} fifties={fifties} duoActive={!!rosterCardPlayer.duoPartners && slots.some(s => s.player && rosterCardPlayer.duoPartners!.includes(s.player.full_name))} />
+                  <PlayerCard player={rosterCardPlayer} displayEra={lockedEra ?? undefined} activeEra={lockedEra ?? undefined} devMode={devMode} fifties={fifties} duoActiveCount={rosterCardPlayer.duoPartners ? slots.filter(s => s.player && rosterCardPlayer.duoPartners!.includes(s.player.full_name)).length : 0} />
                   <Btn variant="ghost" className="w-full py-2" onClick={() => setRosterCardPlayer(null)}>
                     Close
                   </Btn>
@@ -2881,7 +2881,7 @@ function StatsTable({ stats, simEra, title, subtitle, teamActualPPG, teamActualO
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >×</button>
-          <PlayerCard player={cardPlayer} activeEra={cardPlayer.era} fifties={fifties} duoActive={!!cardPlayer.duoPartners && slots.some(s => s.player && cardPlayer.duoPartners!.includes(s.player.full_name))} />
+          <PlayerCard player={cardPlayer} activeEra={cardPlayer.era} fifties={fifties} duoActiveCount={cardPlayer.duoPartners ? slots.filter(s => s.player && cardPlayer.duoPartners!.includes(s.player.full_name)).length : 0} />
           {gameLog.length > 0 && (
             <div style={{ background: G.surface, border: `1px solid ${G.border}`, borderTop: 'none', padding: '12px 16px' }}>
               <div className="text-xs uppercase tracking-widest mb-2" style={{ color: G.grey }}>Playoff Game Log</div>
