@@ -3527,6 +3527,9 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
     }
     setLbError(null)
     setLbSubmitting(true)
+    const draftedPlayers = slots.filter(s => s.player).map(s => s.player!)
+    const no_timeless = !draftedPlayers.some(p => p.timeless)
+    const no_s_tier = !draftedPlayers.some(p => playerTier(playerBaseRating({ ...p, duoActiveCount: 0 }, simEra!)) === 's')
     const playoffWins = playoffResult ? playoffResult.rounds.reduce((s, r) => s + r.seriesWins, 0) : 0
     const playoffLosses = playoffResult ? playoffResult.rounds.reduce((s, r) => s + r.seriesLosses, 0) : 0
     const playoffTotal = playoffWins + playoffLosses
@@ -3563,7 +3566,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
           era: s.player!.era as string,
         })),
       },
-    })
+    }, { no_timeless, no_s_tier })
     setLbScore(score)
     setLbSubmitted(true)
     setLbSubmitting(false)

@@ -31,7 +31,12 @@ export type LeaderboardEntry = {
 
 const GRADE_RANK: Record<string, number> = { A: 4, B: 3, C: 2, D: 1, F: 0 }
 
-export function calcLeaderboardScore(entry: Omit<LeaderboardEntry, 'id' | 'score' | 'created_at'>): number {
+export type ScoreFlags = { no_timeless?: boolean; no_s_tier?: boolean }
+
+export function calcLeaderboardScore(
+  entry: Omit<LeaderboardEntry, 'id' | 'score' | 'created_at'>,
+  flags?: ScoreFlags,
+): number {
   const playoffBonus: Record<string, number> = {
     champion: 500,
     finals: 300,
@@ -41,6 +46,14 @@ export function calcLeaderboardScore(entry: Omit<LeaderboardEntry, 'id' | 'score
   }
   const bonus = entry.playoff_result ? (playoffBonus[entry.playoff_result] ?? 0) : 0
   const coachNum = entry.coach_grade ? (GRADE_RANK[entry.coach_grade] ?? 0) : 0
+  const isChampion = entry.playoff_result === 'champion'
+
+  let challengeBonus = 0
+  if (isChampion) {
+    if (flags?.no_timeless) challengeBonus += 75
+    if (flags?.no_s_tier) challengeBonus += 150
+    if (coachNum <= 2) challengeBonus += 100  // C grade or below
+  }
 
   return (
     entry.reg_win_pct * 500 +
@@ -48,12 +61,16 @@ export function calcLeaderboardScore(entry: Omit<LeaderboardEntry, 'id' | 'score
     entry.avg_pt_diff * 8 +
     entry.team_rating * 3 +
     coachNum * 20 +
-    bonus
+    bonus +
+    challengeBonus
   )
 }
 
-export async function submitLeaderboardEntry(entry: Omit<LeaderboardEntry, 'id' | 'score' | 'created_at' | 'roster'> & { roster?: LeaderboardRoster | null }) {
-  const score = calcLeaderboardScore(entry)
+export async function submitLeaderboardEntry(
+  entry: Omit<LeaderboardEntry, 'id' | 'score' | 'created_at' | 'roster'> & { roster?: LeaderboardRoster | null },
+  flags?: ScoreFlags,
+) {
+  const score = calcLeaderboardScore(entry, flags)
   const { error } = await supabase.from('leaderboard').insert({ ...entry, score })
   if (error) console.error('Leaderboard submit error:', error)
   return score
