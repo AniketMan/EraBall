@@ -1339,6 +1339,9 @@ function EraSelection({ onEraSelected, onSandboxSelected, onSalaryCapSelected, o
             What's New!
           </button>
           <div style={{ fontSize: 10, color: G.greyDark, letterSpacing: '0.15em', marginTop: 2 }}>v1.5</div>
+          <div style={{ fontSize: 9, color: '#CC8844', letterSpacing: '0.04em', marginTop: 8, maxWidth: 280, lineHeight: 1.6, textAlign: 'center' }}>
+            Known issue: players in Southeast Asia may see blank team names and be unable to play. A VPN temporarily resolves it. Working on a fix!
+          </div>
         </div>
       </div>
       {showPatchNotes && <PatchNotesModal onClose={() => setShowPatchNotes(false)} />}
