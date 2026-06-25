@@ -516,12 +516,15 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode, fifti
 }
 
 // ─── Court slot ───────────────────────────────────────────────────────────────
-function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, activePlayer, simEra, sandboxMode, onRemove, fifties }: {
+function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, activePlayer, simEra, sandboxMode, onRemove, onDragStart, fifties }: {
   slot: CourtSlot; onClick: () => void; onDrop: () => void; highlighted: boolean
   pendingPlayer?: Player | null; activePlayer?: Player | null; simEra?: Era
-  sandboxMode?: boolean; onRemove?: () => void; fifties?: boolean
+  sandboxMode?: boolean; onRemove?: () => void; onDragStart?: () => void; fifties?: boolean
 }) {
   const [dragOver, setDragOver] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const [ghostPos, setGhostPos] = useState<{ x: number; y: number } | null>(null)
+  const slotRef = useRef<HTMLDivElement>(null)
   const confirmed = slot.player
   const isPending = !confirmed && !!pendingPlayer
   const sec     = fifties ? '#e2e2e2' : G.grey
@@ -553,18 +556,33 @@ function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, acti
     : 'none'
 
   return (
+    <>
     <div
+      ref={slotRef}
       className={`relative overflow-hidden cursor-pointer select-none court-slot${confirmed ? ' court-slot--filled' : ''}`}
+      draggable={sandboxMode && !!confirmed}
       style={{
         minHeight: 140,
         background: isPending ? `${G.gold}0a` : confirmed ? tierBg(confirmed, fifties) : G.black,
-        border: `1px solid ${fitBorder}`,
+        border: `1px solid ${dragOver ? G.gold : fitBorder}`,
         outline: isPending ? `1px solid ${G.goldDim}` : 'none',
         outlineOffset: '-3px',
-        boxShadow: confirmed ? 'none' : fitGlow,
-        transition: 'box-shadow 0.15s ease, border-color 0.15s ease',
+        boxShadow: dragOver ? `0 0 18px rgba(201,168,76,0.45)` : confirmed ? 'none' : fitGlow,
+        transition: 'box-shadow 0.15s ease, border-color 0.15s ease, opacity 0.15s ease',
+        opacity: isDragging ? 0.35 : 1,
+        cursor: sandboxMode && confirmed ? 'grab' : 'pointer',
       }}
       onClick={onClick}
+      onDragStart={e => {
+        const emptyImg = new Image()
+        emptyImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs='
+        e.dataTransfer.setDragImage(emptyImg, 0, 0)
+        setGhostPos({ x: e.clientX, y: e.clientY })
+        setIsDragging(true)
+        onDragStart?.()
+      }}
+      onDrag={e => { if (e.clientX !== 0 || e.clientY !== 0) setGhostPos({ x: e.clientX, y: e.clientY }) }}
+      onDragEnd={() => { setIsDragging(false); setGhostPos(null) }}
       onDragOver={e => { e.preventDefault(); setDragOver(true) }}
       onDragLeave={() => setDragOver(false)}
       onDrop={() => { setDragOver(false); onDrop() }}
@@ -673,6 +691,38 @@ function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, acti
         </div>
       )}
     </div>
+    {ghostPos && confirmed && typeof document !== 'undefined' && createPortal(
+      <div style={{
+        position: 'fixed',
+        left: ghostPos.x,
+        top: ghostPos.y,
+        transform: 'translate(-50%, -60%) rotate(3deg) scale(1.08)',
+        pointerEvents: 'none',
+        zIndex: 9999,
+        width: slotRef.current?.offsetWidth ?? 130,
+        background: tierBg(confirmed, fifties),
+        border: `1px solid ${G.gold}`,
+        boxShadow: '0 24px 48px rgba(0,0,0,0.85), 0 0 20px rgba(201,168,76,0.25)',
+        borderRadius: 4,
+        overflow: 'hidden',
+        padding: '20px 8px 10px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 6,
+      }}>
+        <img
+          src={`https://cdn.nba.com/headshots/nba/latest/260x190/${confirmed.person_id}.png`}
+          alt=""
+          referrerPolicy="no-referrer"
+          style={{ width: 52, height: 52, borderRadius: '50%', border: `1px solid ${G.goldDim}`, objectFit: 'cover', objectPosition: 'top', background: G.surface2 }}
+        />
+        <div style={{ textAlign: 'center', color: G.white, fontWeight: 600, fontSize: 11, lineHeight: 1.2 }}>{confirmed.full_name}</div>
+        <div style={{ color: G.grey, fontSize: 10 }}>{confirmed.position} · {eraLabel(confirmed.era)}</div>
+      </div>,
+      document.body,
+    )}
+    </>
   )
 }
 
@@ -1408,6 +1458,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
   const [sandboxTeamOpen, setSandboxTeamOpen] = useState(false)
   const [sandboxTab, setSandboxTab] = useState<'spin' | 'team' | 'player' | 'tag'>('team')
   const [sandboxPlayerSearch, setSandboxPlayerSearch] = useState('')
+  const [draggedSlotIdx, setDraggedSlotIdx] = useState<number | null>(null)
 
   const filledCount = slots.filter(s => s.player !== null).length
   const visiblePoolRef = useRef<Player[]>([])
@@ -1602,6 +1653,20 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
     setSlots(prev => prev.map((s, i) => i === idx ? { ...s, player: null, fitPenalty: 0, fitLabel: null } : s))
     setDraftedIds(prev => { const next = new Set(prev); next.delete(p.person_id); return next })
     setSelectedPlayer(null); setPendingSlotIdx(null)
+  }
+
+  const swapSlotPlayers = (fromIdx: number, toIdx: number) => {
+    if (fromIdx === toIdx) return
+    setSlots(prev => {
+      const next = [...prev]
+      const fromPlayer = next[fromIdx].player
+      const toPlayer = next[toIdx].player
+      const { penalty: fp, label: fl } = fromPlayer ? calcFitPenalty(fromPlayer, next[toIdx].position) : { penalty: 0 as const, label: null }
+      const { penalty: tp, label: tl } = toPlayer ? calcFitPenalty(toPlayer, next[fromIdx].position) : { penalty: 0 as const, label: null }
+      next[toIdx] = { ...next[toIdx], player: fromPlayer, fitPenalty: fp, fitLabel: fl }
+      next[fromIdx] = { ...next[fromIdx], player: toPlayer, fitPenalty: tp, fitLabel: tl }
+      return next
+    })
   }
 
   const previewSlot = (idx: number) => {
@@ -2629,7 +2694,9 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                     activePlayer={selectedPlayer} simEra={simEra}
                     sandboxMode={sandboxMode}
                     onRemove={slot.player ? () => removeSlotPlayer(i) : undefined}
-                    fifties={fifties} onClick={() => previewSlot(i)} onDrop={() => previewSlot(i)} />
+                    onDragStart={sandboxMode ? () => setDraggedSlotIdx(i) : undefined}
+                    fifties={fifties} onClick={() => previewSlot(i)}
+                    onDrop={() => { if (sandboxMode && draggedSlotIdx !== null) { swapSlotPlayers(draggedSlotIdx, i); setDraggedSlotIdx(null) } else previewSlot(i) }} />
                 ))}
               </div>
               <div className="grid grid-cols-2 gap-1.5" style={{ width: '66.67%', margin: '0 auto' }}>
@@ -2640,7 +2707,9 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                     activePlayer={selectedPlayer} simEra={simEra}
                     sandboxMode={sandboxMode}
                     onRemove={slot.player ? () => removeSlotPlayer(i + 3) : undefined}
-                    fifties={fifties} onClick={() => previewSlot(i + 3)} onDrop={() => previewSlot(i + 3)} />
+                    onDragStart={sandboxMode ? () => setDraggedSlotIdx(i + 3) : undefined}
+                    fifties={fifties} onClick={() => previewSlot(i + 3)}
+                    onDrop={() => { if (sandboxMode && draggedSlotIdx !== null) { swapSlotPlayers(draggedSlotIdx, i + 3); setDraggedSlotIdx(null) } else previewSlot(i + 3) }} />
                 ))}
               </div>
             </div>
@@ -2664,7 +2733,9 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                   pendingPlayer={pendingSlotIdx === i + 5 ? selectedPlayer : null} simEra={simEra}
                   sandboxMode={sandboxMode}
                   onRemove={slot.player ? () => removeSlotPlayer(i + 5) : undefined}
-                  fifties={fifties} onClick={() => previewSlot(i + 5)} onDrop={() => previewSlot(i + 5)} />
+                  onDragStart={sandboxMode ? () => setDraggedSlotIdx(i + 5) : undefined}
+                  fifties={fifties} onClick={() => previewSlot(i + 5)}
+                  onDrop={() => { if (sandboxMode && draggedSlotIdx !== null) { swapSlotPlayers(draggedSlotIdx, i + 5); setDraggedSlotIdx(null) } else previewSlot(i + 5) }} />
               ))}
             </div>
 
