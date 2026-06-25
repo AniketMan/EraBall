@@ -24,7 +24,7 @@ const C = {
 }
 
 function tierBg(player: Player): string {
-  const r = playerBaseRating(player, player.era as Era)
+  const r = playerBaseRating({ ...player, duoActiveCount: 0 }, player.era as Era)
   if (r >= 55) return 'linear-gradient(145deg, #0f0620 0%, #1e0c3d 40%, #130826 70%, #0a0415 100%)'
   if (r >= 46) return 'linear-gradient(145deg, #2e2000 0%, #6b4800 28%, #3e2a00 60%, #1c1200 100%)'
   if (r >= 38) return 'linear-gradient(145deg, #001508 0%, #002d12 40%, #001c0a 70%, #000e05 100%)'
@@ -52,6 +52,7 @@ interface ResultCardProps {
   finalsMVPId?: string | null
   finalsMVPStats?: PlayerSeasonStats | null
   sandboxMode?: boolean
+  salaryCapMode?: boolean
   customEraRange?: Era[] | null
 }
 
@@ -156,7 +157,7 @@ function StatRow({ lbl, val, lead }: { lbl: string; val: string; lead: boolean }
 }
 
 const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
-  function ResultCard({ simEra, wins, losses, seasonStats, coach, teamRating, headshots, playoffOutcome, playerAwards = {}, finalsMVPId, finalsMVPStats, sandboxMode, customEraRange }, ref) {
+  function ResultCard({ simEra, wins, losses, seasonStats, coach, teamRating, headshots, playoffOutcome, playerAwards = {}, finalsMVPId, finalsMVPStats, sandboxMode, salaryCapMode, customEraRange }, ref) {
     const starters = seasonStats.filter(s => !s.slot.startsWith('B'))
     const bench    = seasonStats.filter(s =>  s.slot.startsWith('B'))
 
@@ -222,6 +223,11 @@ const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
               {sandboxMode && (
                 <div style={{ fontFamily: BEBAS, fontSize: 28, color: C.gold, letterSpacing: '0.18em', lineHeight: 1, marginBottom: 8 }}>
                   Sandbox Mode
+                </div>
+              )}
+              {salaryCapMode && (
+                <div style={{ fontFamily: BEBAS, fontSize: 28, color: C.gold, letterSpacing: '0.18em', lineHeight: 1, marginBottom: 8 }}>
+                  Salary Cap Mode
                 </div>
               )}
               {customEraRange && (() => {

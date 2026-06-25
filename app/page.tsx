@@ -5,13 +5,18 @@ import { createPortal } from 'react-dom'
 import type { Player, Coach, CourtSlot, SlotPosition, Era, GamePhase, PlayerSeasonStats, PlayoffResult, PlayoffGame, PlayerRating } from '../lib/types'
 import ResultCard from './ResultCard'
 import LifetimeStatsModal from './LifetimeStatsModal'
-import { recordRunComplete } from '../lib/lifetimeStats'
+import LeaderboardModal from './LeaderboardModal'
+import AchievementsModal from './AchievementsModal'
+import { recordRunComplete, getLifetimeStats } from '../lib/lifetimeStats'
+import { checkAchievements, type Achievement } from '../lib/achievements'
+import { submitLeaderboardEntry } from '../lib/supabase'
 import {
   ALL_ERAS, SLOT_POSITIONS, SLOT_MPG, ERA_SEASON_GAMES, calcFitPenalty, calcEraModifier, calcTeamRating,
-  simulateSeason, simulatePlayoffs, calcTS, coachBonus, effectiveCoachBonus, coachChampBonus, playerMatchesEra, withEraStats, applyFlexTag, applyRings, applyAnchors, applyTimeless, applyShootingStar,
+  simulateSeason, simulatePlayoffs, calcTS, coachBonus, effectiveCoachBonus, coachChampBonus, playerMatchesEra, withEraStats, applyFlexTag, applyRings, applyAnchors, applyTimeless, applyShootingStar, applyGlassCleaner, applyDuo,
   firstRoundLabel, playerBaseRating, genOppTeamStats, calcTeamDefTotals, calcRebFactor,
+  playerTier, CAP_QUOTAS,
 } from '../lib/gameLogic'
-import type { OppTeamStats } from '../lib/gameLogic'
+import type { OppTeamStats, PlayerTier } from '../lib/gameLogic'
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const G = {
@@ -32,8 +37,20 @@ const G = {
 const BEBAS = { fontFamily: 'var(--font-bebas), "Bebas Neue", impact, sans-serif' }
 
 // ─── Tier backgrounds ─────────────────────────────────────────────────────────
-function tierBg(player: Player): string {
+// 50s era theme: a metallic greyscale luminance ladder so tiers stay distinct under
+// the full-greyscale filter (which would otherwise flatten the color gradients into
+// the same muddy grey). Kept in the darker range so white/gold card text stays legible.
+function tierBg(player: Player, fifties = false): string {
   const r = playerBaseRating(player, player.era as Era)
+  if (fifties) {
+    if (r >= 55) return 'linear-gradient(135deg, #949498 0%, #6c6c78 16%, #606070 38%, #6e6e7e 60%, #808090 78%, #949498 100%)'  // S: bright silver edges, readable center
+    if (r >= 46) return 'linear-gradient(145deg, #606068 0%, #4c4c58 42%, #444452 72%, #585862 100%)'  // A: medium silver
+    if (r >= 38) return 'linear-gradient(145deg, #464650 0%, #343440 42%, #2e2e38 72%, #3e3e48 100%)'  // B: dark steel — clear step below A
+    if (r >= 31) return 'linear-gradient(145deg, #2e2e36 0%, #222230 42%, #1e1e26 72%, #28282e 100%)'  // C: darker — clear step below B
+    if (r >= 24) return 'linear-gradient(145deg, #222228 0%, #1a1a20 42%, #161618 72%, #1e1e22 100%)'  // D: very dark
+    if (r >= 16) return 'linear-gradient(145deg, #1a1a1e 0%, #121214 42%, #0e0e10 72%, #161618 100%)'  // E: near black
+    return '#0e0e10'                                                                                    // F: flat
+  }
   if (r >= 55) return 'linear-gradient(145deg, #0f0620 0%, #1e0c3d 40%, #130826 70%, #0a0415 100%)'  // S: amethyst
   if (r >= 46) return 'linear-gradient(145deg, #2e2000 0%, #6b4800 28%, #3e2a00 60%, #1c1200 100%)'  // A: gold
   if (r >= 38) return 'linear-gradient(145deg, #001508 0%, #002d12 40%, #001c0a 70%, #000e05 100%)'  // B: emerald
@@ -41,6 +58,18 @@ function tierBg(player: Player): string {
   if (r >= 24) return 'linear-gradient(145deg, #1a0900 0%, #2e1200 40%, #1e0c00 70%, #100600 100%)'  // D: bronze
   if (r >= 16) return 'linear-gradient(145deg, #0e0e0e 0%, #181818 50%, #0e0e0e 100%)'               // E: charcoal
   return '#0a0a0a'                                                                                    // F: flat
+}
+
+// Tier-keyed metallic border for the 50s theme (brighter edge = higher tier)
+function fiftiesTierBorder(player: Player): string {
+  const r = playerBaseRating(player, player.era as Era)
+  if (r >= 55) return '#a0a0aa'
+  if (r >= 46) return '#686870'
+  if (r >= 38) return '#505058'
+  if (r >= 31) return '#3a3a42'
+  if (r >= 24) return '#2c2c34'
+  if (r >= 16) return '#222228'
+  return '#1a1a1e'
 }
 
 function eraLabel(era: Era | string): string {
@@ -316,7 +345,7 @@ function CoachHeadshot({ name, size }: { name: string; size: number }) {
 }
 
 // ─── Player card ──────────────────────────────────────────────────────────────
-function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode }: { player: Player; onDragStart?: () => void; displayEra?: Era; activeEra?: Era; devMode?: boolean }) {
+function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode, fifties, duoActiveCount }: { player: Player; onDragStart?: () => void; displayEra?: Era; activeEra?: Era; devMode?: boolean; fifties?: boolean; duoActiveCount?: number }) {
   const ts = (calcTS(player) * 100).toFixed(1)
   const imp = (stat: string) => player.imputed_stats?.includes(stat) ?? false
   const fmt = (stat: string, val: string | null | undefined) =>
@@ -324,20 +353,28 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode }: { p
   const r = playerBaseRating(player, player.era as Era)
   const isSTier = r >= 55
   const isATier = r >= 46 && r < 54
+  const sec     = fifties ? '#e2e2e2' : G.grey
+  const secDark = fifties ? '#c8c8c8' : G.greyDark
+  const tierLabel = r >= 55 ? 'S' : r >= 46 ? 'A' : r >= 38 ? 'B' : r >= 31 ? 'C' : r >= 24 ? 'D' : r >= 16 ? 'E' : 'F'
 
   return (
     <div
       draggable={!!onDragStart}
       onDragStart={onDragStart}
       className={`select-none transition-all ${onDragStart ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}
-      style={{ position: 'relative', overflow: 'hidden', background: tierBg(player), border: `1px solid ${G.border}`, padding: '16px' }}
+      style={{ position: 'relative', overflow: 'hidden', background: tierBg(player, fifties), border: `1px solid ${fifties ? fiftiesTierBorder(player) : G.border}`, padding: '16px' }}
     >
+      {fifties && (
+        <div style={{ position: 'absolute', top: 6, right: 9, ...BEBAS, fontSize: 20, letterSpacing: '0.1em', color: '#c8c8d2', lineHeight: 1, zIndex: 2, pointerEvents: 'none' }}>
+          {tierLabel}
+        </div>
+      )}
       <div className="flex items-start gap-3 mb-3">
         <PlayerHeadshot personId={player.person_id} size={80} initial={player.position?.[0]} />
         <div className="flex-1 flex items-start justify-between min-w-0">
           <div className="min-w-0">
             <div className="font-bold text-white text-base leading-tight truncate">{player.full_name}</div>
-            <div className="text-xs mt-0.5 uppercase tracking-wide" style={{ color: G.grey }}>
+            <div className="text-xs mt-0.5 uppercase tracking-wide" style={{ color: sec }}>
               {player.position} - {eraLabel(player.era)} - {player.eraTeam ?? (displayEra ? playerTeamForEra(player, displayEra) : player.team_abbreviation)}
             </div>
           </div>
@@ -377,10 +414,24 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode }: { p
                 </span>
               </TagTooltip>
             )}
+            {player.glassClean && (
+              <TagTooltip tip="Elite rebounder. Crashes the boards on both ends, boosting team second-chance points and limiting opponent possessions.">
+                <span className="text-xs uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: '#34D399' }}>
+                  Glass Cleaner
+                </span>
+              </TagTooltip>
+            )}
             {player.timeless && (
               <TagTooltip tip="Transcendent skill set. Minimal era penalties across all decades. Minor penalty only if 6+ eras from home era.">
                 <span className="text-xs uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: '#C084FC' }}>
                   Timeless
+                </span>
+              </TagTooltip>
+            )}
+            {player.duoPartners && (
+              <TagTooltip tip={(duoActiveCount ?? 0) > 0 ? `Dynamic Duo active. +${(duoActiveCount ?? 0) * 5} rating boost.` : `Draft ${player.duoPartners.join(' or ')} to activate the Dynamic Duo bonus (+5 per partner).`}>
+                <span className="text-xs uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: (duoActiveCount ?? 0) > 0 ? '#4ECDC4' : '#444444', letterSpacing: '0.08em' }}>
+                  Dynamic Duo
                 </span>
               </TagTooltip>
             )}
@@ -409,7 +460,7 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode }: { p
         {[['PTS', player.PTS], ['REB', player.REB], ['AST', player.AST]].map(([k, v]) => (
           <div key={String(k)} className="text-center py-3" style={{ background: 'rgba(0,0,0,0.55)' }}>
             <div className="text-2xl font-bold" style={{ ...BEBAS, color: G.gold, letterSpacing: '0.05em' }}>{Number(v).toFixed(1)}</div>
-            <div className="text-xs" style={{ color: G.greyDark }}>{k}</div>
+            <div className="text-xs" style={{ color: secDark }}>{k}</div>
           </div>
         ))}
       </div>
@@ -422,8 +473,8 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode }: { p
           ['STL', fmt('STL', player.STL?.toFixed(1)), imp('STL')],
         ].map(([k, v, isEst]) => (
           <div key={String(k)} className="text-center py-2" style={{ background: 'rgba(0,0,0,0.45)' }}>
-            <div className="text-xs font-medium" style={{ color: isEst ? G.grey : G.white }}>{v}</div>
-            <div className="text-xs" style={{ color: G.greyDark }}>{k}</div>
+            <div className="text-xs font-medium" style={{ color: isEst ? sec : G.white }}>{v}</div>
+            <div className="text-xs" style={{ color: secDark }}>{k}</div>
           </div>
         ))}
       </div>
@@ -435,12 +486,12 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode }: { p
           ['WT',  player.weight, false],
         ].map(([k, v, isEst]) => (
           <div key={String(k)} className="text-center py-2" style={{ background: 'rgba(0,0,0,0.45)' }}>
-            <div className="text-xs font-medium" style={{ color: isEst ? G.grey : G.white }}>{v}</div>
-            <div className="text-xs" style={{ color: G.greyDark }}>{k}</div>
+            <div className="text-xs font-medium" style={{ color: isEst ? sec : G.white }}>{v}</div>
+            <div className="text-xs" style={{ color: secDark }}>{k}</div>
           </div>
         ))}
       </div>
-      <div className="mt-2 text-xs text-center" style={{ color: G.greyDark }}>
+      <div className="mt-2 text-xs text-center" style={{ color: secDark }}>
         {(() => {
           if (!activeEra && !player.eraTeam) return `${player.from_year}–${player.to_year ?? 'present'}`
           const seasons = Math.max(1, Math.ceil(player.GP / 82))
@@ -465,14 +516,16 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode }: { p
 }
 
 // ─── Court slot ───────────────────────────────────────────────────────────────
-function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, activePlayer, simEra, sandboxMode, onRemove }: {
+function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, activePlayer, simEra, sandboxMode, onRemove, fifties }: {
   slot: CourtSlot; onClick: () => void; onDrop: () => void; highlighted: boolean
   pendingPlayer?: Player | null; activePlayer?: Player | null; simEra?: Era
-  sandboxMode?: boolean; onRemove?: () => void
+  sandboxMode?: boolean; onRemove?: () => void; fifties?: boolean
 }) {
   const [dragOver, setDragOver] = useState(false)
   const confirmed = slot.player
   const isPending = !confirmed && !!pendingPlayer
+  const sec     = fifties ? '#e2e2e2' : G.grey
+  const secDark = fifties ? '#c8c8c8' : G.greyDark
 
   const { label: pendingFitLabel } = pendingPlayer ? calcFitPenalty(pendingPlayer, slot.position) : { label: null }
 
@@ -504,7 +557,7 @@ function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, acti
       className={`relative overflow-hidden cursor-pointer select-none court-slot${confirmed ? ' court-slot--filled' : ''}`}
       style={{
         minHeight: 140,
-        background: isPending ? `${G.gold}0a` : confirmed ? tierBg(confirmed) : G.black,
+        background: isPending ? `${G.gold}0a` : confirmed ? tierBg(confirmed, fifties) : G.black,
         border: `1px solid ${fitBorder}`,
         outline: isPending ? `1px solid ${G.goldDim}` : 'none',
         outlineOffset: '-3px',
@@ -520,7 +573,7 @@ function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, acti
       {/* Position label + minutes (bench only) */}
       <div className="absolute top-1 left-1.5" style={{ lineHeight: 1 }}>
         <div style={{ ...BEBAS, letterSpacing: '0.1em' }} className="text-[11px] md:text-[16px]">
-          <span style={{ color: G.goldDim }}>{slot.position}</span>
+          <span style={{ color: fifties ? '#b0b0ba' : G.goldDim }}>{slot.position}</span>
         </div>
       </div>
 
@@ -562,33 +615,34 @@ function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, acti
       })()}
       {confirmed ? (
         <div className="flex flex-col items-center px-2 pb-2 pt-5 gap-1.5">
+          {fifties && (() => { const cr = playerBaseRating(confirmed, confirmed.era as Era); const tl = cr >= 55 ? 'S' : cr >= 46 ? 'A' : cr >= 38 ? 'B' : cr >= 31 ? 'C' : cr >= 24 ? 'D' : cr >= 16 ? 'E' : 'F'; return <div style={{ position: 'absolute', top: 4, right: 7, ...BEBAS, fontSize: 16, letterSpacing: '0.1em', color: '#c8c8d2', lineHeight: 1, zIndex: 2, pointerEvents: 'none' }}>{tl}</div> })()}
           <PlayerHeadshot personId={confirmed.person_id} size={52} initial={confirmed.position?.[0]} />
           <div className="w-full text-center min-w-0">
             <div className="font-semibold text-white leading-tight truncate" style={{ fontSize: 11 }}>{confirmed.full_name}</div>
-            <div style={{ color: G.grey, fontSize: 10 }} className="mt-0.5 truncate">{confirmed.position} - {eraLabel(confirmed.era)}</div>
+            <div style={{ color: sec, fontSize: 10 }} className="mt-0.5 truncate">{confirmed.position} - {eraLabel(confirmed.era)}</div>
             {/* Desktop: x.x ppg / x.x rpg / x.x apg */}
             <div className="hidden md:flex justify-center items-baseline gap-1 mt-1 flex-wrap" style={{ fontSize: 10 }}>
               <span style={{ color: G.gold, fontWeight: 700 }}>{confirmed.PTS?.toFixed(1)}</span>
-              <span style={{ color: G.greyDark, fontSize: 8 }}>ppg</span>
-              <span style={{ color: G.greyDark }}>·</span>
-              <span style={{ color: G.grey }}>{confirmed.REB?.toFixed(1)}</span>
-              <span style={{ color: G.greyDark, fontSize: 8 }}>rpg</span>
-              <span style={{ color: G.greyDark }}>·</span>
-              <span style={{ color: G.grey }}>{confirmed.AST?.toFixed(1)}</span>
-              <span style={{ color: G.greyDark, fontSize: 8 }}>apg</span>
+              <span style={{ color: secDark, fontSize: 8 }}>ppg</span>
+              <span style={{ color: secDark }}>·</span>
+              <span style={{ color: sec }}>{confirmed.REB?.toFixed(1)}</span>
+              <span style={{ color: secDark, fontSize: 8 }}>rpg</span>
+              <span style={{ color: secDark }}>·</span>
+              <span style={{ color: sec }}>{confirmed.AST?.toFixed(1)}</span>
+              <span style={{ color: secDark, fontSize: 8 }}>apg</span>
             </div>
             {/* Mobile: pts/reb/ast rounded to nearest whole number */}
             <div className="flex md:hidden justify-center mt-1" style={{ fontSize: 11, color: G.gold, fontWeight: 700 }}>
               {Math.round(confirmed.PTS ?? 0)}<span style={{ color: G.greyDark }}>/</span>{Math.round(confirmed.REB ?? 0)}<span style={{ color: G.greyDark }}>/</span>{Math.round(confirmed.AST ?? 0)}
             </div>
-            {!!confirmed.FG3_PCT && (
+            {!!confirmed.FG3_PCT && simEra && !['50s', '60s', '70s'].includes(simEra) && (
               <div className="mt-0.5" style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', color: confirmed.FG3_PCT >= 0.40 ? G.gold : confirmed.FG3_PCT >= 0.37 ? '#C9A030' : confirmed.FG3_PCT >= 0.34 ? G.grey : confirmed.FG3_PCT >= 0.30 ? G.greyDark : G.red }}>
                 {(confirmed.FG3_PCT * 100).toFixed(1)}% 3PT
               </div>
             )}
             {slot.fitLabel && <div className="mt-1" style={{ fontSize: 10, color: fitLabelColor(slot.fitLabel) }}>{slot.fitLabel}</div>}
             {simEra && (() => { const mod = calcEraModifier(confirmed, simEra); return (
-              <div className="mt-0.5" style={{ fontSize: 9, color: mod >= 1.0 ? G.gold : mod >= 0.75 ? G.grey : G.red, letterSpacing: '0.05em' }}>
+              <div className="mt-0.5" style={{ fontSize: 9, color: mod >= 1.0 ? G.gold : (mod < 0.75 && !fifties) ? G.red : sec, letterSpacing: '0.05em' }}>
                 Era Fit {Math.round(mod * 100)}%
               </div>
             ) })()}
@@ -600,10 +654,10 @@ function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, acti
           <PlayerHeadshot personId={pendingPlayer.person_id} size={52} initial={pendingPlayer.position?.[0]} />
           <div className="w-full text-center min-w-0">
             <div className="font-semibold text-white leading-tight truncate" style={{ fontSize: 11 }}>{pendingPlayer.full_name}</div>
-            <div style={{ color: G.grey, fontSize: 10 }} className="mt-0.5">{pendingPlayer.position} - {eraLabel(pendingPlayer.era)}</div>
+            <div style={{ color: sec, fontSize: 10 }} className="mt-0.5">{pendingPlayer.position} - {eraLabel(pendingPlayer.era)}</div>
             {pendingFitLabel && <div className="mt-1" style={{ fontSize: 10, color: fitLabelColor(pendingFitLabel) }}>{pendingFitLabel}</div>}
             {simEra && (() => { const mod = calcEraModifier(pendingPlayer, simEra); return (
-              <div className="mt-0.5" style={{ fontSize: 9, color: mod >= 1.0 ? G.gold : mod >= 0.75 ? G.grey : G.red, letterSpacing: '0.05em' }}>
+              <div className="mt-0.5" style={{ fontSize: 9, color: mod >= 1.0 ? G.gold : (mod < 0.75 && !fifties) ? G.red : sec, letterSpacing: '0.05em' }}>
                 Era Fit {Math.round(mod * 100)}%
               </div>
             ) })()}
@@ -969,7 +1023,7 @@ function PatchNotesModal({ onClose }: { onClose: () => void }) {
   )
 }
 
-function EraSelection({ onEraSelected, onSandboxSelected, onRestart, onLifetimeStats, onEraPreview, muteBtn, eraThemeBtn }: { onEraSelected: (era: Era) => void; onSandboxSelected: (era: Era) => void; onRestart: () => void; onLifetimeStats: () => void; onEraPreview?: (era: Era) => void; muteBtn?: React.ReactNode; eraThemeBtn?: React.ReactNode }) {
+function EraSelection({ onEraSelected, onSandboxSelected, onSalaryCapSelected, onRestart, onLifetimeStats, onLeaderboard, onAchievements, onEraPreview, muteBtn, eraThemeBtn }: { onEraSelected: (era: Era) => void; onSandboxSelected: (era: Era) => void; onSalaryCapSelected: (era: Era) => void; onRestart: () => void; onLifetimeStats: () => void; onLeaderboard: () => void; onAchievements: () => void; onEraPreview?: (era: Era) => void; muteBtn?: React.ReactNode; eraThemeBtn?: React.ReactNode }) {
   const [spinning, setSpinning] = useState(false)
   const [era, setEra] = useState<Era | null>(null)
   const [showHelp, setShowHelp] = useState(false)
@@ -1178,7 +1232,12 @@ function EraSelection({ onEraSelected, onSandboxSelected, onRestart, onLifetimeS
           </Btn>
           {era && !spinning && (
             <Btn onClick={() => onEraSelected(era)} variant="gold" className="w-48 py-4 text-base" style={{ animation: 'begin-draft-pulse 2s ease-in-out infinite' }}>
-              Begin Draft
+              Normal Draft
+            </Btn>
+          )}
+          {era && !spinning && (
+            <Btn onClick={() => onSalaryCapSelected(era)} variant="ghost" className="w-48 py-3 salary-cap-pulse" style={{ borderColor: '#9b6dff', color: '#9b6dff' }}>
+              Salary Cap Draft
             </Btn>
           )}
           <button
@@ -1198,8 +1257,14 @@ function EraSelection({ onEraSelected, onSandboxSelected, onRestart, onLifetimeS
               </Btn>
             </>
           )}
+          <Btn onClick={onLeaderboard} variant="ghost" className="w-48 py-3 text-sm">
+            Leaderboard
+          </Btn>
           <Btn onClick={onLifetimeStats} variant="ghost" className="w-48 py-3 text-sm">
             Lifetime Stats
+          </Btn>
+          <Btn onClick={onAchievements} variant="ghost" className="w-48 py-3 text-sm">
+            Achievements
           </Btn>
           <button
             onClick={() => setShowPatchNotes(true)}
@@ -1207,10 +1272,7 @@ function EraSelection({ onEraSelected, onSandboxSelected, onRestart, onLifetimeS
           >
             What's New!
           </button>
-          <div style={{ fontSize: 10, color: G.greyDark, letterSpacing: '0.15em', marginTop: 2 }}>v1.4</div>
-          <div style={{ fontSize: 9, color: '#CC8844', letterSpacing: '0.04em', marginTop: 8, maxWidth: 280, lineHeight: 1.6, textAlign: 'center' }}>
-            Known issue: players in Southeast Asia or other unknown blocked countries may see blank team names on spin, and the game is unplayable. Fix is in progress! Expected by June 25 at the latest. In the meantime, a VPN temporarily resolves it. Apologies for the disruption!
-          </div>
+          <div style={{ fontSize: 10, color: G.greyDark, letterSpacing: '0.15em', marginTop: 2 }}>v1.5</div>
         </div>
       </div>
       {showPatchNotes && <PatchNotesModal onClose={() => setShowPatchNotes(false)} />}
@@ -1224,19 +1286,22 @@ function EraSelection({ onEraSelected, onSandboxSelected, onRestart, onLifetimeS
 }
 
 // ─── Phase 2: Draft ───────────────────────────────────────────────────────────
-type TagKey = 'timeless' | 'offAnchor' | 'defAnchor' | 'shootingStar' | 'flex' | 'champion'
+type TagKey = 'timeless' | 'offAnchor' | 'defAnchor' | 'shootingStar' | 'glassClean' | 'flex' | 'champion' | 'dynamicDuo'
 const TAG_OPTIONS: { key: TagKey; label: string; color: string }[] = [
-  { key: 'timeless',     label: 'Timeless',      color: '#C084FC' },
-  { key: 'offAnchor',    label: 'Offensive Anchor', color: G.gold },
-  { key: 'defAnchor',    label: 'Defensive Anchor', color: '#4A9ECC' },
-  { key: 'shootingStar', label: 'Shooting Star',  color: '#F472B6' },
-  { key: 'flex',         label: 'Flex',           color: '#4A9ECC' },
-  { key: 'champion',     label: 'Champion',       color: G.gold },
+  { key: 'timeless',     label: 'Timeless',         color: '#C084FC' },
+  { key: 'offAnchor',    label: 'Offensive Anchor',  color: G.gold },
+  { key: 'defAnchor',    label: 'Defensive Anchor',  color: '#4A9ECC' },
+  { key: 'shootingStar', label: 'Shooting Star',     color: '#F472B6' },
+  { key: 'glassClean',   label: 'Glass Cleaner',     color: '#34D399' },
+  { key: 'flex',         label: 'Flex',              color: '#4A9ECC' },
+  { key: 'champion',     label: 'Champion',          color: G.gold },
+  { key: 'dynamicDuo',   label: 'Dynamic Duo',       color: '#4ECDC4' },
 ]
 
-function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandbox, greyscaleBtn, muteBtn }: {
-  simEra: Era; players: Player[]; onDraftComplete: (slots: CourtSlot[], customEras: Era[] | null) => void; onRestart: () => void; startInSandbox?: boolean; greyscaleBtn?: React.ReactNode; muteBtn?: React.ReactNode
+function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandbox, salaryCapMode, greyscaleBtn, muteBtn, themeFilter }: {
+  simEra: Era; players: Player[]; onDraftComplete: (slots: CourtSlot[], customEras: Era[] | null) => void; onRestart: () => void; startInSandbox?: boolean; salaryCapMode?: boolean; greyscaleBtn?: React.ReactNode; muteBtn?: React.ReactNode; themeFilter?: string
 }) {
+  const fifties = themeFilter === 'grayscale(1)'
   const [slots, setSlots] = useState<CourtSlot[]>(emptySlots())
   const [spinning, setSpinning] = useState(false)
   const [rosterPool, setRosterPool] = useState<Player[]>([])
@@ -1255,6 +1320,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
   const [draftedIds, setDraftedIds] = useState<Set<string>>(new Set())
   const [awaitingSpin, setAwaitingSpin] = useState(false)
   const [noPlayersMsg, setNoPlayersMsg] = useState(false)
+  const [capViolationMsg, setCapViolationMsg] = useState('')
   const [spinsThisRound, setSpinsThisRound] = useState(0)
   const [respinUsed, setRespinUsed] = useState(false)
   const [eraFilter, setEraFilter] = useState<Set<Era>>(new Set(ALL_ERAS))
@@ -1324,6 +1390,21 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
     [validCombos, sandboxTeam]
   )
 
+  const tierCounts = useMemo(() => {
+    const counts: Record<PlayerTier, number> = { s: 0, a: 0, b: 0, c: 0, d: 0 }
+    for (const s of slots) {
+      if (s.player) counts[playerTier(playerBaseRating(s.player, simEra))]++
+    }
+    return counts
+  }, [slots, simEra])
+
+  const neededTiers = useMemo<PlayerTier[]>(() =>
+    salaryCapMode
+      ? (Object.entries(CAP_QUOTAS) as [PlayerTier, number][]).filter(([t, q]) => tierCounts[t] < q).map(([t]) => t)
+      : [],
+    [salaryCapMode, tierCounts]
+  )
+
   const spin = useCallback(() => {
     if (rosterPool.length > 0) { setSpinsThisRound(prev => prev + 1); setRespinUsed(true) }
     setEraFilterLocked(true)
@@ -1358,7 +1439,21 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
         // Land
         const filteredCombos = spinShouldFilter ? validCombos.filter(c => spinEraFilter.has(c.era)) : validCombos
         if (filteredCombos.length === 0) { setSpinning(false); return }
-        const { team, era } = filteredCombos[Math.floor(Math.random() * filteredCombos.length)]
+        // Salary cap guarantee: if tiers are still needed, bias combos toward those that have one
+        let pickableCombos = filteredCombos
+        if (salaryCapMode && neededTiers.length > 0) {
+          const capCombos = filteredCombos.filter(({ team, era }) =>
+            players.some(p => {
+              const eraTeams = p.all_teams_by_era?.[era] as string[] | undefined
+              const onTeam = eraTeams ? eraTeams.includes(team) : playerTeamForEra(p, era) === team
+              if (!onTeam || !playerMatchesEra(p, era) || draftedIds.has(p.person_id)) return false
+              const base = playerBaseRating(withEraStats(p, era, team), simEra)
+              return (neededTiers as string[]).includes(playerTier(base))
+            })
+          )
+          if (capCombos.length > 0) pickableCombos = capCombos
+        }
+        const { team, era } = pickableCombos[Math.floor(Math.random() * pickableCombos.length)]
         setSpinPhase('land')
         setSpinTeamDisplay(team); setSpinEraDisplay(era)
         setSpinKey(k => k + 1)
@@ -1374,14 +1469,14 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
             return ids
           }
           setLockedTeam(team); setLockedEra(era)
-          setRosterPool([...pool].map(p => applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, era, team))))))).sort((a, b) => (b.PTS ?? 0) - (a.PTS ?? 0)))
+          setRosterPool([...pool].map(p => applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, era, team))))))))).sort((a, b) => (b.PTS ?? 0) - (a.PTS ?? 0)))
           setSpinning(false)
           return ids
         })
       }
     }
     setTimeout(doTick, schedule[ticks++])
-  }, [players, allTeams, validCombos, rosterPool, respinUsed, eraFilter, eraFilterLocked])
+  }, [players, allTeams, validCombos, rosterPool, respinUsed, eraFilter, eraFilterLocked, draftedIds, salaryCapMode, neededTiers, simEra])
 
   const removeSlotPlayer = (idx: number) => {
     const p = slots[idx].player
@@ -1400,6 +1495,15 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
 
   const confirmPick = () => {
     if (pendingSlotIdx === null || !selectedPlayer) return
+    if (salaryCapMode) {
+      const tier = playerTier(playerBaseRating(selectedPlayer, simEra))
+      if (tierCounts[tier] >= CAP_QUOTAS[tier]) {
+        setCapViolationMsg(`${tier.toUpperCase()} tier is full (${CAP_QUOTAS[tier]}/${CAP_QUOTAS[tier]}). Pick a different player.`)
+        setTimeout(() => setCapViolationMsg(''), 3000)
+        setPendingSlotIdx(null)
+        return
+      }
+    }
     // selectedPlayer already has era stats applied from when the pool was built
     const { penalty, label } = calcFitPenalty(selectedPlayer, slots[pendingSlotIdx].position)
     setSlots(prev => prev.map((s, i) => i === pendingSlotIdx ? { ...s, player: selectedPlayer, fitPenalty: penalty, fitLabel: label } : s))
@@ -1457,7 +1561,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
         const team = isAll
           ? ((p.all_teams_by_era?.[devEra] as string[] | undefined)?.[0] ?? p.team_abbreviation)
           : devTeam
-        return applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, devEra, team))))))
+        return applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, devEra, team))))))))
       }).sort((a, b) => (b.PTS ?? 0) - (a.PTS ?? 0))
       setLockedTeam(devTeam); setLockedEra(devEra)
       setSpinTeamDisplay(isAll ? devEra : devTeam); setSpinEraDisplay(devEra)
@@ -1478,7 +1582,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
       if (pool.length === 0) { alert(`No players found for ${sandboxTeam} - ${sandboxEra}`); return ids }
       const sorted = pool.map(p => {
         const team = sandboxTeam === 'ALL' ? (playerTeamForEra(p, sandboxEra) ?? p.team_abbreviation) : sandboxTeam
-        return applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, sandboxEra, team))))))
+        return applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, sandboxEra, team))))))))
       }).sort((a, b) => (b.PTS ?? 0) - (a.PTS ?? 0))
       setLockedTeam(sandboxTeam); setLockedEra(sandboxEra)
       setSpinTeamDisplay(sandboxTeam); setSpinEraDisplay(sandboxEra)
@@ -1499,7 +1603,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
       const [era, team] = key.split(':') as [Era, string]
       if (!era || !team || seen.has(key)) continue
       seen.add(key)
-      versions.push(applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(match, era, team)))))))
+      versions.push(applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(match, era, team)))))))))
     }
     if (versions.length === 0) { alert(`No era stats found for ${match.full_name}`); return }
     versions.sort((a, b) => ALL_ERAS.indexOf(a.era as Era) - ALL_ERAS.indexOf(b.era as Era))
@@ -1519,8 +1623,10 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
         case 'offAnchor':    return !!p.offAnchor
         case 'defAnchor':    return !!p.defAnchor
         case 'shootingStar': return !!p.shootingStar
+        case 'glassClean':   return !!p.glassClean
         case 'flex':         return !!p.flexPositions
         case 'champion':     return (p.rings ?? 0) > 0
+        case 'dynamicDuo':   return !!p.duoPartners
         default:             return false
       }
     }
@@ -1531,7 +1637,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
         const [era, team] = key.split(':') as [Era, string]
         if (!era || !team || seen.has(key)) continue
         seen.add(key)
-        const v = applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, era, team))))))
+        const v = applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, era, team))))))))
         if (hasTag(v)) tagged.push(v)
       }
     }
@@ -1554,7 +1660,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
     const top9 = scored
       .sort((a, b) => b.score - a.score)
       .slice(0, 9)
-      .map(({ p }) => applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, p.era as Era, p.team_abbreviation)))))))
+      .map(({ p }) => applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, p.era as Era, p.team_abbreviation)))))))))
     const newSlots = SLOT_POSITIONS.map((pos, i) => {
       const { penalty, label } = calcFitPenalty(top9[i], pos)
       return { position: pos, player: top9[i], fitPenalty: penalty, fitLabel: label }
@@ -1569,7 +1675,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
     const shuffled = [...players].sort(() => Math.random() - 0.5)
     const picks = shuffled.slice(0, 9)
     const newSlots = SLOT_POSITIONS.map((pos, i) => {
-      const player = applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(picks[i], picks[i].era as Era, picks[i].team_abbreviation))))))
+      const player = applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(picks[i], picks[i].era as Era, picks[i].team_abbreviation))))))))
       const { penalty, label } = calcFitPenalty(player, pos)
       return { position: pos, player, fitPenalty: penalty, fitLabel: label }
     })
@@ -1601,7 +1707,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
         return teamsForEra?.includes(team)
       })
       if (!match) continue
-      const tagged = applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(match, era, team))))))
+      const tagged = applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(match, era, team))))))))
       const slotIdx = SLOT_POSITIONS.indexOf(slot)
       const { penalty, label } = calcFitPenalty(tagged, slot)
       newSlots[slotIdx] = { position: slot, player: tagged, fitPenalty: penalty, fitLabel: label }
@@ -1634,7 +1740,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
         return teamsForEra?.includes(team)
       })
       if (!match) continue
-      const tagged = applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(match, era, team))))))
+      const tagged = applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(match, era, team))))))))
       const slotIdx = SLOT_POSITIONS.indexOf(slot)
       const { penalty, label } = calcFitPenalty(tagged, slot)
       newSlots[slotIdx] = { position: slot, player: tagged, fitPenalty: penalty, fitLabel: label }
@@ -1667,7 +1773,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
         return teamsForEra?.includes(team)
       })
       if (!match) continue
-      const tagged = applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(match, era, team))))))
+      const tagged = applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(match, era, team))))))))
       const slotIdx = SLOT_POSITIONS.indexOf(slot)
       const { penalty, label } = calcFitPenalty(tagged, slot)
       newSlots[slotIdx] = { position: slot, player: tagged, fitPenalty: penalty, fitLabel: label }
@@ -1700,7 +1806,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
         return teamsForEra?.includes(team)
       })
       if (!match) continue
-      const tagged = applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(match, era, team))))))
+      const tagged = applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(match, era, team))))))))
       const slotIdx = SLOT_POSITIONS.indexOf(slot)
       const { penalty, label } = calcFitPenalty(tagged, slot)
       newSlots[slotIdx] = { position: slot, player: tagged, fitPenalty: penalty, fitLabel: label }
@@ -1958,7 +2064,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                             <div
                               key={p.person_id}
                               onClick={() => {
-                                const tagged = applyShootingStar(applyTimeless(applyRings(applyFlexTag(withEraStats(p, p.era as Era, p.team_abbreviation)))))
+                                const tagged = applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyRings(applyFlexTag(withEraStats(p, p.era as Era, p.team_abbreviation)))))))
                                 setLockedTeam(p.team_abbreviation)
                                 setLockedEra(p.era as Era)
                                 setSpinTeamDisplay(p.team_abbreviation)
@@ -1984,6 +2090,29 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
             ) : (
               /* ── Normal spin panel ── */
               <>
+                {salaryCapMode && (() => {
+                  const TIER_COL: Record<PlayerTier, string> = { s: '#9b6dff', a: '#C9A84C', b: '#4caf78', c: '#5b8fd4', d: '#c47a35' }
+                  const TIER_DESC: Record<PlayerTier, string> = { s: 'Superstars', a: 'Stars', b: 'Starters', c: 'Rotation', d: 'Role / Spec' }
+                  return (
+                    <div style={{ borderBottom: `1px solid ${G.border}`, padding: '10px 8px 8px' }}>
+                      <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: G.greyDark, marginBottom: 6, textAlign: 'center' }}>Salary Cap</div>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        {(Object.entries(CAP_QUOTAS) as [PlayerTier, number][]).map(([tier, quota]) => {
+                          const filled = tierCounts[tier]
+                          const done = filled >= quota
+                          const col = TIER_COL[tier]
+                          return (
+                            <div key={tier} style={{ flex: 1, textAlign: 'center', border: `1px solid ${done ? col + '55' : G.border}`, background: done ? col + '10' : 'transparent', padding: '6px 4px 5px', transition: 'all 0.2s' }}>
+                              <div style={{ ...BEBAS, fontSize: 28, lineHeight: 1, color: done ? col : '#333', transition: 'color 0.2s' }}>{tier.toUpperCase()}</div>
+                              <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.05em', color: done ? col + 'cc' : G.greyDark, marginTop: 2 }}>{filled}/{quota}</div>
+                              <div style={{ fontSize: 6, letterSpacing: '0.05em', color: done ? col + '88' : '#333', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{TIER_DESC[tier]}</div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })()}
                 <div className="grid grid-cols-2 gap-px" style={{ background: G.border }}>
                   <div className="py-5 text-center" style={{ background: G.surface }}>
                     <div className="text-xs uppercase tracking-[0.2em] mb-2" style={{ color: G.grey }}>Team</div>
@@ -2057,7 +2186,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                       <div className="px-3 py-2 flex items-center justify-between gap-3">
                         <span className="text-xs" style={{ color: eraFilterLocked ? G.goldDim : G.greyDark, letterSpacing: '0.03em' }}>
                           {eraFilterLocked
-                            ? `Locked. Excluding ${ALL_ERAS.length - eraFilter.size} era${ALL_ERAS.length - eraFilter.size !== 1 ? 's' : ''}. Will appear on result card.`
+                            ? `Locked. Excluding ${ALL_ERAS.length - eraFilter.size} era${ALL_ERAS.length - eraFilter.size !== 1 ? 's' : ''}. Will appear on result card. Not eligible for leaderboard.`
                             : 'Select eras, then lock to apply.'}
                         </span>
                         <button
@@ -2182,11 +2311,13 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                     return sorted.map(p => {
                     const ts = (calcTS(p) * 100).toFixed(1)
                     const isSel = selectedPlayer?.person_id === p.person_id && selectedPlayer?.era === p.era && selectedPlayer?.eraTeam === p.eraTeam
+                    const capBlocked = salaryCapMode && (() => { const t = playerTier(playerBaseRating(p, simEra)); return tierCounts[t] >= CAP_QUOTAS[t] })()
                     return (
                       <button
                         key={`${p.person_id}-${p.era}-${p.eraTeam ?? ''}`}
                         id={`player-row-${p.person_id}`}
-                        onClick={() => { setSelectedPlayer(p); setHighlightEmpty(true); setPendingSlotIdx(null) }}
+                        disabled={capBlocked}
+                        onClick={() => { if (capBlocked) return; setSelectedPlayer(p); setHighlightEmpty(true); setPendingSlotIdx(null) }}
                         className={`w-full flex items-center gap-3 px-3 text-left roster-row${isSel ? ' roster-row--selected' : ''}`}
                         style={{
                           background: isSel ? `${G.gold}18` : G.surface,
@@ -2194,8 +2325,10 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                           borderLeft: isSel ? `2px solid ${G.gold}` : '2px solid transparent',
                           paddingTop: 10, paddingBottom: 10,
                           transition: 'background 0.15s ease, border-left-color 0.15s ease, padding 0.15s ease',
+                          opacity: capBlocked ? 0.3 : 1,
+                          cursor: capBlocked ? 'not-allowed' : 'pointer',
                         }}
-                        onMouseEnter={e => { if (!isSel) { e.currentTarget.style.paddingTop = '14px'; e.currentTarget.style.paddingBottom = '14px'; } }}
+                        onMouseEnter={e => { if (!isSel && !capBlocked) { e.currentTarget.style.paddingTop = '14px'; e.currentTarget.style.paddingBottom = '14px'; } }}
                         onMouseLeave={e => { e.currentTarget.style.paddingTop = '10px'; e.currentTarget.style.paddingBottom = '10px'; }}
                       >
                         <PlayerHeadshot personId={p.person_id} size={36} initial={p.position?.[0]} lazy />
@@ -2203,6 +2336,17 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                           <div className="text-sm font-semibold text-white truncate">{p.full_name}</div>
                           <div className="text-xs" style={{ color: G.grey }}>{p.position}</div>
                         </div>
+                        {salaryCapMode && (() => {
+                          const tier = playerTier(playerBaseRating(p, simEra))
+                          const TIER_COL: Record<PlayerTier, string> = { s: '#9b6dff', a: '#C9A84C', b: '#4caf78', c: '#5b8fd4', d: '#c47a35' }
+                          const col = TIER_COL[tier]
+                          const needed = (neededTiers as string[]).includes(tier)
+                          return (
+                            <span style={{ ...BEBAS, fontSize: 18, lineHeight: 1, color: needed ? col : '#333', flexShrink: 0 }}>
+                              {tier.toUpperCase()}
+                            </span>
+                          )
+                        })()}
                         <div className="flex gap-3 text-xs shrink-0">
                           <span style={{ color: sortBy === 'PTS' ? G.gold : G.grey, fontWeight: sortBy === 'PTS' ? 700 : 400 }}>{p.PTS?.toFixed(1)}</span>
                           <span style={{ color: sortBy === 'REB' ? G.gold : G.grey, fontWeight: sortBy === 'REB' ? 700 : 400 }}>{p.REB?.toFixed(1)}</span>
@@ -2266,6 +2410,12 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
               </div>
             )}
 
+            {capViolationMsg && (
+              <div className="text-center text-xs py-2 px-4" style={{ color: '#FF6644', letterSpacing: '0.06em', fontWeight: 700 }}>
+                {capViolationMsg}
+              </div>
+            )}
+
             {/* Selected player card */}
             {selectedPlayer && (
               <div className="space-y-2">
@@ -2274,7 +2424,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                     ? `→ ${slots[pendingSlotIdx].position}: lock or choose another slot`
                     : 'Click a court slot to place'}
                 </GoldLabel>
-                <PlayerCard player={selectedPlayer} displayEra={lockedEra ?? undefined} activeEra={lockedEra ?? undefined} devMode={devMode} />
+                <PlayerCard player={selectedPlayer} displayEra={lockedEra ?? undefined} activeEra={lockedEra ?? undefined} devMode={devMode} fifties={fifties} duoActiveCount={selectedPlayer.duoPartners ? slots.filter(s => s.player && selectedPlayer.duoPartners!.includes(s.player.full_name)).length : 0} />
                 {pendingSlotIdx !== null && (
                   <Btn onClick={confirmPick} variant="gold" className="w-full py-3">
                     Lock {slots[pendingSlotIdx].position}
@@ -2291,7 +2441,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                 onClick={() => setRosterCardPlayer(null)}
               >
                 <div onClick={e => e.stopPropagation()} className="w-full max-w-sm space-y-3">
-                  <PlayerCard player={rosterCardPlayer} displayEra={lockedEra ?? undefined} activeEra={lockedEra ?? undefined} devMode={devMode} />
+                  <PlayerCard player={rosterCardPlayer} displayEra={lockedEra ?? undefined} activeEra={lockedEra ?? undefined} devMode={devMode} fifties={fifties} duoActiveCount={rosterCardPlayer.duoPartners ? slots.filter(s => s.player && rosterCardPlayer.duoPartners!.includes(s.player.full_name)).length : 0} />
                   <Btn variant="ghost" className="w-full py-2" onClick={() => setRosterCardPlayer(null)}>
                     Close
                   </Btn>
@@ -2299,9 +2449,27 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
               </div>
             )}
 
-            {rosterPool.length === 0 && !spinning && !awaitingSpin && filledCount === 0 && (
-              <div className="text-center py-10 text-xs uppercase tracking-widest" style={{ color: G.greyDark }}>
-                {sandboxMode ? 'Sandbox mode. Pick a team and era, then load roster. Or search for a player and load all of that player\'s cards.' : 'Hit Spin to see a roster'}
+            {salaryCapMode && (
+              <div className="text-center py-6 px-4" style={{ color: G.greyDark, borderBottom: `1px solid ${G.border}` }}>
+                <div style={{ maxWidth: 320, margin: '0 auto' }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '0.25em', textTransform: 'uppercase', color: G.gold, marginBottom: 10 }}>Salary Cap Draft</div>
+                  <div style={{ fontSize: 13, lineHeight: 1.6, letterSpacing: '0.04em', color: G.greyDark, marginBottom: 12 }}>
+                    Build a team within tier limits. Draft <span style={{ color: '#9b6dff' }}>2 S</span> - <span style={{ color: '#C9A84C' }}>2 A</span> - <span style={{ color: '#4caf78' }}>2 B</span> - <span style={{ color: '#5b8fd4' }}>2 C</span> - <span style={{ color: '#c47a35' }}>1 D</span> tier players.
+                  </div>
+                  <div style={{ fontSize: 12, lineHeight: 1.7, letterSpacing: '0.04em', color: G.greyDark }}>
+                    Every spin guarantees at least one player from a tier you still need, but you can pick anyone from the roster. Build around your strengths.
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {rosterPool.length === 0 && !spinning && !awaitingSpin && filledCount === 0 && !salaryCapMode && (
+              <div className="text-center py-8 px-4" style={{ color: G.greyDark }}>
+                {sandboxMode ? (
+                  <span className="text-xs uppercase tracking-widest">Sandbox mode. Pick a team and era, then load roster. Or search for a player and load all of that player&apos;s cards.</span>
+                ) : (
+                  <span className="text-xs uppercase tracking-widest">Hit Spin to see a roster</span>
+                )}
               </div>
             )}
           </div>
@@ -2343,7 +2511,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                     activePlayer={selectedPlayer} simEra={simEra}
                     sandboxMode={sandboxMode}
                     onRemove={slot.player ? () => removeSlotPlayer(i) : undefined}
-                    onClick={() => previewSlot(i)} onDrop={() => previewSlot(i)} />
+                    fifties={fifties} onClick={() => previewSlot(i)} onDrop={() => previewSlot(i)} />
                 ))}
               </div>
               <div className="grid grid-cols-2 gap-1.5" style={{ width: '66.67%', margin: '0 auto' }}>
@@ -2354,7 +2522,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                     activePlayer={selectedPlayer} simEra={simEra}
                     sandboxMode={sandboxMode}
                     onRemove={slot.player ? () => removeSlotPlayer(i + 3) : undefined}
-                    onClick={() => previewSlot(i + 3)} onDrop={() => previewSlot(i + 3)} />
+                    fifties={fifties} onClick={() => previewSlot(i + 3)} onDrop={() => previewSlot(i + 3)} />
                 ))}
               </div>
             </div>
@@ -2378,7 +2546,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                   pendingPlayer={pendingSlotIdx === i + 5 ? selectedPlayer : null} simEra={simEra}
                   sandboxMode={sandboxMode}
                   onRemove={slot.player ? () => removeSlotPlayer(i + 5) : undefined}
-                  onClick={() => previewSlot(i + 5)} onDrop={() => previewSlot(i + 5)} />
+                  fifties={fifties} onClick={() => previewSlot(i + 5)} onDrop={() => previewSlot(i + 5)} />
               ))}
             </div>
 
@@ -2395,7 +2563,9 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                   { name: 'Off Anchor',    color: G.gold,     desc: "Elevates the team's offense. T1 carries a larger boost than T2." },
                   { name: 'Flex',          color: '#4A9ECC',  desc: 'Fits multiple positions without penalty.' },
                   { name: 'Shooting Star', color: '#F472B6',  desc: 'Boosts team spacing. All-time shooters. T1 carries a larger boost than T2.' },
+                  { name: 'Glass Cleaner', color: '#34D399',  desc: 'Elite rebounder. Boosts team second-chance points and limits opponent possessions.' },
                   { name: 'Timeless',      color: '#C084FC',  desc: 'Minimal era penalties across all decades. Minor penalty only if 6+ eras from home.' },
+                  { name: 'Dynamic Duo',   color: '#4ECDC4',  desc: 'Draft both players to activate a +5 rating boost for each. Check the tooltip to see who the partner is.' },
                 ].map(t => (
                   <div key={t.name} className="flex items-start gap-2.5 px-3 py-2 transition-all duration-150 hover:-translate-y-0.5 hover:scale-[1.02] cursor-default"
                     style={{ background: `${t.color}0f`, borderLeft: `2px solid ${t.color}`, borderRadius: 3 }}>
@@ -2417,9 +2587,11 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
 }
 
 // ─── Phase 3: Coach Draft ─────────────────────────────────────────────────────
-function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxMode, greyscaleBtn, muteBtn }: {
-  coaches: Coach[]; onCoachSelected: (coach: Coach) => void; onRestart: () => void; sandboxMode?: boolean; greyscaleBtn?: React.ReactNode; muteBtn?: React.ReactNode
+function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxMode, salaryCapMode, greyscaleBtn, muteBtn }: {
+  coaches: Coach[]; onCoachSelected: (coach: Coach) => void; onRestart: () => void; sandboxMode?: boolean; salaryCapMode?: boolean; greyscaleBtn?: React.ReactNode; muteBtn?: React.ReactNode
 }) {
+  const GRADE_RANK: Record<string, number> = { A: 4, B: 3, C: 2, D: 1, F: 0 }
+  const eligibleCoaches = salaryCapMode ? coaches.filter(c => GRADE_RANK[c.overallGrade] >= 3) : coaches
   const [spinning, setSpinning] = useState(false)
   const [coach, setCoach] = useState<Coach | null>(null)
   const [spinsUsed, setSpinsUsed] = useState(0)
@@ -2444,12 +2616,12 @@ function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxMode, gr
     const doTick = () => {
       const phase: 'fast' | 'slow' = ticks < 10 ? 'fast' : 'slow'
       setSpinPhase(phase)
-      setDisplayName(coaches[Math.floor(Math.random() * coaches.length)].name)
+      setDisplayName(eligibleCoaches[Math.floor(Math.random() * eligibleCoaches.length)].name)
       setSpinKey(k => k + 1)
       if (ticks < schedule.length) {
         setTimeout(doTick, schedule[ticks++])
       } else {
-        const picked = coaches[Math.floor(Math.random() * coaches.length)]
+        const picked = eligibleCoaches[Math.floor(Math.random() * eligibleCoaches.length)]
         setSpinPhase('land')
         setSpinKey(k => k + 1)
         setDisplayName(picked.name)
@@ -2493,7 +2665,7 @@ function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxMode, gr
             />
             {sandboxSearch.length > 1 && (
               <div className="roster-scroll" style={{ background: G.surface, border: `1px solid ${G.border}`, borderTop: 'none', maxHeight: 220, overflowY: 'auto' }}>
-                {coaches.filter(c => c.name.toLowerCase().includes(sandboxSearch.toLowerCase())).slice(0, 12).map(c => (
+                {eligibleCoaches.filter(c => c.name.toLowerCase().includes(sandboxSearch.toLowerCase())).slice(0, 12).map(c => (
                   <div
                     key={`${c.name}-${c.from}`}
                     onClick={() => { setCoach(c); setDisplayName(c.name); setSandboxSearch('') }}
@@ -2674,6 +2846,7 @@ const PLAYOFF_ROUND_LABELS = ['First Round', 'Semifinals', 'Conference Finals', 
 function StatsTable({ stats, simEra, title, subtitle, teamActualPPG, teamActualOppPPG, oppStats, playoffGames, eraFilter }: {
   stats: PlayerSeasonStats[]; simEra: Era; title: string; subtitle: string; teamActualPPG?: number; teamActualOppPPG?: number; oppStats?: OppTeamStats | null; playoffGames?: import('../lib/types').PlayoffGame[]; eraFilter?: string
 }) {
+  const fifties = eraFilter === 'grayscale(1)'
   const [cardPlayer, setCardPlayer] = useState<Player | null>(null)
 
   const gameLog = cardPlayer && playoffGames
@@ -2708,7 +2881,7 @@ function StatsTable({ stats, simEra, title, subtitle, teamActualPPG, teamActualO
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >×</button>
-          <PlayerCard player={cardPlayer} activeEra={cardPlayer.era} />
+          <PlayerCard player={cardPlayer} activeEra={cardPlayer.era} fifties={fifties} duoActiveCount={cardPlayer.duoActiveCount ?? 0} />
           {gameLog.length > 0 && (
             <div style={{ background: G.surface, border: `1px solid ${G.border}`, borderTop: 'none', padding: '12px 16px' }}>
               <div className="text-xs uppercase tracking-widest mb-2" style={{ color: G.grey }}>Playoff Game Log</div>
@@ -3187,8 +3360,8 @@ function SeasonAwardsPanel({ awards }: { awards: AwardEntry[] }) {
 }
 
 // ─── Phase 4: Simulation ──────────────────────────────────────────────────────
-function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteBtn, sandboxMode, customEraRange, eraFilter }: {
-  slots: CourtSlot[]; coach: Coach; simEra: Era; onRestart: () => void; greyscaleBtn?: React.ReactNode; muteBtn?: React.ReactNode; sandboxMode?: boolean; customEraRange?: Era[] | null; eraFilter?: string
+function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteBtn, sandboxMode, salaryCapMode, customEraRange, eraFilter, onAchievementsUnlocked }: {
+  slots: CourtSlot[]; coach: Coach; simEra: Era; onRestart: () => void; greyscaleBtn?: React.ReactNode; muteBtn?: React.ReactNode; sandboxMode?: boolean; salaryCapMode?: boolean; customEraRange?: Era[] | null; eraFilter?: string; onAchievementsUnlocked?: (a: Achievement[]) => void
 }) {
   const seasonGames = ERA_SEASON_GAMES[simEra]
   const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
@@ -3214,6 +3387,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
   const [playoffResult, setPlayoffResult] = useState<PlayoffResult | null>(null)
   const [autoAdvance, setAutoAdvance] = useState(false)
   const [selectedGame, setSelectedGame] = useState<{ game: PlayoffGame; roundName: string; gameNum: number } | null>(null)
+  const [selectedBracketRound, setSelectedBracketRound] = useState<number | null>(null)
 
   // ── Headshots ──
   const [headshots, setHeadshots] = useState<Record<string, string | null>>({})
@@ -3247,6 +3421,58 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
   const [sharing, setSharing] = useState(false)
   const [shareImageUrl, setShareImageUrl] = useState<string | null>(null)
   const [shareHint, setShareHint] = useState<string | null>(null)
+
+  // ── Leaderboard submission ──
+  const lbTeamNameRef = useRef<HTMLInputElement>(null)
+  const [lbSubmitted, setLbSubmitted] = useState(false)
+  const [lbSubmitting, setLbSubmitting] = useState(false)
+  const [lbScore, setLbScore] = useState<number | null>(null)
+
+  const handleLeaderboardSubmit = async () => {
+    const lbTeamName = lbTeamNameRef.current?.value.trim() ?? ''
+    if (!lbTeamName || lbSubmitting || lbSubmitted) return
+    setLbSubmitting(true)
+    const playoffWins = playoffResult ? playoffResult.rounds.reduce((s, r) => s + r.seriesWins, 0) : 0
+    const playoffLosses = playoffResult ? playoffResult.rounds.reduce((s, r) => s + r.seriesLosses, 0) : 0
+    const playoffTotal = playoffWins + playoffLosses
+    const roundName = playoffResult?.rounds.at(-1)?.name
+    const playoffResultKey = !madePlayoffs ? null
+      : playoffResult?.champion ? 'champion'
+      : roundName === 'NBA Finals' ? 'finals'
+      : roundName === 'Conference Finals' ? 'conf_finals'
+      : roundName === 'Semifinals' ? 'second_round'
+      : 'first_round'
+    const score = await submitLeaderboardEntry({
+      era: simEra ?? 'unknown',
+      mode: salaryCapMode ? 'salary_cap' : 'normal',
+      team_name: lbTeamName.trim(),
+      reg_wins: wins,
+      reg_losses: losses,
+      reg_win_pct: wins / Math.max(wins + losses, 1),
+      playoff_wins: playoffWins,
+      playoff_losses: playoffLosses,
+      playoff_win_pct: playoffTotal > 0 ? playoffWins / playoffTotal : 0,
+      playoff_result: playoffResultKey,
+      avg_pt_diff: avgTeamScore != null && avgOppScore != null ? Math.round((avgTeamScore - avgOppScore) * 100) / 100 : 0,
+      team_rating: Math.round(tr),
+      coach_name: coach.name.replace('*', ''),
+      coach_grade: coach.overallGrade,
+      roster: {
+        starters: slots.slice(0, 5).filter(s => s.player).map(s => ({
+          slot: s.position,
+          name: s.player!.full_name,
+          era: s.player!.era as string,
+        })),
+        bench: slots.slice(5).filter(s => s.player).map(s => ({
+          name: s.player!.full_name,
+          era: s.player!.era as string,
+        })),
+      },
+    })
+    setLbScore(score)
+    setLbSubmitted(true)
+    setLbSubmitting(false)
+  }
 
   const handleShare = async () => {
     if (!cardRef.current || sharing) return
@@ -3302,7 +3528,12 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
 
   const SITE_URL = typeof window !== 'undefined' ? window.location.origin : 'https://eraball.app'
 
-  const { teamRating: tr, rawRating, playerRatings: pr } = calcTeamRating(slots, coach, simEra)
+  const slotsWithDuo = slots.map(slot => {
+    if (!slot.player?.duoPartners) return slot
+    const duoActiveCount = slots.filter(s => s !== slot && s.player && slot.player!.duoPartners!.includes(s.player.full_name)).length
+    return { ...slot, player: { ...slot.player, duoActiveCount } }
+  })
+  const { teamRating: tr, rawRating, playerRatings: pr } = calcTeamRating(slotsWithDuo, coach, simEra)
   // rawRating with champ bonus on the team side — passed to sims so off/def apply separately
   const simRaw = rawRating * (1 + coachChampBonus(coach))
 
@@ -3312,10 +3543,10 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
   const runBatch = (n = 10) => {
     const runs: BatchRun[] = []
     for (let i = 0; i < n; i++) {
-      const { games: allGames } = simulateSeason(simRaw, pr, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'))
+      const { games: allGames } = simulateSeason(simRaw, pr, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'), salaryCapMode ? 0.85 : 1.0)
       const w = allGames.filter(Boolean).length
       const l = allGames.length - w
-      const playoff = simulatePlayoffs(simRaw, pr, w, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'))
+      const playoff = simulatePlayoffs(simRaw, pr, w, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'), salaryCapMode ? 0.85 : 1.0)
       runs.push({ wins: w, losses: l, roundsWon: playoff.rounds.filter(r => r.advanced).length, champion: playoff.champion })
     }
     setBatchResults(runs)
@@ -3323,7 +3554,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
 
   const startSim = () => {
     setSimStarted(true); setGames([]); setDone(false); setSeasonStats([])
-    const { games: allGames, seasonStats: stats, avgTeamScore: ats, avgOppScore: aos, teamAnalysis: ta } = simulateSeason(simRaw, pr, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'))
+    const { games: allGames, seasonStats: stats, avgTeamScore: ats, avgOppScore: aos, teamAnalysis: ta } = simulateSeason(simRaw, pr, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'), salaryCapMode ? 0.85 : 1.0)
     setSeasonStats(stats)
     setAvgTeamScore(ats)
     setAvgOppScore(aos)
@@ -3343,7 +3574,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
     setPlayoffRevealIndex(-1)
     setPlayoffDone(false)
     setAutoAdvance(false)
-    const result = simulatePlayoffs(simRaw, pr, wins, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'))
+    const result = simulatePlayoffs(simRaw, pr, wins, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'), salaryCapMode ? 0.85 : 1.0)
     setPlayoffResult(result)
     const poAvgOpp = result.allGames.reduce((s, g) => s + g.oppScore, 0) / result.allGames.length
     const { stl: poTeamSTL, blk: poTeamBLK } = calcTeamDefTotals(pr)
@@ -3495,18 +3726,28 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
   useEffect(() => {
     if (!allDone || sandboxMode || customEraRange || savedRun.current) return
     savedRun.current = true
-    const players = slots
-      .filter(s => s.player)
-      .map(s => ({ personId: s.player!.person_id, name: s.player!.full_name }))
+    const starters = slots.slice(0, 5).filter(s => s.player).map(s => ({ personId: s.player!.person_id, name: s.player!.full_name }))
+    const bench    = slots.slice(5).filter(s => s.player).map(s => ({ personId: s.player!.person_id, name: s.player!.full_name }))
+    const hasSTierStarter = slots.slice(0, 5).some(s => s.player && playerTier(playerBaseRating(s.player, simEra)) === 's')
+    const runMode: 'normal' | 'salary_cap' = salaryCapMode ? 'salary_cap' : 'normal'
     recordRunComplete({
       era: simEra,
       wins,
       losses,
       champion: playoffResult?.champion ?? false,
       teamRating: Math.round(tr + 15),
-      players,
+      starters,
+      bench,
       coach: coach.name,
+      mode: runMode,
+      hasSTierStarter,
     })
+    const newAchievements = checkAchievements(
+      getLifetimeStats('normal'),
+      getLifetimeStats('salary_cap'),
+      { era: simEra, mode: runMode, wins, losses, champion: playoffResult?.champion ?? false, teamRating: Math.round(tr + 15), coachGrade: coach.overallGrade, hasSTierStarter },
+    )
+    if (newAchievements.length > 0) onAchievementsUnlocked?.(newAchievements)
   }, [allDone])
 
   const seasonAwards = done && seasonStats.length > 0
@@ -3636,6 +3877,11 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
                   {sandboxMode && (
                     <div className="text-xs uppercase tracking-[0.25em] mb-3 py-1.5 mx-8" style={{ color: G.gold, background: `${G.gold}18`, border: `1px solid ${G.gold}66`, letterSpacing: '0.25em', fontWeight: 700 }}>
                       Sandbox Mode
+                    </div>
+                  )}
+                  {salaryCapMode && (
+                    <div className="text-xs uppercase tracking-[0.25em] mb-3 py-1.5 mx-8" style={{ color: G.gold, background: `${G.gold}18`, border: `1px solid ${G.gold}66`, letterSpacing: '0.25em', fontWeight: 700 }}>
+                      Salary Cap Mode
                     </div>
                   )}
                   <div className="text-xs uppercase tracking-[0.3em] mb-3" style={{ color: G.grey }}>Regular Season</div>
@@ -3781,17 +4027,35 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
                 </div>
 
                 {/* Game leaders */}
-                <div className="flex justify-center gap-6 px-5 pb-3" style={{ borderTop: `1px solid ${G.border}`, paddingTop: 10 }}>
-                  {[
-                    { label: 'PTS', leader: currentGame.leaders.pts },
-                    { label: 'REB', leader: currentGame.leaders.reb },
-                    { label: 'AST', leader: currentGame.leaders.ast },
-                  ].map(({ label, leader }) => (
-                    <div key={label} className="text-center">
-                      <div style={{ fontSize: 11, color: G.white, fontWeight: 600 }}>{leader.name} <span style={{ color: G.gold }}>{leader.val}</span></div>
-                      <div style={{ fontSize: 9, color: G.greyDark, letterSpacing: '0.15em', textTransform: 'uppercase' }}>{label}</div>
-                    </div>
-                  ))}
+                <div style={{ borderTop: `1px solid ${G.border}`, paddingTop: 10, paddingBottom: 6 }}>
+                  <div className="flex justify-center gap-6 px-5 pb-2">
+                    {[
+                      { label: 'PTS', leader: currentGame.leaders.pts },
+                      { label: 'REB', leader: currentGame.leaders.reb },
+                      { label: 'AST', leader: currentGame.leaders.ast },
+                    ].map(({ label, leader }) => (
+                      <div key={label} className="text-center">
+                        <div style={{ fontSize: 11, color: G.white, fontWeight: 600 }}>{leader.name} <span style={{ color: G.gold }}>{leader.val}</span></div>
+                        <div style={{ fontSize: 9, color: G.greyDark, letterSpacing: '0.15em', textTransform: 'uppercase' }}>{label}</div>
+                      </div>
+                    ))}
+                  </div>
+                  {currentGame.playerLines && currentGame.playerLines.length > 0 && (() => {
+                    const roundName = ROUND_NAMES[currentGame.roundIndex]
+                    const gameNum = revealedGames.filter(g => g.roundIndex === currentGame.roundIndex).length
+                    return (
+                      <div className="text-center">
+                        <button
+                          onClick={() => setSelectedGame({ game: currentGame, roundName, gameNum })}
+                          style={{ fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: G.greyDark, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0', transition: 'color 0.15s' }}
+                          onMouseEnter={e => (e.currentTarget.style.color = G.gold)}
+                          onMouseLeave={e => (e.currentTarget.style.color = G.greyDark)}
+                        >
+                          Full box score ↗
+                        </button>
+                      </div>
+                    )
+                  })()}
                 </div>
 
                 {/* Special performance */}
@@ -3822,56 +4086,181 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
             )}
 
 
-            {/* Series history — horizontal game cards per round */}
-            {visibleRounds.length > 0 && (
-              <div style={{ background: G.surface, border: `1px solid ${G.border}` }}>
-                {visibleRounds.map(({ name, rGames, w, l, complete, advanced }, ri) => (
-                  <div key={name} style={{ borderBottom: ri < visibleRounds.length - 1 ? `1px solid ${G.border}` : 'none' }}>
-                    {/* Round header */}
-                    <div className="flex items-center justify-between px-4 py-2" style={{ borderBottom: `1px solid ${G.border}` }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.18em', color: complete ? (advanced ? G.gold : G.red) : G.white }}>
-                        {name === 'First Round' ? firstRoundLabel(simEra) : name}
+            {/* Playoff bracket */}
+            {liveRounds.some(r => r.rGames.length > 0) && (() => {
+              const activeBracketRound = liveRounds.reduce((last, r, i) => r.rGames.length > 0 ? i : last, 0)
+              const displayRound = selectedBracketRound ?? activeBracketRound
+              const displayData = liveRounds[displayRound]
+              const winsTotal = liveRounds.filter(r => r.advanced).length
+              const bracketLabel = (name: string) =>
+                name === 'Conference Finals' ? 'Conf Finals' : name === 'NBA Finals' ? 'Finals' : name
+              return (
+                <div style={{ background: G.surface, border: `1px solid ${G.border}` }}>
+
+                  {/* Section header */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px 8px', borderBottom: `1px solid ${G.border}` }}>
+                    <div style={{ ...BEBAS, fontSize: 18, letterSpacing: '0.18em', color: G.goldDim }}>NBA Playoffs</div>
+                    {winsTotal > 0 && (
+                      <div style={{ fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#444' }}>
+                        {winsTotal} round{winsTotal !== 1 ? 's' : ''} won
                       </div>
-                      <div style={{ fontSize: 10, letterSpacing: '0.12em', color: complete ? (advanced ? G.gold : G.red) : G.grey }}>
-                        {w}–{l}{complete ? (advanced ? ' - ADV' : ' - ELIM') : ''}
+                    )}
+                  </div>
+
+                  {/* Bracket cards row — no overflow scroll, compact enough for mobile */}
+                  <div style={{ display: 'flex', alignItems: 'stretch', padding: '12px 10px 8px', gap: 0 }}>
+                    {liveRounds.map((round, ri) => {
+                      const reached = round.rGames.length > 0
+                      const won  = round.complete && round.advanced
+                      const lost = round.complete && !round.advanced
+                      const isActive   = !round.complete && reached
+                      const isSelected = ri === displayRound
+                      const prevWon    = liveRounds[ri - 1]?.advanced ?? false
+
+                      const accentCol   = won ? G.gold : lost ? G.red : isActive ? '#444' : '#222'
+                      const outerBorder = isSelected ? (won ? G.gold : lost ? G.red : G.white) : '#1e1e1e'
+                      const labelCol    = won ? G.goldDim : lost ? '#6b2020' : reached ? '#3a3a3a' : '#1c1c1c'
+                      const teamCol     = won ? G.gold : reached ? G.white : '#282828'
+                      const oppCol      = lost ? G.red : reached ? '#555' : '#1e1e1e'
+                      const teamNumCol  = won ? G.gold : reached ? G.white : '#242424'
+                      const oppNumCol   = lost ? G.red : reached ? '#666' : '#1e1e1e'
+                      const arrowCol    = prevWon ? `${G.goldDim}90` : '#252525'
+
+                      return (
+                        <React.Fragment key={round.name}>
+                          {/* Arrow connector */}
+                          {ri > 0 && (
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, width: 10 }}>
+                              <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
+                                <path d="M1 7h10M8 3l4 4-4 4" stroke={arrowCol} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </div>
+                          )}
+
+                          {/* Matchup card */}
+                          <div
+                            onClick={() => reached && setSelectedBracketRound(prev => prev === ri ? null : ri)}
+                            className={reached ? 'bracket-card' : undefined}
+                            style={{
+                              flex: '1 1 0',
+                              minWidth: 0,
+                              background: G.black,
+                              borderTop: `1px solid ${outerBorder}`,
+                              borderRight: `1px solid ${outerBorder}`,
+                              borderBottom: `1px solid ${outerBorder}`,
+                              borderLeft: `3px solid ${accentCol}`,
+                              cursor: reached ? 'pointer' : 'default',
+                              opacity: reached ? 1 : 0.15,
+                              overflow: 'hidden',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              transition: 'border-color 0.18s',
+                            }}
+                          >
+                            {/* Round name */}
+                            <div style={{
+                              fontSize: 7,
+                              padding: '5px 7px 4px',
+                              borderBottom: '1px solid #111',
+                              fontWeight: 700,
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.15em',
+                              color: labelCol,
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            }}>
+                              {bracketLabel(round.name)}
+                            </div>
+
+                            {/* YOUR TEAM row */}
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 7px 5px' }}>
+                              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.02em', color: teamCol, flex: 1, overflow: 'hidden', textOverflow: 'clip', whiteSpace: 'nowrap' }}>
+                                Your Team
+                              </div>
+                              <div style={{ ...BEBAS, fontSize: 22, lineHeight: 1, color: teamNumCol, marginLeft: 4, flexShrink: 0 }}>
+                                {reached ? round.w : '—'}
+                              </div>
+                            </div>
+
+                            {/* Divider */}
+                            <div style={{ height: 1, background: '#111', margin: '0 7px' }} />
+
+                            {/* OPPONENT row */}
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '5px 7px 8px' }}>
+                              <div style={{ fontSize: 8, textTransform: 'uppercase', letterSpacing: '0.02em', color: oppCol, flex: 1, overflow: 'hidden', textOverflow: 'clip', whiteSpace: 'nowrap' }}>
+                                Opponent
+                              </div>
+                              <div style={{ ...BEBAS, fontSize: 22, lineHeight: 1, color: oppNumCol, marginLeft: 4, flexShrink: 0 }}>
+                                {reached ? round.l : '—'}
+                              </div>
+                            </div>
+
+                            {/* Dots + status */}
+                            {reached && (
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 7px 6px', borderTop: '1px solid #111', gap: 4 }}>
+                                <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
+                                  {round.rGames.map((g, gi) => (
+                                    <div key={gi} style={{ width: 6, height: 6, borderRadius: '50%', background: g.win ? G.gold : G.red, flexShrink: 0 }} />
+                                  ))}
+                                </div>
+                                <div style={{ fontSize: 7, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', flexShrink: 0, color: won ? G.gold : lost ? G.red : '#3a3a3a' }}>
+                                  {won ? 'ADV' : lost ? 'OUT' : 'LIVE'}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </React.Fragment>
+                      )
+                    })}
+                  </div>
+
+                  {/* Detail panel for selected round */}
+                  <div style={{ borderTop: `1px solid ${G.border}` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 16px', borderBottom: `1px solid ${G.border}` }}>
+                      <div style={{ ...BEBAS, fontSize: 15, letterSpacing: '0.15em', color: displayData.complete ? (displayData.advanced ? G.gold : G.red) : G.white }}>
+                        {bracketLabel(displayData.name)}
+                      </div>
+                      <div style={{ fontSize: 10, letterSpacing: '0.12em', color: displayData.complete ? (displayData.advanced ? G.gold : G.red) : G.grey }}>
+                        {displayData.w}–{displayData.l}{displayData.complete ? (displayData.advanced ? ' · ADV' : ' · ELIM') : ''}
                       </div>
                     </div>
-                    {/* Horizontal game cards */}
-                    <div className="flex gap-2 p-3 overflow-x-auto">
-                      {rGames.map((g, gi) => (
+                    <div style={{ display: 'flex', gap: 8, padding: 12, overflowX: 'auto' }}>
+                      {displayData.rGames.map((g, gi) => (
                         <div key={gi}
-                          onClick={() => setSelectedGame({ game: g, roundName: name, gameNum: gi + 1 })}
+                          onClick={() => setSelectedGame({ game: g, roundName: displayData.name, gameNum: gi + 1 })}
                           className={`playoff-game-card ${g.win ? 'playoff-game-card--win' : 'playoff-game-card--loss'}`}
-                          style={{ flexShrink: 0, width: 100, background: G.black, cursor: 'pointer', overflow: 'hidden' }}
+                          style={{ flexShrink: 0, width: 104, background: G.black, cursor: 'pointer', overflow: 'hidden', border: `1px solid ${G.border}` }}
                         >
-                          {/* Colored top bar */}
                           <div style={{ height: 3, background: g.win ? G.gold : G.red }} />
-                          <div style={{ padding: '6px 8px' }}>
-                            {/* G# + W/L */}
-                            <div className="flex items-center justify-between mb-1">
-                              <div style={{ fontSize: 8, color: G.greyDark, letterSpacing: '0.12em' }}>G{gi + 1}</div>
-                              <div style={{ fontSize: 9, fontWeight: 700, color: g.win ? G.gold : G.red }}>{g.win ? 'W' : 'L'}</div>
+                          <div style={{ padding: '7px 9px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
+                              <div style={{ fontSize: 8, color: '#444', letterSpacing: '0.12em' }}>GAME {gi + 1}</div>
+                              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: g.win ? G.gold : G.red }}>{g.win ? 'W' : 'L'}</div>
                             </div>
-                            {/* Score */}
-                            <div style={{ ...BEBAS, fontSize: 16, lineHeight: 1, color: g.win ? G.white : G.grey, letterSpacing: '0.04em', marginBottom: 5 }}>
+                            <div style={{ ...BEBAS, fontSize: 18, lineHeight: 1, color: g.win ? G.white : G.grey, letterSpacing: '0.04em', marginBottom: 6 }}>
                               {g.teamScore}–{g.oppScore}
                             </div>
-                            {/* PTS leader */}
                             <div style={{ fontSize: 9, color: G.gold, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                               {g.leaders.pts.name.split(' ').slice(-1)[0]} <span style={{ color: G.white, fontWeight: 600 }}>{g.leaders.pts.val}</span>
                             </div>
-                            {/* Special */}
                             {g.special && (
-                              <div style={{ fontSize: 8, color: G.goldDim, marginTop: 2 }}>★ special</div>
+                              <div style={{ fontSize: 8, color: G.goldDim, marginTop: 3 }}>★ special</div>
+                            )}
+                            {g.playerLines && g.playerLines.length > 0 && (
+                              <div style={{ fontSize: 8, color: '#444', marginTop: 5, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                                Box score ↗
+                              </div>
                             )}
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
+
+                </div>
+              )
+            })()}
 
             {/* Playoff controls */}
             {!playoffDone && playoffRevealIndex > 0 && (
@@ -4011,7 +4400,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
         {allDone && (
           <div className="flex flex-col gap-3">
             <Btn onClick={handleShare} disabled={sharing} variant="outline" className="w-full py-3">
-              {sharing ? 'Generating…' : 'Share Result'}
+              {sharing ? 'Generating…' : (!sandboxMode && !customEraRange ? 'Share Result / Submit to Leaderboard' : 'Share Result')}
             </Btn>
             <Btn onClick={onRestart} variant="gold" className="w-full py-3">
               Play Again
@@ -4043,6 +4432,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
             teamRating={tr}
             headshots={headshots}
             sandboxMode={sandboxMode}
+            salaryCapMode={salaryCapMode}
             playoffOutcome={
               madePlayoffs && playoffDone && playoffResult
                 ? {
@@ -4208,7 +4598,45 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
           />
 
           {/* Action buttons */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 20, width: '100%', maxWidth: 400 }}>
+          {/* Leaderboard submission */}
+          {sandboxMode || customEraRange ? (
+            <div style={{ width: '100%', maxWidth: 400, marginTop: 20, padding: '12px 16px', border: `1px solid ${G.border}`, background: G.surface, textAlign: 'center' }}>
+              <div style={{ fontSize: 11, color: G.greyDark, letterSpacing: '0.08em' }}>
+                {sandboxMode ? 'Sandbox mode is not eligible for the leaderboard.' : 'Custom era range is not eligible for the leaderboard.'}
+              </div>
+            </div>
+          ) : (
+          <div style={{ width: '100%', maxWidth: 400, marginTop: 20, padding: '16px', border: `1px solid ${G.border}`, background: G.surface }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: G.gold, marginBottom: 10, textAlign: 'center' }}>
+              Submit to Leaderboard
+            </div>
+            {lbSubmitted ? (
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 13, color: G.white, marginBottom: 4 }}>Score submitted!</div>
+                <div style={{ ...BEBAS, fontSize: 36, color: G.gold, lineHeight: 1 }}>{Math.round(lbScore ?? 0).toLocaleString()}</div>
+                <div style={{ fontSize: 10, color: G.greyDark, marginTop: 4, letterSpacing: '0.1em' }}>
+                  {simEra?.toUpperCase()} · {salaryCapMode ? 'SALARY CAP' : 'NORMAL'}
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  ref={lbTeamNameRef}
+                  type="text"
+                  placeholder="Your team name..."
+                  maxLength={30}
+                  onKeyDown={e => e.key === 'Enter' && handleLeaderboardSubmit()}
+                  style={{ flex: 1, background: G.black, border: `1px solid ${G.border}`, color: G.white, padding: '8px 10px', fontSize: 13, outline: 'none', minWidth: 0 }}
+                />
+                <Btn onClick={handleLeaderboardSubmit} variant="gold" style={{ flexShrink: 0 }} disabled={lbSubmitting}>
+                  {lbSubmitting ? '...' : 'Submit'}
+                </Btn>
+              </div>
+            )}
+          </div>
+          )}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12, width: '100%', maxWidth: 400 }}>
             <Btn onClick={handleShareTwitter} variant="ghost" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.259 5.63 5.905-5.63Zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
               X / Twitter
@@ -4247,7 +4675,7 @@ function getAudioElement(src: string): HTMLAudioElement {
   return _audioElements.get(src)!
 }
 
-const R2 = 'https://pub-c85456ef7b454894a21cc859fee77b58.r2.dev'
+const R2 = 'https://assets.eraball.com'
 
 const ERA_AUDIO: Partial<Record<Era, string>> = {
   '50s': `${R2}/50s.mp3`,
@@ -4265,6 +4693,7 @@ export default function Home() {
   const [phase, setPhase] = useState<GamePhase>('era-select')
   const [simEra, setSimEra] = useState<Era>('20s')
   const [startSandbox, setStartSandbox] = useState(false)
+  const [salaryCapMode, setSalaryCapMode] = useState(false)
   const [greyscale, setGreyscale] = useState(false)
   const [hasUsedTheme, setHasUsedTheme] = useState(false)
   const [lowPerfMode, setLowPerfMode] = useState(false)
@@ -4277,6 +4706,9 @@ export default function Home() {
   const [coach, setCoach] = useState<Coach | null>(null)
   const [draftCustomEras, setDraftCustomEras] = useState<Era[] | null>(null)
   const [showLifetimeStats, setShowLifetimeStats] = useState(false)
+  const [showLeaderboard, setShowLeaderboard] = useState(false)
+  const [showAchievements, setShowAchievements] = useState(false)
+  const [unlockedAchievements, setUnlockedAchievements] = useState<Achievement[]>([])
   const [loading, setLoading] = useState(false)
   const [muted, setMuted] = useState(false)
   const [volume, setVolume] = useState(0.21)
@@ -4334,7 +4766,7 @@ export default function Home() {
     dataReqRef.current = true
     setLoading(true)
     Promise.all([
-      fetch('https://pub-c85456ef7b454894a21cc859fee77b58.r2.dev/players_with_stats.json').then(r => r.json()),
+      fetch('https://assets.eraball.com/players_with_stats.json').then(r => r.json()),
       fetch('/coaches.csv').then(r => r.text()).then(parseCoachesCSV)
     ]).then(([p, c]) => { setPlayers(p); setCoaches(c); setLoading(false) })
       .catch(err => { console.error('Failed to load data:', err); setLoading(false); dataReqRef.current = false })
@@ -4579,11 +5011,27 @@ export default function Home() {
         </>,
         document.body
       )}
-      {phase === 'era-select' && <EraSelection onEraSelected={era => { setSimEra(era); setStartSandbox(false); setShowPerfDisclaimer(false); ensureData(); setPhase('draft') }} onSandboxSelected={era => { setSimEra(era); setStartSandbox(true); setShowPerfDisclaimer(false); ensureData(); setPhase('draft') }} onRestart={restart} onLifetimeStats={() => setShowLifetimeStats(true)} onEraPreview={era => setAudioEra(era)} muteBtn={muteBtn} eraThemeBtn={greyscaleBtn} />}
+      {phase === 'era-select' && <EraSelection onEraSelected={era => { setSimEra(era); setStartSandbox(false); setSalaryCapMode(false); setShowPerfDisclaimer(false); ensureData(); setPhase('draft') }} onSandboxSelected={era => { setSimEra(era); setStartSandbox(true); setSalaryCapMode(false); setShowPerfDisclaimer(false); ensureData(); setPhase('draft') }} onSalaryCapSelected={era => { setSimEra(era); setStartSandbox(false); setSalaryCapMode(true); setShowPerfDisclaimer(false); ensureData(); setPhase('draft') }} onRestart={restart} onLifetimeStats={() => setShowLifetimeStats(true)} onLeaderboard={() => setShowLeaderboard(true)} onAchievements={() => setShowAchievements(true)} onEraPreview={era => setAudioEra(era)} muteBtn={muteBtn} eraThemeBtn={greyscaleBtn} />}
       {showLifetimeStats && <LifetimeStatsModal onClose={() => setShowLifetimeStats(false)} />}
-      {phase === 'draft' && <DraftScreen simEra={simEra} players={players} onDraftComplete={(s, ce) => { setSlots(s); setDraftCustomEras(ce); setPhase('coach-draft') }} onRestart={restart} startInSandbox={startSandbox} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} />}
-      {phase === 'coach-draft' && <CoachDraftScreen coaches={coaches} onCoachSelected={c => { setCoach(c); setPhase('simulation') }} onRestart={restart} sandboxMode={startSandbox} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} />}
-      {phase === 'simulation' && coach && <SimulationScreen slots={slots} coach={coach} simEra={simEra} onRestart={restart} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} sandboxMode={startSandbox} customEraRange={draftCustomEras} eraFilter={eraFilter} />}
+      {showLeaderboard && <LeaderboardModal onClose={() => setShowLeaderboard(false)} />}
+      {showAchievements && <AchievementsModal onClose={() => setShowAchievements(false)} />}
+
+      {/* Achievement unlock toast */}
+      {unlockedAchievements.length > 0 && (
+        <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 2000, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {unlockedAchievements.map(a => (
+            <div key={a.id} style={{ background: '#0d0d0d', border: `1px solid ${G.gold}`, padding: '12px 16px', minWidth: 240, maxWidth: 320, boxShadow: `0 4px 24px ${G.gold}33` }}>
+              <div style={{ fontSize: 9, color: G.gold, letterSpacing: '0.2em', marginBottom: 4 }}>ACHIEVEMENT UNLOCKED</div>
+              <div style={{ fontFamily: '"Bebas Neue", Impact, sans-serif', fontSize: 18, color: '#fff', letterSpacing: '0.08em' }}>{a.title}</div>
+              <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>{a.description}</div>
+              <button onClick={() => setUnlockedAchievements(prev => prev.filter(x => x.id !== a.id))} style={{ position: 'absolute', top: 8, right: 10, background: 'none', border: 'none', color: '#555', cursor: 'pointer', fontSize: 14 }}>✕</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {phase === 'draft' && <DraftScreen simEra={simEra} players={players} onDraftComplete={(s, ce) => { setSlots(s); setDraftCustomEras(ce); setPhase('coach-draft') }} onRestart={restart} startInSandbox={startSandbox} salaryCapMode={salaryCapMode} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} themeFilter={eraFilter} />}
+      {phase === 'coach-draft' && <CoachDraftScreen coaches={coaches} onCoachSelected={c => { setCoach(c); setPhase('simulation') }} onRestart={restart} sandboxMode={startSandbox} salaryCapMode={salaryCapMode} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} />}
+      {phase === 'simulation' && coach && <SimulationScreen slots={slots} coach={coach} simEra={simEra} onRestart={restart} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} sandboxMode={startSandbox} salaryCapMode={salaryCapMode} customEraRange={draftCustomEras} eraFilter={eraFilter} onAchievementsUnlocked={setUnlockedAchievements} />}
 
       {/* Volume popover */}
       {showVolumePopover && audioEra !== null && !isMobileDevice && (
@@ -4679,6 +5127,21 @@ export default function Home() {
           }}
         >
           Suggestions or bugs? DM me on Twitter
+        </a>
+        <a
+          href="https://ko-fi.com/eshanb"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="footer-link"
+          style={{
+            fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
+            color: G.gold, border: `1px solid ${G.goldDim}`,
+            padding: '6px 12px', background: G.surface,
+            textDecoration: 'none', opacity: 0.85,
+            transition: 'opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease',
+          }}
+        >
+          Support the game
         </a>
       </div>
 

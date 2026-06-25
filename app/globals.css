@@ -59,6 +59,15 @@
   animation: begin-draft-pulse 2s ease-in-out infinite;
 }
 
+@keyframes salary-cap-pulse {
+  0%, 100% { box-shadow: 0 0 8px 2px rgba(155, 109, 255, 0.25); }
+  50%       { box-shadow: 0 0 22px 6px rgba(155, 109, 255, 0.65); }
+}
+
+.salary-cap-pulse {
+  animation: salary-cap-pulse 2s ease-in-out infinite;
+}
+
 /* ── Global scrollbar theme ──────────────────────────────────────────────── */
 *::-webkit-scrollbar        { width: 4px; height: 4px; }
 *::-webkit-scrollbar-track  { background: #111111; }
@@ -313,6 +322,16 @@ body {
 
 .playoff-game-card {
   transition: box-shadow 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+}
+.bracket-card {
+  transition: box-shadow 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+}
+.bracket-card:hover {
+  border-top-color: rgba(201, 168, 76, 0.75) !important;
+  border-right-color: rgba(201, 168, 76, 0.75) !important;
+  border-bottom-color: rgba(201, 168, 76, 0.75) !important;
+  box-shadow: 0 0 0 1px rgba(201, 168, 76, 0.25), 0 4px 18px rgba(201, 168, 76, 0.18);
+  background: #111111 !important;
 }
 .playoff-game-card--win  { border: 1px solid rgba(201, 168, 76, 0.35); }
 .playoff-game-card--loss { border: 1px solid #1e1e1e; }

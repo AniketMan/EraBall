@@ -40,6 +40,8 @@ const POSITION_LOCK: Record<string, SlotPosition[]> = {
   'Kevin Garnett':       ['PF', 'C'],
   'Shaquille O\'Neal':   ['PF', 'C'],
   'Dirk Nowitzki':       ['PF', 'C'],
+  'Kareem Abdul-Jabbar': ['PF', 'C'],
+  'Brandon Ingram':      ['SG', 'SF', 'PF'],
 }
 
 export function applyFlexTag(player: Player): Player {
@@ -171,6 +173,7 @@ const PLAYER_ANCHORS: Record<string, AnchorType> = {
   'David Robinson':          'def',
   'Anthony Davis':           'def',
   'Patrick Ewing':           'def',
+  'Yao Ming':                'def',
   // Defensive Anchors — T2
   'Marcus Smart':            'def',
   'Aaron Gordon':            'def',
@@ -305,6 +308,74 @@ export function applyAnchors(player: Player): Player {
   return { ...player, defAnchor: anchor === 'def', offAnchor: anchor === 'off', anchorTier: tier }
 }
 
+export const DUO_PAIRS: Record<string, string[]> = {
+  // 50s / 60s
+  'Wilt Chamberlain':        ['Hal Greer'],
+  'Hal Greer':               ['Wilt Chamberlain'],
+  'Jerry West':              ['Elgin Baylor'],
+  'Elgin Baylor':            ['Jerry West'],
+  'Bill Russell':            ['John Havlicek'],
+  'John Havlicek':           ['Bill Russell'],
+  // 70s / 80s
+  'Alex English':            ['Kiki Vandeweghe'],
+  'Kiki Vandeweghe':         ['Alex English'],
+  'Magic Johnson':           ['Kareem Abdul-Jabbar'],
+  'Kareem Abdul-Jabbar':     ['Magic Johnson'],
+  'Larry Bird':              ['Kevin McHale'],
+  'Kevin McHale':            ['Larry Bird'],
+  'Isiah Thomas':            ['Joe Dumars'],
+  'Joe Dumars':              ['Isiah Thomas'],
+  // 90s
+  'Michael Jordan':          ['Scottie Pippen'],
+  'Scottie Pippen':          ['Michael Jordan'],
+  'John Stockton':           ['Karl Malone'],
+  'Karl Malone':             ['John Stockton'],
+  'Hakeem Olajuwon':         ['Clyde Drexler'],
+  'Clyde Drexler':           ['Hakeem Olajuwon'],
+  "Shaquille O'Neal":        ['Kobe Bryant', 'Anfernee Hardaway', 'Dwyane Wade'],
+  'Anfernee Hardaway':       ["Shaquille O'Neal"],
+  // 00s
+  'Kobe Bryant':             ["Shaquille O'Neal"],
+  'Tracy McGrady':           ['Yao Ming'],
+  'Yao Ming':                ['Tracy McGrady'],
+  'Tim Duncan':              ['Tony Parker', 'David Robinson'],
+  'David Robinson':          ['Tim Duncan'],
+  'Tony Parker':             ['Tim Duncan'],
+  'Dirk Nowitzki':           ['Jason Terry'],
+  'Jason Terry':             ['Dirk Nowitzki'],
+  // 10s
+  'Kevin Durant':            ['Russell Westbrook'],
+  'Russell Westbrook':       ['Kevin Durant'],
+  'LeBron James':            ['Dwyane Wade', 'Kyrie Irving', 'Kevin Love', 'Anthony Davis'],
+  'Dwyane Wade':             ['LeBron James', "Shaquille O'Neal"],
+  'Kyrie Irving':            ['LeBron James'],
+  'Kevin Love':              ['LeBron James'],
+  'Chris Paul':              ['Blake Griffin', 'Deandre Jordan'],
+  'Blake Griffin':           ['Chris Paul'],
+  'Deandre Jordan':          ['Chris Paul'],
+  'James Harden':            ['Clint Capela'],
+  'Clint Capela':            ['James Harden'],
+  'Stephen Curry':           ['Klay Thompson', 'Draymond Green'],
+  'Klay Thompson':           ['Stephen Curry', 'Draymond Green'],
+  'Draymond Green':          ['Stephen Curry', 'Klay Thompson'],
+  // 20s
+  'Nikola Jokic':            ['Jamal Murray', 'Aaron Gordon'],
+  'Jamal Murray':            ['Nikola Jokic', 'Aaron Gordon'],
+  'Aaron Gordon':            ['Nikola Jokic', 'Jamal Murray'],
+  'Anthony Davis':           ['LeBron James'],
+  'Jayson Tatum':            ['Jaylen Brown'],
+  'Jaylen Brown':            ['Jayson Tatum'],
+  'Jalen Brunson':           ['Josh Hart', 'Mikal Bridges'],
+  'Josh Hart':               ['Jalen Brunson', 'Mikal Bridges'],
+  'Mikal Bridges':           ['Jalen Brunson', 'Josh Hart'],
+}
+
+export function applyDuo(player: Player): Player {
+  const partners = DUO_PAIRS[player.full_name]
+  if (!partners) return player
+  return { ...player, duoPartners: partners }
+}
+
 const TIMELESS_PLAYERS = new Set([
   'LeBron James',
   'Oscar Robertson',
@@ -328,6 +399,7 @@ const TIMELESS_PLAYERS = new Set([
   'David Robinson',
   'Anthony Davis',
   'Moses Malone',
+  'Pete Maravich',
 ])
 
 export function applyTimeless(player: Player): Player {
@@ -368,6 +440,27 @@ export function applyShootingStar(player: Player): Player {
   if (SHOOTING_STAR_T1.has(player.full_name)) return { ...player, shootingStar: true, shootingStarTier: 1 }
   if (SHOOTING_STAR_T2.has(player.full_name)) return { ...player, shootingStar: true, shootingStarTier: 2 }
   return player
+}
+
+// ─── Glass Cleaner ─────────────────────────────────────────────────────────────
+// Dominant rebounders whose glass work meaningfully lifts team rebFactor.
+const GLASS_CLEANER_PLAYERS = new Set([
+  'Dennis Rodman',
+  'Ben Wallace',
+  'Moses Malone',
+  'Andre Drummond',
+  'DeAndre Jordan',
+  'Steven Adams',
+  'Wes Unseld',
+  'Bob Pettit',
+  'Nate Thurmond',
+  'Kevin Love',
+  'Clint Capela',
+])
+
+export function applyGlassCleaner(player: Player): Player {
+  if (!GLASS_CLEANER_PLAYERS.has(player.full_name)) return player
+  return { ...player, glassClean: true }
 }
 
 function playoffRingBoost(rings: number): number {
@@ -464,6 +557,7 @@ const BASE_RATING_OVERRIDE: Record<string, number> = {
   'Aaron Gordon:20s:DEN':            47,
   'Austin Reaves:20s:LAL':           44,
   'Christian Braun:20s:DEN':         32,
+  'Jared McCain:20s:OKC':            35,
   'Peyton Watson:20s:DEN':           34,
   // 10s
   'LeBron James:10s:CLE':            72,
@@ -482,6 +576,7 @@ const BASE_RATING_OVERRIDE: Record<string, number> = {
   "Shaquille O'Neal:00s:LAL":        66,
   'Tim Duncan:00s:SAS':              66,
   'Kobe Bryant:00s:LAL':             65,
+  'Yao Ming:00s:HOU':                46.5,
   // 90s
   'Michael Jordan:90s:CHI':          72,
   'Magic Johnson:90s:LAL':           60,
@@ -605,9 +700,10 @@ export function imputeTOV(player: Player): number {
 }
 
 export function playerBaseRating(player: Player, simEra?: Era): number {
+  const duoBonus = (player.duoActiveCount ?? 0) * 5
   // Flat base rating override
   const flatKey = player.eraTeam ? `${player.full_name}:${player.era}:${player.eraTeam}` : null
-  if (flatKey && BASE_RATING_OVERRIDE[flatKey] != null) return BASE_RATING_OVERRIDE[flatKey]
+  if (flatKey && BASE_RATING_OVERRIDE[flatKey] != null) return BASE_RATING_OVERRIDE[flatKey] + duoBonus
 
   // Check for a rating-only stat override (display stats unchanged)
   const overrideKey = player.eraTeam ? `${player.full_name}:${player.era}:${player.eraTeam}` : null
@@ -633,8 +729,19 @@ export function playerBaseRating(player: Player, simEra?: Era): number {
     imputeBLK(ratingPlayer)     * 1.5 -
     imputeTOV(ratingPlayer)     * 1.0 +
     anchorBonus                       +
-    top75Bonus
+    top75Bonus                        +
+    duoBonus
   )
+}
+
+export type PlayerTier = 's' | 'a' | 'b' | 'c' | 'd'
+export const CAP_QUOTAS: Record<PlayerTier, number> = { s: 2, a: 2, b: 2, c: 2, d: 1 }
+export function playerTier(base: number): PlayerTier {
+  if (base >= 55) return 's'
+  if (base >= 46) return 'a'
+  if (base >= 38) return 'b'
+  if (base >= 31) return 'c'
+  return 'd'
 }
 
 export function calcFitPenalty(player: Player, slot: SlotPosition): { penalty: 0 | 0.10 | 0.25; label: CourtSlot['fitLabel'] } {
@@ -731,8 +838,10 @@ export function calcEraModifier(player: Player, simEra: Era): number {
   if ((player.era === '10s' && simEra === '20s') || (player.era === '20s' && simEra === '10s')) return 0.98
   // Chris Paul — elite fit in the 90s and any modern era forward
   if (player.full_name === 'Chris Paul' && (simEra === '90s' || simEra === '00s' || simEra === '10s' || simEra === '20s')) return 1.0
+  // Zach Randolph — elite backward fit; physical low-post game translates to any older era
+  if (player.full_name === 'Zach Randolph' && playerIdx > simIdx) return 1.0
   // Tall centers (6'10"+) or Bam Adebayo going back get reduced penalty (physical size translates)
-  const isTallCenter = playerHeightInches(player) >= 82 || player.full_name === 'Bam Adebayo' || player.full_name === 'Zion Williamson'
+  const isTallCenter = playerHeightInches(player) >= 82 || player.full_name === 'Bam Adebayo' || player.full_name === 'Zion Williamson' || player.full_name === 'Aaron Gordon'
   const table = playerIdx > simIdx
     ? (isTallCenter ? ERA_MOD_BACKWARD_TALL : ERA_MOD_BACKWARD)
     : (isEstimatedShooter(player, simEra) ? ERA_MOD_FORWARD_EST_SHOOTER : ERA_MOD_FORWARD)
@@ -1005,7 +1114,8 @@ export function calcRebFactor(entries: { pr: PlayerRating; minScale: number }[],
   const leagueAvg = ERA_LEAGUE_AVG_REB[simEra]
   const eraScale  = leagueAvg / ERA_LEAGUE_AVG_REB['20s']  // scale C/PF expectations relative to modern
   const rebIndex  = entries.reduce((s, { pr, minScale }) => {
-    const contrib = (pr.player.REB ?? 0) * pr.eraMod * minScale * rebSlotMod(pr.slot)
+    const gcMult = pr.player.glassClean ? 1.50 : 1.0
+    const contrib = (pr.player.REB ?? 0) * pr.eraMod * minScale * rebSlotMod(pr.slot) * gcMult
     // Guards are neutral by default — only surplus above positional average contributes
     if (pr.slot === 'PG') return s + Math.max(0, contrib - PG_REB_THRESHOLD)
     if (pr.slot === 'SG') return s + Math.max(0, contrib - SG_REB_THRESHOLD)
@@ -1050,6 +1160,7 @@ export function simulateSeason(
   simEra: Era,
   coachDefBonus?: number,
   coachOffBonus?: number,
+  difficultyMod?: number,
 ): { wins: number; losses: number; games: boolean[]; seasonStats: PlayerSeasonStats[]; avgTeamScore: number; avgOppScore: number; teamAnalysis: { spacingWinFactor: number; shooterCount: number; spacingBaseline: number; isPreThreePt: boolean; highVolumeShooterCount: number; rebFactor: number; blkScore: number; astFactor: number } } {
   const games: boolean[] = []
   let wins = 0
@@ -1057,7 +1168,7 @@ export function simulateSeason(
   let totalOppScore = 0
 
   const eraDifficulty = ERA_DIFFICULTY[simEra] ?? 1.00
-  const OPP_BASELINE = 43 * eraDifficulty
+  const OPP_BASELINE = 43 * eraDifficulty * (difficultyMod ?? 1.0)
   const OPP_SPREAD   = 6
   const GAME_NOISE   = 8
 
@@ -1220,7 +1331,7 @@ export function firstRoundLabel(simEra: Era): string {
 // offRating: raw opponent strength (then scaled by user's playerDefFactor)
 // defFactor: how well the opponent defends — multiplied against effectiveTeamRating each round
 // Finals (round 4): scales with team's raw rating so stronger teams face proportionally harder opponents.
-function playoffOppRating(round: number, teamWins: number, teamRaw: number, simEra: Era): { offRating: number; defFactor: number } {
+function playoffOppRating(round: number, teamWins: number, teamRaw: number, simEra: Era, difficultyMod = 1.0): { offRating: number; defFactor: number } {
   const idx = round - 1
   const winsBase = teamWins >= 60 ? [45, 49, 53, 52][idx]
                  : teamWins >= 53 ? [46, 50, 53, 53][idx]
@@ -1229,7 +1340,7 @@ function playoffOppRating(round: number, teamWins: number, teamRaw: number, simE
   // Finals opponent scales with team strength — slightly weaker than user's raw rating
   const baseRating = round === 4 ? Math.max(winsBase, Math.round(teamRaw * 0.88)) : winsBase
   const eraDifficulty = ERA_DIFFICULTY[simEra] ?? 1.00
-  const offRating = Math.round(baseRating * eraDifficulty)
+  const offRating = Math.round(baseRating * eraDifficulty * difficultyMod)
   // Later rounds face better defenses — mild progressive reduction to team's effective rating
   const defFactor = [1.00, 0.97, 0.94, 0.89][idx]
   return { offRating, defFactor }
@@ -1244,6 +1355,7 @@ export function simulatePlayoffs(
   simEra: Era,
   coachDefBonus?: number,
   coachOffBonus?: number,
+  difficultyMod?: number,
 ): PlayoffResult {
   const OPP_SPREAD = 3
   const GAME_NOISE = 5
@@ -1319,7 +1431,7 @@ export function simulatePlayoffs(
   let champion = false
 
   for (let r = 0; r < 4; r++) {
-    const { offRating: oppMean, defFactor: roundDefFactor } = playoffOppRating(r + 1, regularSeasonWins, rawRating, simEra)
+    const { offRating: oppMean, defFactor: roundDefFactor } = playoffOppRating(r + 1, regularSeasonWins, rawRating, simEra, difficultyMod ?? 1.0)
     const winsNeeded = r === 0 ? firstRoundWinsNeeded(simEra) : 4
     let sW = 0, sL = 0
 
