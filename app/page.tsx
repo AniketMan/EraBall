@@ -4967,7 +4967,9 @@ export default function Home() {
     dataReqRef.current = true
     setLoading(true)
     Promise.all([
-      fetch('https://assets.eraball.com/players_with_stats.json').then(r => r.json()),
+      fetch('https://assets.eraball.com/players_with_stats.json')
+        .catch(() => fetch('https://pub-c85456ef7b454894a21cc859fee77b58.r2.dev/players_with_stats.json'))
+        .then(r => r.json()),
       fetch('/coaches.csv').then(r => r.text()).then(parseCoachesCSV)
     ]).then(([p, c]) => { setPlayers(p); setCoaches(c); setLoading(false) })
       .catch(err => { console.error('Failed to load data:', err); setLoading(false); dataReqRef.current = false })
