@@ -1627,31 +1627,45 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
         setSpinTeamDisplay(initialTeam); setSpinEraDisplay(initialEra)
         setSpinKey(k => k + 1)
         setDraftedIds(ids => {
-          // Re-verify guarantee with current ids (closure draftedIds may be stale)
+          // Full guarantee runs here with truly-current ids — the external selection
+          // used closure draftedIds which may lag React batching.
           let team = initialTeam, era = initialEra
           if (salaryCapMode && neededTiers.length > 0) {
-            const currentPool = players.filter(p => {
-              const eraTeams = p.all_teams_by_era?.[era] as string[] | undefined
-              const onTeam = eraTeams ? eraTeams.includes(team) : playerTeamForEra(p, era) === team
-              return onTeam && playerMatchesEra(p, era) && !ids.has(p.person_id)
+            const highestNeeded = TIER_PRIORITY.find(t => (neededTiers as string[]).includes(t))
+            const testPoolFor = (t: string, e: Era) => players.filter(p => {
+              const eraTeams = p.all_teams_by_era?.[e] as string[] | undefined
+              const onTeam = eraTeams ? eraTeams.includes(t) : playerTeamForEra(p, e) === t
+              return onTeam && playerMatchesEra(p, e) && !ids.has(p.person_id)
             })
-            const currentHasNeeded = currentPool.length >= 3 && currentPool.some(p => {
-              const base = playerBaseRating(withEraStats(p, era, team), simEra)
-              return checkTiers.includes(playerTier(base))
-            })
-            if (!currentHasNeeded) {
+            const hasHighest = (pool: typeof players, t: string, e: Era) =>
+              pool.length >= 3 && pool.some(p => {
+                const base = playerBaseRating(withEraStats(p, e, t), simEra)
+                return playerTier(base) === highestNeeded
+              })
+            const hasAnyNeeded = (pool: typeof players, t: string, e: Era) =>
+              pool.length >= 3 && pool.some(p => {
+                const base = playerBaseRating(withEraStats(p, e, t), simEra)
+                return (neededTiers as string[]).includes(playerTier(base))
+              })
+            // Check if current combo already satisfies highest needed tier
+            const curPool = testPoolFor(team, era)
+            if (!hasHighest(curPool, team, era)) {
+              // Try to find a combo with the highest needed tier
+              let found = false
               for (const combo of shuffled) {
-                if (combo.team === team && combo.era === era) continue
-                const testPool = players.filter(p => {
-                  const eraTeams = p.all_teams_by_era?.[combo.era] as string[] | undefined
-                  const onTeam = eraTeams ? eraTeams.includes(combo.team) : playerTeamForEra(p, combo.era) === combo.team
-                  return onTeam && playerMatchesEra(p, combo.era) && !ids.has(p.person_id)
-                })
-                const hasNeeded = testPool.length >= 3 && testPool.some(p => {
-                  const base = playerBaseRating(withEraStats(p, combo.era, combo.team), simEra)
-                  return checkTiers.includes(playerTier(base))
-                })
-                if (hasNeeded) { team = combo.team; era = combo.era; break }
+                const pool = testPoolFor(combo.team, combo.era)
+                if (hasHighest(pool, combo.team, combo.era)) {
+                  team = combo.team; era = combo.era; found = true; break
+                }
+              }
+              // Fallback: any needed tier
+              if (!found) {
+                for (const combo of shuffled) {
+                  const pool = testPoolFor(combo.team, combo.era)
+                  if (hasAnyNeeded(pool, combo.team, combo.era)) {
+                    team = combo.team; era = combo.era; break
+                  }
+                }
               }
               if (team !== initialTeam || era !== initialEra) {
                 setSpinTeamDisplay(team); setSpinEraDisplay(era)
