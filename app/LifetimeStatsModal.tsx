@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { getLifetimeStats, clearLifetimeStats, type LifetimeStats } from '../lib/lifetimeStats'
 
 const ALL_ERAS = ['50s','60s','70s','80s','90s','00s','10s','20s']
@@ -114,15 +114,44 @@ function StatBox({ label, value, sub, compact = false }: { label: string; value:
   )
 }
 
+function PlayerHighlightCard({ label, name, count, sub }: { label: string; name: string; count: number; sub?: string }) {
+  const [hovered, setHovered] = useState(false)
+  const [sheenKey, setSheenKey] = useState(0)
+  return (
+    <div
+      onMouseEnter={() => { setHovered(true); setSheenKey(k => k + 1) }}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: G.surface, padding: '14px 16px', flex: 1,
+        position: 'relative', overflow: 'hidden',
+        border: `1px solid ${hovered ? 'rgba(201,168,76,0.35)' : G.border}`,
+        transform: hovered ? 'scale(1.03)' : 'none',
+        transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease',
+        boxShadow: hovered ? '0 4px 18px rgba(201,168,76,0.12)' : 'none',
+      }}
+    >
+      {hovered && <div key={sheenKey} className="stat-box-sheen" />}
+      <div style={{ fontFamily: INTER, fontSize: 9, color: G.grey, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 6 }}>{label}</div>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+        <div style={{ fontFamily: BEBAS, fontSize: 22, color: G.gold, letterSpacing: '0.06em', flex: 1, minWidth: 0, lineHeight: 1.05, wordBreak: 'break-word' }}>{name}</div>
+        <div style={{ fontFamily: INTER, fontSize: 12, color: G.grey, flexShrink: 0 }}>{count}×</div>
+      </div>
+      {sub && <div style={{ fontFamily: INTER, fontSize: 10, color: G.grey, marginTop: 3 }}>{sub}</div>}
+    </div>
+  )
+}
+
 function StatsPanel({ stats, isMobile }: { stats: LifetimeStats; isMobile: boolean }) {
   const winPct = stats.totalWins + stats.totalLosses > 0
     ? ((stats.totalWins / (stats.totalWins + stats.totalLosses)) * 100).toFixed(1)
     : '—'
 
-  const mostDrafted = Object.values(stats.playerDraftCounts).sort((a, b) => b.count - a.count)[0]
+  const mostDrafted      = Object.values(stats.playerDraftCounts).sort((a, b) => b.count - a.count)[0]
+  const mostSuccessful   = Object.values(stats.playerChampionshipCounts ?? {}).sort((a, b) => b.count - a.count)[0]
+  const mostBenched      = Object.values(stats.playerBenchCounts ?? {}).sort((a, b) => b.count - a.count)[0]
   const mostDraftedCoach = Object.values(stats.coachDraftCounts).sort((a, b) => b.count - a.count)[0]
-  const favoriteEra = Object.entries(stats.eraSpinCount).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]
-  const erasWithRecord = ALL_ERAS.filter(e => stats.recordByEra[e])
+  const favoriteEra      = Object.entries(stats.eraSpinCount).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]
+  const erasWithRecord   = ALL_ERAS.filter(e => stats.recordByEra[e])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -161,26 +190,16 @@ function StatsPanel({ stats, isMobile }: { stats: LifetimeStats; isMobile: boole
         />
       </div>
 
-      {/* Most drafted player + coach */}
+      {/* Player highlights row 1 */}
       <div style={{ display: 'flex', flexWrap: isMobile ? 'wrap' : 'nowrap', gap: 8 }}>
-        {mostDrafted && (
-          <HoverCard style={{ background: G.surface, padding: '14px 16px', flex: 1 }}>
-            <div style={{ fontFamily: INTER, fontSize: 9, color: G.grey, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 6 }}>Most Drafted Player</div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-              <div style={{ fontFamily: BEBAS, fontSize: isMobile ? 18 : 24, color: G.gold, letterSpacing: '0.06em', flex: 1, minWidth: 0, lineHeight: 1.05, wordBreak: 'break-word' }}>{mostDrafted.name}</div>
-              <div style={{ fontFamily: INTER, fontSize: 12, color: G.grey, flexShrink: 0 }}>{mostDrafted.count}×</div>
-            </div>
-          </HoverCard>
-        )}
-        {mostDraftedCoach && (
-          <HoverCard style={{ background: G.surface, padding: '14px 16px', flex: 1 }}>
-            <div style={{ fontFamily: INTER, fontSize: 9, color: G.grey, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 6 }}>Most Drafted Coach</div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-              <div style={{ fontFamily: BEBAS, fontSize: isMobile ? 18 : 24, color: G.gold, letterSpacing: '0.06em', flex: 1, minWidth: 0, lineHeight: 1.05, wordBreak: 'break-word' }}>{mostDraftedCoach.name}</div>
-              <div style={{ fontFamily: INTER, fontSize: 12, color: G.grey, flexShrink: 0 }}>{mostDraftedCoach.count}×</div>
-            </div>
-          </HoverCard>
-        )}
+        {mostDrafted && <PlayerHighlightCard label="Most Drafted Player" name={mostDrafted.name} count={mostDrafted.count} />}
+        {mostSuccessful && <PlayerHighlightCard label="Most Successful Player" name={mostSuccessful.name} count={mostSuccessful.count} sub="rings" />}
+      </div>
+
+      {/* Player highlights row 2 */}
+      <div style={{ display: 'flex', flexWrap: isMobile ? 'wrap' : 'nowrap', gap: 8 }}>
+        {mostBenched && <PlayerHighlightCard label="Most Benched Player" name={mostBenched.name} count={mostBenched.count} sub="times benched" />}
+        {mostDraftedCoach && <PlayerHighlightCard label="Most Drafted Coach" name={mostDraftedCoach.name} count={mostDraftedCoach.count} />}
       </div>
 
       {/* Record by era */}
@@ -210,6 +229,8 @@ export default function LifetimeStatsModal({ onClose }: { onClose: () => void })
   const [stats, setStats] = useState<LifetimeStats | null>(null)
   const [confirming, setConfirming] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [sharing, setSharing] = useState(false)
+  const shareCardRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => { setStats(getLifetimeStats(tab)) }, [tab])
   useEffect(() => {
@@ -219,9 +240,36 @@ export default function LifetimeStatsModal({ onClose }: { onClose: () => void })
     return () => window.removeEventListener('resize', check)
   }, [])
 
+  const handleShare = async () => {
+    if (!shareCardRef.current || sharing || !stats) return
+    setSharing(true)
+    try {
+      await document.fonts.ready
+      const { default: html2canvas } = await import('html2canvas')
+      const canvas = await html2canvas(shareCardRef.current, {
+        scale: 2, useCORS: true, backgroundColor: '#000000', logging: false,
+      })
+      const url = canvas.toDataURL('image/png')
+      if (navigator.share) {
+        const blob = await (await fetch(url)).blob()
+        await navigator.share({ files: [new File([blob], 'eraball-stats.png', { type: 'image/png' })] })
+      } else {
+        const a = document.createElement('a')
+        a.download = 'eraball-stats.png'
+        a.href = url
+        a.click()
+      }
+    } catch (e) { console.error(e) }
+    finally { setSharing(false) }
+  }
+
   if (!stats) return null
 
   const isEmpty = stats.draftsCompleted === 0
+  const winPct = stats.totalWins + stats.totalLosses > 0
+    ? ((stats.totalWins / (stats.totalWins + stats.totalLosses)) * 100).toFixed(1) : '—'
+  const favoriteEra = Object.entries(stats.eraSpinCount).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]
+  const mostDrafted = Object.values(stats.playerDraftCounts).sort((a, b) => b.count - a.count)[0]
 
   return (
     <div
@@ -235,7 +283,20 @@ export default function LifetimeStatsModal({ onClose }: { onClose: () => void })
         {/* Header */}
         <div style={{ padding: '20px 24px 16px', borderBottom: `1px solid ${G.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontFamily: BEBAS, fontSize: 28, color: G.gold, letterSpacing: '0.2em' }}>Lifetime Stats</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: G.grey, fontSize: 18, cursor: 'pointer' }}>✕</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {!isEmpty && (
+              <button
+                onClick={handleShare}
+                disabled={sharing}
+                style={{ background: 'none', border: `1px solid ${G.border}`, color: G.grey, fontSize: 11, padding: '5px 12px', cursor: 'pointer', letterSpacing: '0.1em', fontFamily: INTER, fontWeight: 700, opacity: sharing ? 0.5 : 1, transition: 'border-color 0.15s, color 0.15s' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = G.gold; (e.currentTarget as HTMLButtonElement).style.color = G.gold }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = G.border; (e.currentTarget as HTMLButtonElement).style.color = G.grey }}
+              >
+                {sharing ? 'SAVING...' : 'SHARE'}
+              </button>
+            )}
+            <button onClick={onClose} style={{ background: 'none', border: 'none', color: G.grey, fontSize: 18, cursor: 'pointer' }}>✕</button>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -298,6 +359,96 @@ export default function LifetimeStatsModal({ onClose }: { onClose: () => void })
                 Reset Stats
               </button>
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Hidden share card captured by html2canvas */}
+      <div style={{ position: 'fixed', top: -9999, left: -9999, width: 640 }}>
+        <div ref={shareCardRef} style={{ background: '#000000', padding: 32, fontFamily: INTER, width: 640 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, borderBottom: `1px solid #252525`, paddingBottom: 16 }}>
+            <div style={{ fontFamily: BEBAS, fontSize: 32, color: G.gold, letterSpacing: '0.2em' }}>ERA BALL</div>
+            <div style={{ fontFamily: BEBAS, fontSize: 18, color: G.grey, letterSpacing: '0.15em' }}>
+              {tab === 'salary_cap' ? 'SALARY CAP DRAFT' : 'NORMAL DRAFT'} · LIFETIME STATS
+            </div>
+          </div>
+          {/* Row 1: Drafts / Record / Championships */}
+          <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
+            {[
+              { label: 'DRAFTS', value: String(stats.draftsCompleted) },
+              { label: 'RECORD', value: `${stats.totalWins}–${stats.totalLosses}`, sub: `${winPct}% win rate` },
+              { label: 'CHAMPIONSHIPS', value: String(stats.championshipsTotal) },
+            ].map(({ label, value, sub }) => (
+              <div key={label} style={{ flex: 1, background: '#111', border: '1px solid #252525', padding: '10px 12px' }}>
+                <div style={{ fontSize: 8, color: G.grey, letterSpacing: '0.18em', marginBottom: 3 }}>{label}</div>
+                <div style={{ fontFamily: BEBAS, fontSize: 26, color: G.gold, letterSpacing: '0.06em', lineHeight: 1 }}>{value}</div>
+                {sub && <div style={{ fontSize: 9, color: G.grey, marginTop: 2 }}>{sub}</div>}
+              </div>
+            ))}
+          </div>
+          {/* Row 2: Best Record / Worst Record / Highest Rating / Favorite Era */}
+          <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
+            {[
+              { label: 'BEST RECORD', value: stats.bestRecord ? `${stats.bestRecord.wins}–${stats.bestRecord.losses}` : '—', sub: stats.bestRecord ? eraLabel(stats.bestRecord.era) : undefined },
+              { label: 'WORST RECORD', value: stats.worstRecord ? `${stats.worstRecord.wins}–${stats.worstRecord.losses}` : '—', sub: stats.worstRecord ? eraLabel(stats.worstRecord.era) : undefined },
+              { label: 'HIGHEST RATING', value: stats.highestTeamRating ? String(stats.highestTeamRating.rating) : '—', sub: stats.highestTeamRating ? eraLabel(stats.highestTeamRating.era) : undefined },
+              { label: 'FAVORITE ERA', value: favoriteEra ? eraLabel(favoriteEra[0]) : '—', sub: favoriteEra ? `${favoriteEra[1]} played` : undefined },
+            ].map(({ label, value, sub }) => (
+              <div key={label} style={{ flex: 1, background: '#111', border: '1px solid #252525', padding: '10px 12px' }}>
+                <div style={{ fontSize: 8, color: G.grey, letterSpacing: '0.18em', marginBottom: 3 }}>{label}</div>
+                <div style={{ fontFamily: BEBAS, fontSize: 20, color: G.gold, letterSpacing: '0.06em', lineHeight: 1 }}>{value}</div>
+                {sub && <div style={{ fontSize: 9, color: G.grey, marginTop: 2 }}>{sub}</div>}
+              </div>
+            ))}
+          </div>
+          {/* Row 3: Player highlights */}
+          {(() => {
+            const mostSuccessful = Object.values(stats.playerChampionshipCounts ?? {}).sort((a, b) => b.count - a.count)[0]
+            const mostBenched    = Object.values(stats.playerBenchCounts ?? {}).sort((a, b) => b.count - a.count)[0]
+            const mostCoach      = Object.values(stats.coachDraftCounts).sort((a, b) => b.count - a.count)[0]
+            const highlights = [
+              mostDrafted    && { label: 'MOST DRAFTED PLAYER',    name: mostDrafted.name,    count: mostDrafted.count },
+              mostSuccessful && { label: 'MOST SUCCESSFUL PLAYER', name: mostSuccessful.name, count: mostSuccessful.count, sub: 'rings' },
+              mostBenched    && { label: 'MOST BENCHED PLAYER',    name: mostBenched.name,    count: mostBenched.count },
+              mostCoach      && { label: 'MOST DRAFTED COACH',     name: mostCoach.name,      count: mostCoach.count },
+            ].filter(Boolean) as { label: string; name: string; count: number; sub?: string }[]
+            return highlights.length > 0 ? (
+              <div style={{ display: 'flex', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
+                {highlights.map(h => (
+                  <div key={h.label} style={{ flex: '1 1 calc(50% - 5px)', background: '#111', border: '1px solid #252525', padding: '10px 12px', minWidth: 0 }}>
+                    <div style={{ fontSize: 8, color: G.grey, letterSpacing: '0.18em', marginBottom: 3 }}>{h.label}</div>
+                    <div style={{ fontFamily: BEBAS, fontSize: 18, color: G.gold, letterSpacing: '0.06em', wordBreak: 'break-word' }}>
+                      {h.name} <span style={{ color: G.grey, fontSize: 14 }}>{h.count}×</span>
+                    </div>
+                    {h.sub && <div style={{ fontSize: 9, color: G.grey, marginTop: 1 }}>{h.sub}</div>}
+                  </div>
+                ))}
+              </div>
+            ) : null
+          })()}
+          {/* Record by Era */}
+          {(() => {
+            const erasWithRecord = ALL_ERAS.filter(e => stats.recordByEra[e])
+            return erasWithRecord.length > 0 ? (
+              <div style={{ background: '#111', border: '1px solid #252525', marginBottom: 10 }}>
+                <div style={{ padding: '8px 12px', borderBottom: '1px solid #252525', fontSize: 8, color: G.grey, letterSpacing: '0.18em' }}>RECORD BY ERA</div>
+                {erasWithRecord.map(era => {
+                  const rec = stats.recordByEra[era]!
+                  const champs = stats.championshipsByEra[era] ?? 0
+                  const pct = ((rec.wins / (rec.wins + rec.losses)) * 100).toFixed(0)
+                  return (
+                    <div key={era} style={{ display: 'flex', alignItems: 'center', padding: '7px 12px', borderBottom: '1px solid #1a1a1a' }}>
+                      <div style={{ fontFamily: BEBAS, fontSize: 15, color: G.gold, letterSpacing: '0.1em', width: 48 }}>{eraLabel(era)}</div>
+                      <div style={{ flex: 1, fontSize: 12, color: '#ccc' }}>{rec.wins}–{rec.losses} <span style={{ color: G.grey, fontSize: 10 }}>({pct}%)</span></div>
+                      {champs > 0 && <div style={{ fontSize: 10, color: G.gold, fontWeight: 700 }}>🏆 {champs}×</div>}
+                    </div>
+                  )
+                })}
+              </div>
+            ) : null
+          })()}
+          <div style={{ borderTop: `1px solid #252525`, paddingTop: 10, textAlign: 'center', fontSize: 11, color: '#555', letterSpacing: '0.12em' }}>
+            ERABALL.COM
           </div>
         </div>
       </div>

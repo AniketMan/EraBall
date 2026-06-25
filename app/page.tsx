@@ -6,7 +6,9 @@ import type { Player, Coach, CourtSlot, SlotPosition, Era, GamePhase, PlayerSeas
 import ResultCard from './ResultCard'
 import LifetimeStatsModal from './LifetimeStatsModal'
 import LeaderboardModal from './LeaderboardModal'
-import { recordRunComplete } from '../lib/lifetimeStats'
+import AchievementsModal from './AchievementsModal'
+import { recordRunComplete, getLifetimeStats } from '../lib/lifetimeStats'
+import { checkAchievements, type Achievement } from '../lib/achievements'
 import { submitLeaderboardEntry } from '../lib/supabase'
 import {
   ALL_ERAS, SLOT_POSITIONS, SLOT_MPG, ERA_SEASON_GAMES, calcFitPenalty, calcEraModifier, calcTeamRating,
@@ -1014,7 +1016,7 @@ function PatchNotesModal({ onClose }: { onClose: () => void }) {
   )
 }
 
-function EraSelection({ onEraSelected, onSandboxSelected, onSalaryCapSelected, onRestart, onLifetimeStats, onLeaderboard, onEraPreview, muteBtn, eraThemeBtn }: { onEraSelected: (era: Era) => void; onSandboxSelected: (era: Era) => void; onSalaryCapSelected: (era: Era) => void; onRestart: () => void; onLifetimeStats: () => void; onLeaderboard: () => void; onEraPreview?: (era: Era) => void; muteBtn?: React.ReactNode; eraThemeBtn?: React.ReactNode }) {
+function EraSelection({ onEraSelected, onSandboxSelected, onSalaryCapSelected, onRestart, onLifetimeStats, onLeaderboard, onAchievements, onEraPreview, muteBtn, eraThemeBtn }: { onEraSelected: (era: Era) => void; onSandboxSelected: (era: Era) => void; onSalaryCapSelected: (era: Era) => void; onRestart: () => void; onLifetimeStats: () => void; onLeaderboard: () => void; onAchievements: () => void; onEraPreview?: (era: Era) => void; muteBtn?: React.ReactNode; eraThemeBtn?: React.ReactNode }) {
   const [spinning, setSpinning] = useState(false)
   const [era, setEra] = useState<Era | null>(null)
   const [showHelp, setShowHelp] = useState(false)
@@ -1253,6 +1255,9 @@ function EraSelection({ onEraSelected, onSandboxSelected, onSalaryCapSelected, o
           </Btn>
           <Btn onClick={onLifetimeStats} variant="ghost" className="w-48 py-3 text-sm">
             Lifetime Stats
+          </Btn>
+          <Btn onClick={onAchievements} variant="ghost" className="w-48 py-3 text-sm">
+            Achievements
           </Btn>
           <button
             onClick={() => setShowPatchNotes(true)}
@@ -3345,8 +3350,8 @@ function SeasonAwardsPanel({ awards }: { awards: AwardEntry[] }) {
 }
 
 // ─── Phase 4: Simulation ──────────────────────────────────────────────────────
-function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteBtn, sandboxMode, salaryCapMode, customEraRange, eraFilter }: {
-  slots: CourtSlot[]; coach: Coach; simEra: Era; onRestart: () => void; greyscaleBtn?: React.ReactNode; muteBtn?: React.ReactNode; sandboxMode?: boolean; salaryCapMode?: boolean; customEraRange?: Era[] | null; eraFilter?: string
+function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteBtn, sandboxMode, salaryCapMode, customEraRange, eraFilter, onAchievementsUnlocked }: {
+  slots: CourtSlot[]; coach: Coach; simEra: Era; onRestart: () => void; greyscaleBtn?: React.ReactNode; muteBtn?: React.ReactNode; sandboxMode?: boolean; salaryCapMode?: boolean; customEraRange?: Era[] | null; eraFilter?: string; onAchievementsUnlocked?: (a: Achievement[]) => void
 }) {
   const seasonGames = ERA_SEASON_GAMES[simEra]
   const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
@@ -3706,19 +3711,28 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
   useEffect(() => {
     if (!allDone || sandboxMode || customEraRange || savedRun.current) return
     savedRun.current = true
-    const players = slots
-      .filter(s => s.player)
-      .map(s => ({ personId: s.player!.person_id, name: s.player!.full_name }))
+    const starters = slots.slice(0, 5).filter(s => s.player).map(s => ({ personId: s.player!.person_id, name: s.player!.full_name }))
+    const bench    = slots.slice(5).filter(s => s.player).map(s => ({ personId: s.player!.person_id, name: s.player!.full_name }))
+    const hasSTierStarter = slots.slice(0, 5).some(s => s.player && playerTier(playerBaseRating(s.player, simEra)) === 's')
+    const runMode: 'normal' | 'salary_cap' = salaryCapMode ? 'salary_cap' : 'normal'
     recordRunComplete({
       era: simEra,
       wins,
       losses,
       champion: playoffResult?.champion ?? false,
       teamRating: Math.round(tr + 15),
-      players,
+      starters,
+      bench,
       coach: coach.name,
-      mode: salaryCapMode ? 'salary_cap' : 'normal',
+      mode: runMode,
+      hasSTierStarter,
     })
+    const newAchievements = checkAchievements(
+      getLifetimeStats('normal'),
+      getLifetimeStats('salary_cap'),
+      { era: simEra, mode: runMode, wins, losses, champion: playoffResult?.champion ?? false, teamRating: Math.round(tr + 15), coachGrade: coach.overallGrade, hasSTierStarter },
+    )
+    if (newAchievements.length > 0) onAchievementsUnlocked?.(newAchievements)
   }, [allDone])
 
   const seasonAwards = done && seasonStats.length > 0
@@ -4678,6 +4692,8 @@ export default function Home() {
   const [draftCustomEras, setDraftCustomEras] = useState<Era[] | null>(null)
   const [showLifetimeStats, setShowLifetimeStats] = useState(false)
   const [showLeaderboard, setShowLeaderboard] = useState(false)
+  const [showAchievements, setShowAchievements] = useState(false)
+  const [unlockedAchievements, setUnlockedAchievements] = useState<Achievement[]>([])
   const [loading, setLoading] = useState(false)
   const [muted, setMuted] = useState(false)
   const [volume, setVolume] = useState(0.21)
@@ -4980,12 +4996,27 @@ export default function Home() {
         </>,
         document.body
       )}
-      {phase === 'era-select' && <EraSelection onEraSelected={era => { setSimEra(era); setStartSandbox(false); setSalaryCapMode(false); setShowPerfDisclaimer(false); ensureData(); setPhase('draft') }} onSandboxSelected={era => { setSimEra(era); setStartSandbox(true); setSalaryCapMode(false); setShowPerfDisclaimer(false); ensureData(); setPhase('draft') }} onSalaryCapSelected={era => { setSimEra(era); setStartSandbox(false); setSalaryCapMode(true); setShowPerfDisclaimer(false); ensureData(); setPhase('draft') }} onRestart={restart} onLifetimeStats={() => setShowLifetimeStats(true)} onLeaderboard={() => setShowLeaderboard(true)} onEraPreview={era => setAudioEra(era)} muteBtn={muteBtn} eraThemeBtn={greyscaleBtn} />}
+      {phase === 'era-select' && <EraSelection onEraSelected={era => { setSimEra(era); setStartSandbox(false); setSalaryCapMode(false); setShowPerfDisclaimer(false); ensureData(); setPhase('draft') }} onSandboxSelected={era => { setSimEra(era); setStartSandbox(true); setSalaryCapMode(false); setShowPerfDisclaimer(false); ensureData(); setPhase('draft') }} onSalaryCapSelected={era => { setSimEra(era); setStartSandbox(false); setSalaryCapMode(true); setShowPerfDisclaimer(false); ensureData(); setPhase('draft') }} onRestart={restart} onLifetimeStats={() => setShowLifetimeStats(true)} onLeaderboard={() => setShowLeaderboard(true)} onAchievements={() => setShowAchievements(true)} onEraPreview={era => setAudioEra(era)} muteBtn={muteBtn} eraThemeBtn={greyscaleBtn} />}
       {showLifetimeStats && <LifetimeStatsModal onClose={() => setShowLifetimeStats(false)} />}
       {showLeaderboard && <LeaderboardModal onClose={() => setShowLeaderboard(false)} />}
+      {showAchievements && <AchievementsModal onClose={() => setShowAchievements(false)} />}
+
+      {/* Achievement unlock toast */}
+      {unlockedAchievements.length > 0 && (
+        <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 2000, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {unlockedAchievements.map(a => (
+            <div key={a.id} style={{ background: '#0d0d0d', border: `1px solid ${G.gold}`, padding: '12px 16px', minWidth: 240, maxWidth: 320, boxShadow: `0 4px 24px ${G.gold}33` }}>
+              <div style={{ fontSize: 9, color: G.gold, letterSpacing: '0.2em', marginBottom: 4 }}>ACHIEVEMENT UNLOCKED</div>
+              <div style={{ fontFamily: '"Bebas Neue", Impact, sans-serif', fontSize: 18, color: '#fff', letterSpacing: '0.08em' }}>{a.title}</div>
+              <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>{a.description}</div>
+              <button onClick={() => setUnlockedAchievements(prev => prev.filter(x => x.id !== a.id))} style={{ position: 'absolute', top: 8, right: 10, background: 'none', border: 'none', color: '#555', cursor: 'pointer', fontSize: 14 }}>✕</button>
+            </div>
+          ))}
+        </div>
+      )}
       {phase === 'draft' && <DraftScreen simEra={simEra} players={players} onDraftComplete={(s, ce) => { setSlots(s); setDraftCustomEras(ce); setPhase('coach-draft') }} onRestart={restart} startInSandbox={startSandbox} salaryCapMode={salaryCapMode} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} themeFilter={eraFilter} />}
       {phase === 'coach-draft' && <CoachDraftScreen coaches={coaches} onCoachSelected={c => { setCoach(c); setPhase('simulation') }} onRestart={restart} sandboxMode={startSandbox} salaryCapMode={salaryCapMode} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} />}
-      {phase === 'simulation' && coach && <SimulationScreen slots={slots} coach={coach} simEra={simEra} onRestart={restart} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} sandboxMode={startSandbox} salaryCapMode={salaryCapMode} customEraRange={draftCustomEras} eraFilter={eraFilter} />}
+      {phase === 'simulation' && coach && <SimulationScreen slots={slots} coach={coach} simEra={simEra} onRestart={restart} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} sandboxMode={startSandbox} salaryCapMode={salaryCapMode} customEraRange={draftCustomEras} eraFilter={eraFilter} onAchievementsUnlocked={setUnlockedAchievements} />}
 
       {/* Volume popover */}
       {showVolumePopover && audioEra !== null && !isMobileDevice && (
