@@ -909,7 +909,6 @@ const V1_5_NOTES = [
   ]},
   { section: 'Bugs', items: [
     'Stats now add up correctly in the playoffs with special performances.',
-    'Players in Southeast Asian countries who were blocked from getting team data can now play again! Fixed for all countries.',
   ]},
   { section: 'Misc', items: [
     'Era themes are now off by default and save your chosen setting locally.',
@@ -4742,7 +4741,7 @@ function getAudioElement(src: string): HTMLAudioElement {
   return _audioElements.get(src)!
 }
 
-const R2 = 'https://pub-c85456ef7b454894a21cc859fee77b58.r2.dev'
+const R2 = 'https://assets.eraball.com'
 
 const ERA_AUDIO: Partial<Record<Era, string>> = {
   '50s': `${R2}/50s.mp3`,
@@ -4833,7 +4832,7 @@ export default function Home() {
     dataReqRef.current = true
     setLoading(true)
     Promise.all([
-      fetch('https://pub-c85456ef7b454894a21cc859fee77b58.r2.dev/players_with_stats.json').then(r => r.json()),
+      fetch('https://assets.eraball.com/players_with_stats.json').then(r => r.json()),
       fetch('/coaches.csv').then(r => r.text()).then(parseCoachesCSV)
     ]).then(([p, c]) => { setPlayers(p); setCoaches(c); setLoading(false) })
       .catch(err => { console.error('Failed to load data:', err); setLoading(false); dataReqRef.current = false })
