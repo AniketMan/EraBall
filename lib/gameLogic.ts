@@ -308,33 +308,33 @@ export function applyAnchors(player: Player): Player {
   return { ...player, defAnchor: anchor === 'def', offAnchor: anchor === 'off', anchorTier: tier }
 }
 
-export const DUO_PAIRS: Record<string, string> = {
-  'Michael Jordan':          'Scottie Pippen',
-  'Scottie Pippen':          'Michael Jordan',
-  'Magic Johnson':           'Kareem Abdul-Jabbar',
-  'Kareem Abdul-Jabbar':     'Magic Johnson',
-  "Shaquille O'Neal":        'Kobe Bryant',
-  'Kobe Bryant':             "Shaquille O'Neal",
-  'John Stockton':           'Karl Malone',
-  'Karl Malone':             'John Stockton',
-  'Tim Duncan':              'Tony Parker',
-  'Tony Parker':             'Tim Duncan',
-  'LeBron James':            'Dwyane Wade',
-  'Dwyane Wade':             'LeBron James',
-  'Stephen Curry':           'Klay Thompson',
-  'Klay Thompson':           'Stephen Curry',
-  'Draymond Green':          'Stephen Curry',
-  'Nikola Jokic':            'Jamal Murray',
-  'Jamal Murray':            'Nikola Jokic',
-  'Aaron Gordon':            'Nikola Jokic',
-  'Bill Russell':            'John Havlicek',
-  'John Havlicek':           'Bill Russell',
+export const DUO_PAIRS: Record<string, string[]> = {
+  'Michael Jordan':          ['Scottie Pippen'],
+  'Scottie Pippen':          ['Michael Jordan'],
+  'Magic Johnson':           ['Kareem Abdul-Jabbar'],
+  'Kareem Abdul-Jabbar':     ['Magic Johnson'],
+  "Shaquille O'Neal":        ['Kobe Bryant'],
+  'Kobe Bryant':             ["Shaquille O'Neal"],
+  'John Stockton':           ['Karl Malone'],
+  'Karl Malone':             ['John Stockton'],
+  'Tim Duncan':              ['Tony Parker'],
+  'Tony Parker':             ['Tim Duncan'],
+  'LeBron James':            ['Dwyane Wade'],
+  'Dwyane Wade':             ['LeBron James'],
+  'Stephen Curry':           ['Klay Thompson', 'Draymond Green'],
+  'Klay Thompson':           ['Stephen Curry'],
+  'Draymond Green':          ['Stephen Curry'],
+  'Nikola Jokic':            ['Jamal Murray', 'Aaron Gordon'],
+  'Jamal Murray':            ['Nikola Jokic'],
+  'Aaron Gordon':            ['Nikola Jokic'],
+  'Bill Russell':            ['John Havlicek'],
+  'John Havlicek':           ['Bill Russell'],
 }
 
 export function applyDuo(player: Player): Player {
-  const partner = DUO_PAIRS[player.full_name]
-  if (!partner) return player
-  return { ...player, duoPartner: partner }
+  const partners = DUO_PAIRS[player.full_name]
+  if (!partners) return player
+  return { ...player, duoPartners: partners }
 }
 
 const TIMELESS_PLAYERS = new Set([
