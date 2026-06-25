@@ -173,6 +173,7 @@ const PLAYER_ANCHORS: Record<string, AnchorType> = {
   'David Robinson':          'def',
   'Anthony Davis':           'def',
   'Patrick Ewing':           'def',
+  'Yao Ming':                'def',
   // Defensive Anchors — T2
   'Marcus Smart':            'def',
   'Aaron Gordon':            'def',
@@ -506,6 +507,7 @@ const BASE_RATING_OVERRIDE: Record<string, number> = {
   "Shaquille O'Neal:00s:LAL":        66,
   'Tim Duncan:00s:SAS':              66,
   'Kobe Bryant:00s:LAL':             65,
+  'Yao Ming:00s:HOU':                46.5,
   // 90s
   'Michael Jordan:90s:CHI':          72,
   'Magic Johnson:90s:LAL':           60,
@@ -768,7 +770,7 @@ export function calcEraModifier(player: Player, simEra: Era): number {
   // Zach Randolph — elite backward fit; physical low-post game translates to any older era
   if (player.full_name === 'Zach Randolph' && playerIdx > simIdx) return 1.0
   // Tall centers (6'10"+) or Bam Adebayo going back get reduced penalty (physical size translates)
-  const isTallCenter = playerHeightInches(player) >= 82 || player.full_name === 'Bam Adebayo' || player.full_name === 'Zion Williamson'
+  const isTallCenter = playerHeightInches(player) >= 82 || player.full_name === 'Bam Adebayo' || player.full_name === 'Zion Williamson' || player.full_name === 'Aaron Gordon'
   const table = playerIdx > simIdx
     ? (isTallCenter ? ERA_MOD_BACKWARD_TALL : ERA_MOD_BACKWARD)
     : (isEstimatedShooter(player, simEra) ? ERA_MOD_FORWARD_EST_SHOOTER : ERA_MOD_FORWARD)
