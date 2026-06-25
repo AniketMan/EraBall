@@ -309,26 +309,52 @@ export function applyAnchors(player: Player): Player {
 }
 
 export const DUO_PAIRS: Record<string, string[]> = {
-  'Michael Jordan':          ['Scottie Pippen'],
-  'Scottie Pippen':          ['Michael Jordan'],
+  // 50s / 60s
+  'Wilt Chamberlain':        ['Hal Greer'],
+  'Hal Greer':               ['Wilt Chamberlain'],
+  'Jerry West':              ['Elgin Baylor'],
+  'Elgin Baylor':            ['Jerry West'],
+  'Bill Russell':            ['John Havlicek'],
+  'John Havlicek':           ['Bill Russell'],
+  // 70s / 80s
+  'Alex English':            ['Kiki Vandeweghe'],
+  'Kiki Vandeweghe':         ['Alex English'],
   'Magic Johnson':           ['Kareem Abdul-Jabbar'],
   'Kareem Abdul-Jabbar':     ['Magic Johnson'],
-  "Shaquille O'Neal":        ['Kobe Bryant'],
-  'Kobe Bryant':             ["Shaquille O'Neal"],
+  'Larry Bird':              ['Kevin McHale'],
+  'Kevin McHale':            ['Larry Bird'],
+  'Isiah Thomas':            ['Joe Dumars'],
+  'Joe Dumars':              ['Isiah Thomas'],
+  // 90s
+  'Michael Jordan':          ['Scottie Pippen'],
+  'Scottie Pippen':          ['Michael Jordan'],
   'John Stockton':           ['Karl Malone'],
   'Karl Malone':             ['John Stockton'],
+  'Hakeem Olajuwon':         ['Clyde Drexler'],
+  'Clyde Drexler':           ['Hakeem Olajuwon'],
+  "Shaquille O'Neal":        ['Kobe Bryant', 'Anfernee Hardaway'],
+  'Anfernee Hardaway':       ["Shaquille O'Neal"],
+  // 00s
+  'Kobe Bryant':             ["Shaquille O'Neal"],
+  'Tracy McGrady':           ['Yao Ming'],
+  'Yao Ming':                ['Tracy McGrady'],
   'Tim Duncan':              ['Tony Parker'],
   'Tony Parker':             ['Tim Duncan'],
-  'LeBron James':            ['Dwyane Wade'],
+  'Dirk Nowitzki':           ['Jason Terry'],
+  'Jason Terry':             ['Dirk Nowitzki'],
+  // 10s
+  'Kevin Durant':            ['Russell Westbrook'],
+  'Russell Westbrook':       ['Kevin Durant'],
+  'LeBron James':            ['Dwyane Wade', 'Kyrie Irving'],
   'Dwyane Wade':             ['LeBron James'],
+  'Kyrie Irving':            ['LeBron James'],
   'Stephen Curry':           ['Klay Thompson', 'Draymond Green'],
   'Klay Thompson':           ['Stephen Curry'],
   'Draymond Green':          ['Stephen Curry'],
+  // 20s
   'Nikola Jokic':            ['Jamal Murray', 'Aaron Gordon'],
   'Jamal Murray':            ['Nikola Jokic'],
   'Aaron Gordon':            ['Nikola Jokic'],
-  'Bill Russell':            ['John Havlicek'],
-  'John Havlicek':           ['Bill Russell'],
 }
 
 export function applyDuo(player: Player): Player {
