@@ -3515,9 +3515,15 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
   const [lbSubmitting, setLbSubmitting] = useState(false)
   const [lbScore, setLbScore] = useState<number | null>(null)
 
+  const PROFANITY_RE = /nigger|nigga|nigg(a|er|ers|as)|chink|spick?|wetback|faggot|fag|cunt|kike|tranny|retard|rape|rapist/i
+
   const handleLeaderboardSubmit = async () => {
     const lbTeamName = lbTeamNameRef.current?.value.trim() ?? ''
     if (!lbTeamName || lbSubmitting || lbSubmitted) return
+    if (PROFANITY_RE.test(lbTeamName)) {
+      alert('Team name contains prohibited language. Please choose a different name.')
+      return
+    }
     setLbSubmitting(true)
     const playoffWins = playoffResult ? playoffResult.rounds.reduce((s, r) => s + r.seriesWins, 0) : 0
     const playoffLosses = playoffResult ? playoffResult.rounds.reduce((s, r) => s + r.seriesLosses, 0) : 0
