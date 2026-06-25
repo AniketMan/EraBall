@@ -3514,6 +3514,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
   const [lbSubmitted, setLbSubmitted] = useState(false)
   const [lbSubmitting, setLbSubmitting] = useState(false)
   const [lbScore, setLbScore] = useState<number | null>(null)
+  const [lbError, setLbError] = useState<string | null>(null)
 
   const PROFANITY_RE = /nigger|nigga|nigg(a|er|ers|as)|chink|spick?|wetback|faggot|fag|cunt|kike|tranny|retard|rape|rapist/i
 
@@ -3521,9 +3522,10 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
     const lbTeamName = lbTeamNameRef.current?.value.trim() ?? ''
     if (!lbTeamName || lbSubmitting || lbSubmitted) return
     if (PROFANITY_RE.test(lbTeamName)) {
-      alert('Team name contains prohibited language. Please choose a different name.')
+      setLbError('Team name not allowed. Please choose a different name.')
       return
     }
+    setLbError(null)
     setLbSubmitting(true)
     const playoffWins = playoffResult ? playoffResult.rounds.reduce((s, r) => s + r.seriesWins, 0) : 0
     const playoffLosses = playoffResult ? playoffResult.rounds.reduce((s, r) => s + r.seriesLosses, 0) : 0
@@ -4726,6 +4728,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
                 </Btn>
               </div>
             )}
+            {lbError && <div style={{ fontSize: 11, color: '#CC4444', marginTop: 6, letterSpacing: '0.04em' }}>{lbError}</div>}
           </div>
           )}
 
