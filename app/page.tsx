@@ -40,6 +40,15 @@ const BEBAS = { fontFamily: 'var(--font-bebas), "Bebas Neue", impact, sans-serif
 // 50s era theme: a metallic greyscale luminance ladder so tiers stay distinct under
 // the full-greyscale filter (which would otherwise flatten the color gradients into
 // the same muddy grey). Kept in the darker range so white/gold card text stays legible.
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
 function tierBg(player: Player, fifties = false): string {
   const r = playerBaseRating(player, player.era as Era)
   if (fifties) {
@@ -1577,7 +1586,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
           if (capCombos.length > 0) pickableCombos = capCombos
         }
         // Shuffle pickableCombos so retries don't re-pick the same combo
-        const shuffled = [...pickableCombos].sort(() => Math.random() - 0.5)
+        const shuffled = shuffle(pickableCombos)
         let chosen = shuffled[0]
         const checkTiers: string[] = neededTiers as string[]
         if (salaryCapMode && neededTiers.length > 0) {
@@ -1881,7 +1890,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
   }
 
   const fillRandom = () => {
-    const shuffled = [...players].sort(() => Math.random() - 0.5)
+    const shuffled = shuffle(players)
     const picks = shuffled.slice(0, 9)
     const newSlots = SLOT_POSITIONS.map((pos, i) => {
       const player = applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(picks[i], picks[i].era as Era, picks[i].team_abbreviation))))))))
