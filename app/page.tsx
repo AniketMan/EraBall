@@ -2881,7 +2881,7 @@ function StatsTable({ stats, simEra, title, subtitle, teamActualPPG, teamActualO
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >×</button>
-          <PlayerCard player={cardPlayer} activeEra={cardPlayer.era} fifties={fifties} duoActiveCount={cardPlayer.duoPartners ? slots.filter(s => s.player && cardPlayer.duoPartners!.includes(s.player.full_name)).length : 0} />
+          <PlayerCard player={cardPlayer} activeEra={cardPlayer.era} fifties={fifties} duoActiveCount={cardPlayer.duoActiveCount ?? 0} />
           {gameLog.length > 0 && (
             <div style={{ background: G.surface, border: `1px solid ${G.border}`, borderTop: 'none', padding: '12px 16px' }}>
               <div className="text-xs uppercase tracking-widest mb-2" style={{ color: G.grey }}>Playoff Game Log</div>
