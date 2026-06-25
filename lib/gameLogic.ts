@@ -686,7 +686,7 @@ export function imputeTOV(player: Player): number {
 }
 
 export function playerBaseRating(player: Player, simEra?: Era): number {
-  const duoBonus = player.duoActive ? 5 : 0
+  const duoBonus = (player.duoActiveCount ?? 0) * 5
   // Flat base rating override
   const flatKey = player.eraTeam ? `${player.full_name}:${player.era}:${player.eraTeam}` : null
   if (flatKey && BASE_RATING_OVERRIDE[flatKey] != null) return BASE_RATING_OVERRIDE[flatKey] + duoBonus

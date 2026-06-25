@@ -3530,8 +3530,8 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
 
   const slotsWithDuo = slots.map(slot => {
     if (!slot.player?.duoPartners) return slot
-    const duoActive = slots.some(s => s !== slot && s.player && slot.player!.duoPartners!.includes(s.player.full_name))
-    return { ...slot, player: { ...slot.player, duoActive } }
+    const duoActiveCount = slots.filter(s => s !== slot && s.player && slot.player!.duoPartners!.includes(s.player.full_name)).length
+    return { ...slot, player: { ...slot.player, duoActiveCount } }
   })
   const { teamRating: tr, rawRating, playerRatings: pr } = calcTeamRating(slotsWithDuo, coach, simEra)
   // rawRating with champ bonus on the team side — passed to sims so off/def apply separately
