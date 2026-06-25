@@ -308,6 +308,37 @@ export function applyAnchors(player: Player): Player {
   return { ...player, defAnchor: anchor === 'def', offAnchor: anchor === 'off', anchorTier: tier }
 }
 
+export const DUO_PAIRS: Record<string, string> = {
+  'Michael Jordan':          'Scottie Pippen',
+  'Scottie Pippen':          'Michael Jordan',
+  'Magic Johnson':           'Kareem Abdul-Jabbar',
+  'Kareem Abdul-Jabbar':     'Magic Johnson',
+  'Larry Bird':              'Kevin McHale',
+  'Kevin McHale':            'Larry Bird',
+  "Shaquille O'Neal":        'Kobe Bryant',
+  'Kobe Bryant':             "Shaquille O'Neal",
+  'John Stockton':           'Karl Malone',
+  'Karl Malone':             'John Stockton',
+  'Tim Duncan':              'Tony Parker',
+  'Tony Parker':             'Tim Duncan',
+  'LeBron James':            'Dwyane Wade',
+  'Dwyane Wade':             'LeBron James',
+  'Stephen Curry':           'Klay Thompson',
+  'Klay Thompson':           'Stephen Curry',
+  'Nikola Jokic':            'Jamal Murray',
+  'Jamal Murray':            'Nikola Jokic',
+  'Giannis Antetokounmpo':   'Khris Middleton',
+  'Khris Middleton':         'Giannis Antetokounmpo',
+  'Bill Russell':            'John Havlicek',
+  'John Havlicek':           'Bill Russell',
+}
+
+export function applyDuo(player: Player): Player {
+  const partner = DUO_PAIRS[player.full_name]
+  if (!partner) return player
+  return { ...player, duoPartner: partner }
+}
+
 const TIMELESS_PLAYERS = new Set([
   'LeBron James',
   'Oscar Robertson',
@@ -631,9 +662,10 @@ export function imputeTOV(player: Player): number {
 }
 
 export function playerBaseRating(player: Player, simEra?: Era): number {
+  const duoBonus = player.duoActive ? 5 : 0
   // Flat base rating override
   const flatKey = player.eraTeam ? `${player.full_name}:${player.era}:${player.eraTeam}` : null
-  if (flatKey && BASE_RATING_OVERRIDE[flatKey] != null) return BASE_RATING_OVERRIDE[flatKey]
+  if (flatKey && BASE_RATING_OVERRIDE[flatKey] != null) return BASE_RATING_OVERRIDE[flatKey] + duoBonus
 
   // Check for a rating-only stat override (display stats unchanged)
   const overrideKey = player.eraTeam ? `${player.full_name}:${player.era}:${player.eraTeam}` : null
@@ -659,7 +691,8 @@ export function playerBaseRating(player: Player, simEra?: Era): number {
     imputeBLK(ratingPlayer)     * 1.5 -
     imputeTOV(ratingPlayer)     * 1.0 +
     anchorBonus                       +
-    top75Bonus
+    top75Bonus                        +
+    duoBonus
   )
 }
 

@@ -44,6 +44,8 @@ export interface Player {
   shootingStar?: boolean
   shootingStarTier?: 1 | 2
   glassClean?: boolean
+  duoPartner?: string
+  duoActive?: boolean
   eraTeam?: string  // set by withEraStats to reflect which team's era stats are loaded
 }
 
