@@ -846,6 +846,33 @@ function HowToPlayModal({ onClose }: { onClose: () => void }) {
 }
 
 // ─── Shared top bar ───────────────────────────────────────────────────────────
+function FooterLink({ href, label, color, border, opacity }: { href: string; label: string; color: string; border: string; opacity: number }) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
+        color: hovered ? '#ffffff' : color,
+        border: `1px solid ${hovered ? '#888888' : border}`,
+        padding: '6px 12px',
+        background: hovered ? '#1a1a1a' : G.surface,
+        textDecoration: 'none',
+        opacity: hovered ? 1 : opacity,
+        transition: 'opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease',
+        cursor: 'pointer',
+        display: 'block',
+      }}
+    >
+      {label}
+    </a>
+  )
+}
+
 function TopBar({ onRestart, right }: { onRestart: () => void; right?: React.ReactNode }) {
   const [showHelp, setShowHelp] = useState(false)
   return (
@@ -1568,109 +1595,42 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
         // Land
         const filteredCombos = spinShouldFilter ? validCombos.filter(c => spinEraFilter.has(c.era)) : validCombos
         if (filteredCombos.length === 0) { setSpinning(false); return }
-        // Salary cap guarantee: keep pool broad (any needed tier) but prefer the highest missing tier
-        // when selecting the chosen combo. This preserves randomness early (all tiers needed → wide pool)
-        // while ensuring e.g. an A player is guaranteed when A is specifically still needed.
         const TIER_PRIORITY: PlayerTier[] = ['s', 'a', 'b', 'c', 'd']
-        let pickableCombos = filteredCombos
-        if (salaryCapMode && neededTiers.length > 0) {
-          const capCombos = filteredCombos.filter(({ team, era }) =>
-            players.some(p => {
-              const eraTeams = p.all_teams_by_era?.[era] as string[] | undefined
-              const onTeam = eraTeams ? eraTeams.includes(team) : playerTeamForEra(p, era) === team
-              if (!onTeam || !playerMatchesEra(p, era) || draftedIds.has(p.person_id)) return false
-              const base = playerBaseRating(withEraStats(p, era, team), simEra)
-              return (neededTiers as string[]).includes(playerTier(base))
-            })
-          )
-          if (capCombos.length > 0) pickableCombos = capCombos
-        }
-        // Shuffle pickableCombos so retries don't re-pick the same combo
-        const shuffled = shuffle(pickableCombos)
-        let chosen = shuffled[0]
-        const checkTiers: string[] = neededTiers as string[]
-        if (salaryCapMode && neededTiers.length > 0) {
-          // Try highest needed tier first; fall back to any needed tier if no match
-          const highestNeeded = TIER_PRIORITY.find(t => (neededTiers as string[]).includes(t))
-          let found = false
-          if (highestNeeded) {
-            for (const combo of shuffled) {
-              const testPool = players.filter(p => {
-                const eraTeams = p.all_teams_by_era?.[combo.era] as string[] | undefined
-                const onTeam = eraTeams ? eraTeams.includes(combo.team) : playerTeamForEra(p, combo.era) === combo.team
-                return onTeam && playerMatchesEra(p, combo.era) && !draftedIds.has(p.person_id)
-              })
-              const hasHighest = testPool.length >= 3 && testPool.some(p => {
-                const base = playerBaseRating(withEraStats(p, combo.era, combo.team), simEra)
-                return playerTier(base) === highestNeeded
-              })
-              if (hasHighest) { chosen = combo; found = true; break }
-            }
-          }
-          if (!found) {
-            for (const combo of shuffled) {
-              const testPool = players.filter(p => {
-                const eraTeams = p.all_teams_by_era?.[combo.era] as string[] | undefined
-                const onTeam = eraTeams ? eraTeams.includes(combo.team) : playerTeamForEra(p, combo.era) === combo.team
-                return onTeam && playerMatchesEra(p, combo.era) && !draftedIds.has(p.person_id)
-              })
-              const hasNeeded = testPool.length >= 3 && testPool.some(p => {
-                const base = playerBaseRating(withEraStats(p, combo.era, combo.team), simEra)
-                return checkTiers.includes(playerTier(base))
-              })
-              if (hasNeeded) { chosen = combo; break }
-            }
-          }
-        }
-        const { team: initialTeam, era: initialEra } = chosen
+        // Pick any random combo just for the landing display animation
+        const { team: initialTeam, era: initialEra } = filteredCombos[Math.floor(Math.random() * filteredCombos.length)]
         setSpinPhase('land')
         setSpinTeamDisplay(initialTeam); setSpinEraDisplay(initialEra)
         setSpinKey(k => k + 1)
         setDraftedIds(ids => {
-          // Full guarantee runs here with truly-current ids — the external selection
-          // used closure draftedIds which may lag React batching.
+          // All guarantee logic runs here with truly-current ids.
+          // freshShuffled covers ALL filteredCombos — no pre-filtering by stale closure draftedIds.
           let team = initialTeam, era = initialEra
           if (salaryCapMode && neededTiers.length > 0) {
             const highestNeeded = TIER_PRIORITY.find(t => (neededTiers as string[]).includes(t))
-            const testPoolFor = (t: string, e: Era) => players.filter(p => {
+            const freshShuffled = shuffle([...filteredCombos])
+            const getPool = (t: string, e: Era) => players.filter(p => {
               const eraTeams = p.all_teams_by_era?.[e] as string[] | undefined
               const onTeam = eraTeams ? eraTeams.includes(t) : playerTeamForEra(p, e) === t
               return onTeam && playerMatchesEra(p, e) && !ids.has(p.person_id)
             })
-            const hasHighest = (pool: typeof players, t: string, e: Era) =>
-              pool.length >= 3 && pool.some(p => {
-                const base = playerBaseRating(withEraStats(p, e, t), simEra)
-                return playerTier(base) === highestNeeded
-              })
-            const hasAnyNeeded = (pool: typeof players, t: string, e: Era) =>
-              pool.length >= 3 && pool.some(p => {
-                const base = playerBaseRating(withEraStats(p, e, t), simEra)
-                return (neededTiers as string[]).includes(playerTier(base))
-              })
-            // Check if current combo already satisfies highest needed tier
-            const curPool = testPoolFor(team, era)
-            if (!hasHighest(curPool, team, era)) {
-              // Try to find a combo with the highest needed tier
-              let found = false
-              for (const combo of shuffled) {
-                const pool = testPoolFor(combo.team, combo.era)
-                if (hasHighest(pool, combo.team, combo.era)) {
-                  team = combo.team; era = combo.era; found = true; break
-                }
-              }
-              // Fallback: any needed tier
-              if (!found) {
-                for (const combo of shuffled) {
-                  const pool = testPoolFor(combo.team, combo.era)
-                  if (hasAnyNeeded(pool, combo.team, combo.era)) {
-                    team = combo.team; era = combo.era; break
-                  }
-                }
-              }
-              if (team !== initialTeam || era !== initialEra) {
-                setSpinTeamDisplay(team); setSpinEraDisplay(era)
+            let found = false
+            // Pass 1: find a combo with the highest needed tier and 3+ available players
+            for (const combo of freshShuffled) {
+              const pool = getPool(combo.team, combo.era)
+              if (pool.length >= 3 && pool.some(p => playerTier(playerBaseRating(withEraStats(p, combo.era, combo.team), simEra)) === highestNeeded)) {
+                team = combo.team; era = combo.era; found = true; break
               }
             }
+            // Pass 2: fall back to any needed tier
+            if (!found) {
+              for (const combo of freshShuffled) {
+                const pool = getPool(combo.team, combo.era)
+                if (pool.length >= 3 && pool.some(p => (neededTiers as string[]).includes(playerTier(playerBaseRating(withEraStats(p, combo.era, combo.team), simEra))))) {
+                  team = combo.team; era = combo.era; break
+                }
+              }
+            }
+            setSpinTeamDisplay(team); setSpinEraDisplay(era)
           }
           const pool = players.filter(p => {
             const allTeams = p.all_teams_by_era?.[era] as string[] | undefined
@@ -5351,51 +5311,13 @@ export default function Home() {
       )}
       {/* Bottom-right footer links */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, padding: '16px 20px 32px' }}>
-        <a
-          href="https://eshanbhattdesign.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="footer-link"
-          style={{
-            fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
-            color: G.greyDark, border: `1px solid ${G.border}`,
-            padding: '6px 12px', background: G.surface,
-            textDecoration: 'none', opacity: 0.7,
-            transition: 'opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease',
-          }}
-        >
-          eshanbhattdesign.com
-        </a>
-        <a
-          href="https://x.com/Eshan_Design"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="footer-link"
-          style={{
-            fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
-            color: G.greyDark, border: `1px solid ${G.border}`,
-            padding: '6px 12px', background: G.surface,
-            textDecoration: 'none', opacity: 0.7,
-            transition: 'opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease',
-          }}
-        >
-          Suggestions or bugs? DM me on Twitter
-        </a>
-        <a
-          href="https://ko-fi.com/eshanb"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="footer-link"
-          style={{
-            fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
-            color: G.gold, border: `1px solid ${G.goldDim}`,
-            padding: '6px 12px', background: G.surface,
-            textDecoration: 'none', opacity: 0.85,
-            transition: 'opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease',
-          }}
-        >
-          Support the game
-        </a>
+        <span style={{ fontSize: 10, color: G.greyDark, letterSpacing: '0.06em', textTransform: 'uppercase', opacity: 0.55, marginBottom: 2 }}>
+          Suggestions or Bugs? Join the Discord or DM me on Twitter:
+        </span>
+        <FooterLink href="https://discord.gg/gFAp5adX" label="Discord" color={G.greyDark} border={G.border} opacity={0.7} />
+        <FooterLink href="https://x.com/Eshan_Design" label="Twitter" color={G.greyDark} border={G.border} opacity={0.7} />
+        <FooterLink href="https://ko-fi.com/eshanb" label="Support the game" color={G.gold} border={G.goldDim} opacity={0.85} />
+        <FooterLink href="https://eshanbhattdesign.com" label="eshanbhattdesign.com" color={G.greyDark} border={G.border} opacity={0.7} />
       </div>
 
       {/* Disclaimer */}
