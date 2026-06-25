@@ -1286,7 +1286,7 @@ function EraSelection({ onEraSelected, onSandboxSelected, onSalaryCapSelected, o
 }
 
 // ─── Phase 2: Draft ───────────────────────────────────────────────────────────
-type TagKey = 'timeless' | 'offAnchor' | 'defAnchor' | 'shootingStar' | 'glassClean' | 'flex' | 'champion'
+type TagKey = 'timeless' | 'offAnchor' | 'defAnchor' | 'shootingStar' | 'glassClean' | 'flex' | 'champion' | 'dynamicDuo'
 const TAG_OPTIONS: { key: TagKey; label: string; color: string }[] = [
   { key: 'timeless',     label: 'Timeless',         color: '#C084FC' },
   { key: 'offAnchor',    label: 'Offensive Anchor',  color: G.gold },
@@ -1295,6 +1295,7 @@ const TAG_OPTIONS: { key: TagKey; label: string; color: string }[] = [
   { key: 'glassClean',   label: 'Glass Cleaner',     color: '#34D399' },
   { key: 'flex',         label: 'Flex',              color: '#4A9ECC' },
   { key: 'champion',     label: 'Champion',          color: G.gold },
+  { key: 'dynamicDuo',   label: 'Dynamic Duo',       color: '#4ECDC4' },
 ]
 
 function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandbox, salaryCapMode, greyscaleBtn, muteBtn, themeFilter }: {
@@ -1625,6 +1626,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
         case 'glassClean':   return !!p.glassClean
         case 'flex':         return !!p.flexPositions
         case 'champion':     return (p.rings ?? 0) > 0
+        case 'dynamicDuo':   return !!p.duoPartner
         default:             return false
       }
     }
@@ -2563,6 +2565,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                   { name: 'Shooting Star', color: '#F472B6',  desc: 'Boosts team spacing. All-time shooters. T1 carries a larger boost than T2.' },
                   { name: 'Glass Cleaner', color: '#34D399',  desc: 'Elite rebounder. Boosts team second-chance points and limits opponent possessions.' },
                   { name: 'Timeless',      color: '#C084FC',  desc: 'Minimal era penalties across all decades. Minor penalty only if 6+ eras from home.' },
+                  { name: 'Dynamic Duo',   color: '#4ECDC4',  desc: 'Draft both players to activate a +5 rating boost for each. Check the tooltip to see who the partner is.' },
                 ].map(t => (
                   <div key={t.name} className="flex items-start gap-2.5 px-3 py-2 transition-all duration-150 hover:-translate-y-0.5 hover:scale-[1.02] cursor-default"
                     style={{ background: `${t.color}0f`, borderLeft: `2px solid ${t.color}`, borderRadius: 3 }}>
