@@ -89,11 +89,25 @@ const DEFS: (Achievement & { check: CheckFn })[] = [
     check: (n, c) => (n.bestRecord?.wins ?? 0) >= 75 || (c.bestRecord?.wins ?? 0) >= 74,
   },
   {
+    id: 'seventy_two_zero',
+    title: '72-0',
+    description: 'Go 72-0 in the regular season. (50s or 60s era.)',
+    rarity: 'epic',
+    check: (_n, _c, run) => run.wins >= 72 && run.losses === 0 && run.wins < 82,
+  },
+  {
     id: 'perfect_season',
-    title: 'Perfect Season',
-    description: 'Win 81 or more regular season games.',
+    title: '82-0',
+    description: 'Go 82-0 in the regular season.',
     rarity: 'legendary',
-    check: (n, c) => (n.bestRecord?.wins ?? 0) >= 81 || (c.bestRecord?.wins ?? 0) >= 81,
+    check: (_n, _c, run) => run.wins >= 82 && run.losses === 0,
+  },
+  {
+    id: 'true_perfect',
+    title: 'Perfect Season',
+    description: 'Go undefeated in the regular season and win the championship.',
+    rarity: 'legendary',
+    check: (_n, _c, run) => run.losses === 0 && run.champion,
   },
   {
     id: 'no_stars',
@@ -124,6 +138,66 @@ const DEFS: (Achievement & { check: CheckFn })[] = [
     description: 'Win a championship with a team rating under 60.',
     rarity: 'epic',
     check: (_n, _c, run) => run.champion && run.teamRating < 60,
+  },
+  {
+    id: 'loyal_coach',
+    title: 'Ride or Die',
+    description: 'Draft the same coach 10 times.',
+    rarity: 'common',
+    check: (n, c) =>
+      Object.values(n.coachDraftCounts).some(p => p.count >= 10) ||
+      Object.values(c.coachDraftCounts).some(p => p.count >= 10),
+  },
+  {
+    id: 'cap_dynasty',
+    title: 'Cap Dynasty',
+    description: 'Win 5 championships in Salary Cap mode.',
+    rarity: 'epic',
+    check: (_n, c) => c.championshipsTotal >= 5,
+  },
+  {
+    id: 'era_traveler',
+    title: 'Era Traveler',
+    description: 'Spin every era at least once.',
+    rarity: 'common',
+    check: (n, c) => ['50s','60s','70s','80s','90s','00s','10s','20s'].every(
+      e => ((n.eraSpinCount?.[e] ?? 0) + (c.eraSpinCount?.[e] ?? 0)) >= 1
+    ),
+  },
+  {
+    id: 'iron_man',
+    title: 'Iron Man',
+    description: 'Complete 250 drafts.',
+    rarity: 'rare',
+    check: (n, c) => (n.draftsCompleted + c.draftsCompleted) >= 250,
+  },
+  {
+    id: 'lifer',
+    title: 'Lifer',
+    description: 'Complete 500 drafts.',
+    rarity: 'epic',
+    check: (n, c) => (n.draftsCompleted + c.draftsCompleted) >= 500,
+  },
+  {
+    id: 'built_different',
+    title: 'Built Different',
+    description: 'Win a championship with a team rating of 80 or higher.',
+    rarity: 'legendary',
+    check: (_n, _c, run) => run.champion && run.teamRating >= 80,
+  },
+  {
+    id: 'bad_coach',
+    title: 'Bad Coach, Good Team',
+    description: 'Win a championship with a D-grade coach.',
+    rarity: 'epic',
+    check: (_n, _c, run) => run.champion && run.coachGrade.startsWith('D'),
+  },
+  {
+    id: 'hof_staff',
+    title: 'Hall of Fame Staff',
+    description: 'Win a championship with an A+ coach.',
+    rarity: 'common',
+    check: (_n, _c, run) => run.champion && run.coachGrade === 'A+',
   },
 ]
 
