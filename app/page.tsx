@@ -9,7 +9,7 @@ import LeaderboardModal from './LeaderboardModal'
 import AchievementsModal from './AchievementsModal'
 import { recordRunComplete, getLifetimeStats } from '../lib/lifetimeStats'
 import { checkAchievements, type Achievement } from '../lib/achievements'
-import { submitLeaderboardEntry } from '../lib/supabase'
+import { submitLeaderboardEntry, fetchScoreRank } from '../lib/supabase'
 import {
   ALL_ERAS, SLOT_POSITIONS, SLOT_MPG, ERA_SEASON_GAMES, calcFitPenalty, calcEraModifier, calcTeamRating,
   simulateSeason, simulatePlayoffs, calcTS, coachBonus, effectiveCoachBonus, coachChampBonus, playerMatchesEra, withEraStats, applyFlexTag, applyRings, applyAnchors, applyTimeless, applyShootingStar, applyGlassCleaner, applyDuo,
@@ -868,6 +868,101 @@ function FooterLink({ href, label, color, border, opacity }: { href: string; lab
         textDecoration: 'none',
         opacity: hovered ? 1 : opacity,
         transition: 'opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease',
+        cursor: 'pointer',
+        display: 'block',
+      }}
+    >
+      {label}
+    </a>
+  )
+}
+
+const SUPPORTERS = [
+  'Klass',
+  "Klass's Friend",
+]
+
+function SupporterCard({ name }: { name: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+  return (
+    <div
+      ref={ref}
+      onMouseEnter={() => {
+        if (!ref.current) return
+        ref.current.style.transform = 'scale(1.03)'
+        ref.current.style.borderColor = G.goldDim
+      }}
+      onMouseLeave={() => {
+        if (!ref.current) return
+        ref.current.style.transform = 'scale(1)'
+        ref.current.style.borderColor = G.border
+      }}
+      style={{
+        position: 'relative', overflow: 'hidden',
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '8px 12px', background: G.black,
+        border: `1px solid ${G.border}`,
+        transition: 'transform 0.15s ease, border-color 0.15s ease',
+      }}
+    >
+      <div className="card-sheen-beam" />
+      <span style={{ color: G.gold, fontSize: 14 }}>★</span>
+      <span style={{ fontSize: 13, color: G.white, letterSpacing: '0.04em' }}>{name}</span>
+    </div>
+  )
+}
+
+function SupportersModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: G.surface, border: `1px solid ${G.border}`, width: '100%', maxWidth: 340, fontFamily: 'Inter, system-ui, sans-serif' }}>
+        <div style={{ padding: '18px 20px 14px', borderBottom: `1px solid ${G.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ ...BEBAS, fontSize: 22, color: G.gold, letterSpacing: '0.2em' }}>Thank You!</div>
+            <div style={{ fontSize: 11, color: G.grey, marginTop: 2 }}>These supporters are keeping EraBall alive!</div>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: G.grey, fontSize: 18, cursor: 'pointer', padding: '0 4px' }}>✕</button>
+        </div>
+        <div style={{ padding: '14px 20px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {SUPPORTERS.map(name => <SupporterCard key={name} name={name} />)}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function FooterButton({ label, onClick }: { label: string; onClick: () => void }) {
+  const ref = useRef<HTMLAnchorElement>(null)
+  return (
+    <a
+      ref={ref}
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={e => e.key === 'Enter' && onClick()}
+      onMouseEnter={() => {
+        if (!ref.current) return
+        ref.current.style.color = '#ffffff'
+        ref.current.style.borderColor = '#888888'
+        ref.current.style.background = '#1a1a1a'
+        ref.current.style.opacity = '1'
+      }}
+      onMouseLeave={() => {
+        if (!ref.current) return
+        ref.current.style.color = G.gold
+        ref.current.style.borderColor = G.goldDim
+        ref.current.style.background = G.surface
+        ref.current.style.opacity = '0.85'
+      }}
+      style={{
+        fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
+        color: G.gold,
+        border: `1px solid ${G.goldDim}`,
+        padding: '6px 12px',
+        background: G.surface,
+        textDecoration: 'none',
+        opacity: 0.85,
+        transition: 'color 0.15s ease, border-color 0.15s ease, background 0.15s ease, opacity 0.15s ease',
         cursor: 'pointer',
         display: 'block',
       }}
@@ -3641,6 +3736,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
   const [lbSubmitted, setLbSubmitted] = useState(false)
   const [lbSubmitting, setLbSubmitting] = useState(false)
   const [lbScore, setLbScore] = useState<number | null>(null)
+  const [lbRank, setLbRank] = useState<number | null>(null)
   const [lbError, setLbError] = useState<string | null>(null)
 
   const PROFANITY_RE = /nigger|nigga|nigg(a|er|ers|as)|chink|spick?|wetback|faggot|fag|cunt|kike|tranny|retard|rape|rapist/i
@@ -3702,6 +3798,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
     setLbScore(score)
     setLbSubmitted(true)
     setLbSubmitting(false)
+    fetchScoreRank(simEra ?? 'unknown', salaryCapMode ? 'salary_cap' : 'normal', score).then(setLbRank)
   }
 
   const handleShare = async () => {
@@ -4847,6 +4944,9 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
                 <div style={{ fontSize: 10, color: G.greyDark, marginTop: 4, letterSpacing: '0.1em' }}>
                   {simEra?.toUpperCase()} · {salaryCapMode ? 'SALARY CAP' : 'NORMAL'}
                 </div>
+                <div style={{ fontSize: 12, color: G.grey, marginTop: 6, letterSpacing: '0.06em' }}>
+                  {lbRank != null ? `Rank #${lbRank.toLocaleString()}` : 'Fetching rank...'}
+                </div>
               </div>
             ) : (
               <div style={{ display: 'flex', gap: 8 }}>
@@ -4940,6 +5040,7 @@ export default function Home() {
   const [showLifetimeStats, setShowLifetimeStats] = useState(false)
   const [showLeaderboard, setShowLeaderboard] = useState(false)
   const [showAchievements, setShowAchievements] = useState(false)
+  const [showSupporters, setShowSupporters] = useState(false)
   const [unlockedAchievements, setUnlockedAchievements] = useState<Achievement[]>([])
   const [loading, setLoading] = useState(false)
   const [muted, setMuted] = useState(false)
@@ -5249,6 +5350,7 @@ export default function Home() {
       {showLifetimeStats && <LifetimeStatsModal onClose={() => setShowLifetimeStats(false)} />}
       {showLeaderboard && <LeaderboardModal onClose={() => setShowLeaderboard(false)} />}
       {showAchievements && <AchievementsModal onClose={() => setShowAchievements(false)} />}
+      {showSupporters && <SupportersModal onClose={() => setShowSupporters(false)} />}
 
       {/* Achievement unlock toast */}
       {unlockedAchievements.length > 0 && (
@@ -5340,6 +5442,7 @@ export default function Home() {
           <FooterLink href="https://x.com/Eshan_Design" label="Twitter" color={G.greyDark} border={G.border} opacity={0.7} />
         </div>
         <FooterLink href="https://ko-fi.com/eshanb" label="Support the game" color={G.gold} border={G.goldDim} opacity={0.85} />
+        <FooterButton label="★ Thank you, supporters!" onClick={() => setShowSupporters(true)} />
         <FooterLink href="https://eshanbhattdesign.com" label="eshanbhattdesign.com" color={G.greyDark} border={G.border} opacity={0.7} />
       </div>
 

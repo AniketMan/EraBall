@@ -89,6 +89,17 @@ export async function submitLeaderboardEntry(
   return score
 }
 
+export async function fetchScoreRank(era: string, mode: 'normal' | 'salary_cap', score: number): Promise<number> {
+  const { count, error } = await supabase
+    .from('leaderboard')
+    .select('*', { count: 'exact', head: true })
+    .eq('era', era)
+    .eq('mode', mode)
+    .gt('score', score)
+  if (error) console.error('Rank fetch error:', error)
+  return (count ?? 0) + 1
+}
+
 export async function fetchLeaderboard(era: string, mode: 'normal' | 'salary_cap', limit = 50) {
   const { data, error } = await supabase
     .from('leaderboard')
