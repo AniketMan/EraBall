@@ -31,7 +31,14 @@ export type LeaderboardEntry = {
 
 const GRADE_RANK: Record<string, number> = { A: 4, B: 3, C: 2, D: 1, F: 0 }
 
-export type ScoreFlags = { no_timeless?: boolean; no_s_tier?: boolean }
+export type ScoreFlags = {
+  no_timeless?: boolean
+  no_s_tier?: boolean
+  elite_spacing?: boolean
+  elite_rim?: boolean
+  elite_playmaking?: boolean
+  reb_edge?: boolean
+}
 
 export function calcLeaderboardScore(
   entry: Omit<LeaderboardEntry, 'id' | 'score' | 'created_at'>,
@@ -52,8 +59,13 @@ export function calcLeaderboardScore(
   if (isChampion) {
     if (flags?.no_timeless) challengeBonus += 75
     if (flags?.no_s_tier) challengeBonus += 150
-    if (coachNum <= 2) challengeBonus += 100  // C grade or below
   }
+
+  let teamBonus = 0
+  if (flags?.elite_spacing)   teamBonus += 40
+  if (flags?.elite_rim)       teamBonus += 50
+  if (flags?.elite_playmaking) teamBonus += 40
+  if (flags?.reb_edge)        teamBonus += 25
 
   return (
     entry.reg_win_pct * 500 +
@@ -62,7 +74,8 @@ export function calcLeaderboardScore(
     entry.team_rating * 3 +
     coachNum * 20 +
     bonus +
-    challengeBonus
+    challengeBonus +
+    teamBonus
   )
 }
 

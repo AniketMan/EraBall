@@ -66,18 +66,21 @@ const PLAYER_RINGS: Record<string, number> = {
   // 5
   'Magic Johnson': 5, 'Kobe Bryant': 5, 'Tim Duncan': 5, 'Dennis Rodman': 5,
   'Derek Fisher': 5, 'Ron Harper': 5, 'Steve Kerr': 5, 'Michael Cooper': 5,
+  'George Mikan': 5,
   // 4
   'Shaquille O\'Neal': 4, 'LeBron James': 4, 'Stephen Curry': 4, 'Draymond Green': 4,
   'Klay Thompson': 4, 'Robert Parish': 4, 'Tony Parker': 4, 'Manu Ginobili': 4,
   'Andre Iguodala': 4, 'Bill Sharman': 4, 'John Salley': 4,
   'Kevon Looney': 4, 'Horace Grant': 4,
   'Jamaal Wilkes': 4, 'Kurt Rambis': 4,
+  'Vern Mikkelsen': 4,
   // 3
   'Larry Bird': 3, 'Kevin McHale': 3, 'James Worthy': 3, 'Byron Scott': 3,
   'Dwyane Wade': 3, 'Udonis Haslem': 3, 'A.C. Green': 3, 'Mychal Thompson': 3,
   'Danny Green': 3, 'Rick Fox': 3, 'Toni Kukoc': 3, 'Luc Longley': 3,
   'Dennis Johnson': 3, 'John Paxson': 3, 'Bill Cartwright': 3,
   'James Jones': 3,
+  'Clyde Lovellette': 3,
   // 2
   'Hakeem Olajuwon': 2,
   'Wilt Chamberlain': 2, 'Isiah Thomas': 2, 'Joe Dumars': 2, 'Kevin Durant': 2,
@@ -90,6 +93,8 @@ const PLAYER_RINGS: Record<string, number> = {
   'Willis Reed': 2, 'Walt Frazier': 2, 'Dave DeBusschere': 2, 'Bill Bradley': 2,
   'Bob McAdoo': 2, 'Bob Dandridge': 2,
   'Mike Miller': 2, 'Norris Cole': 2,
+  'Bailey Howell': 2, 'Jo Jo White': 2, 'Dave Cowens': 2, 'Bill Walton': 2,
+  'Norm Nixon': 2, 'Mark Aguirre': 2,
   // 1
   'Clyde Drexler': 1,
   'Jerry West': 1, 'Oscar Robertson': 1, 'Julius Erving': 1, 'Moses Malone': 1,
@@ -97,6 +102,16 @@ const PLAYER_RINGS: Record<string, number> = {
   'Jason Kidd': 1, 'Chauncey Billups': 1, 'Rasheed Wallace': 1, 'Ben Wallace': 1,
   'Rick Barry': 1, 'Nate Archibald': 1,
   'Earl Monroe': 1,
+  // 50s champions
+  'Paul Arizin': 1, 'Dolph Schayes': 1, 'Bob Pettit': 1,
+  'Ed Macaulay': 1, 'Cliff Hagan': 1,
+  // 60s–70s champions
+  'Hal Greer': 1, 'Billy Cunningham': 1,
+  'Jon McGlocklin': 1, 'Jerry Lucas': 1, 'Gail Goodrich': 1, 'Jim McMillan': 1,
+  'Wes Unseld': 1, 'Elvin Hayes': 1,
+  'Maurice Lucas': 1, 'Gus Williams': 1, 'Fred Brown': 1,
+  // 80s champions
+  'Spencer Haywood': 1,
   // 2025-26 Knicks
   'Jalen Brunson': 1, 'Mikal Bridges': 1, 'O.G. Anunoby': 1, 'Karl-Anthony Towns': 1,
   'Josh Hart': 1, 'Mitchell Robinson': 1, 'Jordan Clarkson': 1, 'Miles McBride': 1,

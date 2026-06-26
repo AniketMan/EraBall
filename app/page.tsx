@@ -995,6 +995,7 @@ const V1_5_NOTES = [
   ]},
   { section: 'Bugs', items: [
     'Stats now add up correctly in the playoffs with special performances.',
+    'Fixed support for SEA countries.'
   ]},
   { section: 'Misc', items: [
     'Era themes are now off by default and save your chosen setting locally.',
@@ -1426,7 +1427,7 @@ function EraSelection({ onEraSelected, onSandboxSelected, onSalaryCapSelected, o
           </button>
           <div style={{ fontSize: 10, color: G.greyDark, letterSpacing: '0.15em', marginTop: 2 }}>v1.5</div>
           <div style={{ fontSize: 9, color: '#CC8844', letterSpacing: '0.04em', marginTop: 8, maxWidth: 280, lineHeight: 1.6, textAlign: 'center' }}>
-            Known issue: players in Southeast Asia may see blank team names and be unable to play. A VPN temporarily resolves it. Working on a fix!
+            
           </div>
         </div>
       </div>
@@ -1617,7 +1618,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
             // Pass 1: find a combo with the highest needed tier and 3+ available players
             for (const combo of freshShuffled) {
               const pool = getPool(combo.team, combo.era)
-              if (pool.length >= 3 && pool.some(p => playerTier(playerBaseRating(withEraStats(p, combo.era, combo.team), simEra)) === highestNeeded)) {
+              if (pool.length >= 3 && pool.some(p => playerTier(playerBaseRating(applyAnchors(withEraStats(p, combo.era, combo.team)), simEra)) === highestNeeded)) {
                 team = combo.team; era = combo.era; found = true; break
               }
             }
@@ -1625,7 +1626,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
             if (!found) {
               for (const combo of freshShuffled) {
                 const pool = getPool(combo.team, combo.era)
-                if (pool.length >= 3 && pool.some(p => (neededTiers as string[]).includes(playerTier(playerBaseRating(withEraStats(p, combo.era, combo.team), simEra))))) {
+                if (pool.length >= 3 && pool.some(p => (neededTiers as string[]).includes(playerTier(playerBaseRating(applyAnchors(withEraStats(p, combo.era, combo.team)), simEra))))) {
                   team = combo.team; era = combo.era; break
                 }
               }
@@ -3652,6 +3653,11 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
     const draftedPlayers = slots.filter(s => s.player).map(s => s.player!)
     const no_timeless = !draftedPlayers.some(p => p.timeless)
     const no_s_tier = !draftedPlayers.some(p => playerTier(playerBaseRating({ ...p, duoActiveCount: 0 }, simEra!)) === 's')
+    const BLK_BASELINE = 3.5
+    const elite_spacing   = !teamAnalysis?.isPreThreePt && ((teamAnalysis?.spacingWinFactor ?? 1) - 1) * 100 >= 5
+    const elite_rim       = (teamAnalysis?.blkScore ?? 0) >= BLK_BASELINE * 1.5
+    const elite_playmaking = ((teamAnalysis?.astFactor ?? 1) - 1) * 100 > 3
+    const reb_edge        = ((teamAnalysis?.rebFactor ?? 1) - 1) * 100 > 5
     const playoffWins = playoffResult ? playoffResult.rounds.reduce((s, r) => s + r.seriesWins, 0) : 0
     const playoffLosses = playoffResult ? playoffResult.rounds.reduce((s, r) => s + r.seriesLosses, 0) : 0
     const playoffTotal = playoffWins + playoffLosses
@@ -3688,7 +3694,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
           era: s.player!.era as string,
         })),
       },
-    }, { no_timeless, no_s_tier })
+    }, { no_timeless, no_s_tier, elite_spacing, elite_rim, elite_playmaking, reb_edge })
     setLbScore(score)
     setLbSubmitted(true)
     setLbSubmitting(false)
