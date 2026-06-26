@@ -81,6 +81,7 @@ const PLAYER_RINGS: Record<string, number> = {
   'Dennis Johnson': 3, 'John Paxson': 3, 'Bill Cartwright': 3,
   'James Jones': 3,
   'Clyde Lovellette': 3,
+  'Shaun Livingston': 3, 'Mario Elie': 3, 'JaVale McGee': 3, 'Patrick McCaw': 3,
   // 2
   'Hakeem Olajuwon': 2,
   'Wilt Chamberlain': 2, 'Isiah Thomas': 2, 'Joe Dumars': 2, 'Kevin Durant': 2,
@@ -95,6 +96,9 @@ const PLAYER_RINGS: Record<string, number> = {
   'Mike Miller': 2, 'Norris Cole': 2,
   'Bailey Howell': 2, 'Jo Jo White': 2, 'Dave Cowens': 2, 'Bill Walton': 2,
   'Norm Nixon': 2, 'Mark Aguirre': 2,
+  'Sam Cassell': 2, 'Kenny Smith': 2, 'Tyronn Lue': 2,
+  'Luke Walton': 2, 'Jordan Farmar': 2, 'Sasha Vujacic': 2,
+  'David West': 2, 'Zaza Pachulia': 2,
   // 1
   'Clyde Drexler': 1,
   'Jerry West': 1, 'Oscar Robertson': 1, 'Julius Erving': 1, 'Moses Malone': 1,
@@ -112,6 +116,16 @@ const PLAYER_RINGS: Record<string, number> = {
   'Maurice Lucas': 1, 'Gus Williams': 1, 'Fred Brown': 1,
   // 80s champions
   'Spencer Haywood': 1,
+  // 1982-83 76ers
+  'Andrew Toney': 1,
+  // 1993-94 Rockets
+  'Vernon Maxwell': 1, 'Otis Thorpe': 1,
+  // 1998-99 Spurs
+  'Sean Elliott': 1,
+  // 1999-00 Lakers
+  'Glen Rice': 1,
+  // 2001-02 Lakers
+  'Mitch Richmond': 1,
   // 2025-26 Knicks
   'Jalen Brunson': 1, 'Mikal Bridges': 1, 'O.G. Anunoby': 1, 'Karl-Anthony Towns': 1,
   'Josh Hart': 1, 'Mitchell Robinson': 1, 'Jordan Clarkson': 1, 'Miles McBride': 1,
@@ -129,7 +143,7 @@ const PLAYER_RINGS: Record<string, number> = {
   // 2022-23 Nuggets
   'Nikola Jokic': 1, 'Jamal Murray': 1, 'Aaron Gordon': 1, 'Michael Porter Jr.': 1,
   'Bruce Brown': 1, 'Christian Braun': 1, 'Jeff Green': 1, 'DeAndre Jordan': 1,
-  'Reggie Jackson': 1, 'Vlatko Cancar': 1, 'Zeke Nnaji': 1,
+  'Reggie Jackson': 1, 'Vlatko Cancar': 1, 'Zeke Nnaji': 1, 'Thomas Bryant': 1,
   // 2021-22 Warriors
   'Andrew Wiggins': 1, 'Jordan Poole': 1, 'Gary Payton II': 1, 'Otto Porter Jr.': 1,
   // 2020-21 Bucks
@@ -137,22 +151,35 @@ const PLAYER_RINGS: Record<string, number> = {
   'Bobby Portis': 1, 'PJ Tucker': 1, 'Pat Connaughton': 1,
   // 2019-20 Lakers
   'Anthony Davis': 1, 'Kyle Kuzma': 1, 'Markieff Morris': 1, 'Dwight Howard': 1,
+  'Jared Dudley': 1, 'Dion Waiters': 1, 'Avery Bradley': 1,
   // 2018-19 Raptors
   'Kyle Lowry': 1, 'Pascal Siakam': 1, 'Marc Gasol': 1,
   'Serge Ibaka': 1, 'Fred VanVleet': 1, 'Norman Powell': 1,
+  // 2017-18 Warriors
+  'Nick Young': 1,
+  // 2016-17 Warriors
+  'Matt Barnes': 1,
   // 2015-16 Cavs
   'Kevin Love': 1, 'Tristan Thompson': 1, 'J.R. Smith': 1,
   'Richard Jefferson': 1, 'Matthew Dellavedova': 1, 'Channing Frye': 1,
   'Iman Shumpert': 1,
+  // 2014-15 Warriors
+  'Andrew Bogut': 1, 'Harrison Barnes': 1, 'Leandro Barbosa': 1,
+  'David Lee': 1, 'Festus Ezeli': 1,
   // 2013-14 Spurs
-  'Boris Diaw': 1, 'Patty Mills': 1, 'Marco Belinelli': 1,
+  'Boris Diaw': 1, 'Patty Mills': 1, 'Marco Belinelli': 1, 'Austin Daye': 1,
+  // 2012-13 Heat
+  'Chris Andersen': 1,
   // 2010-11 Mavs
   'Tyson Chandler': 1, 'Shawn Marion': 1, 'Jason Terry': 1,
-  'J.J. Barea': 1, 'DeShawn Stevenson': 1, 'Peja Stojakovic': 1,
+  'J.J. Barea': 1, 'DeShawn Stevenson': 1, 'Peja Stojakovic': 1, 'Caron Butler': 1,
+  // 2008-09 Lakers
+  'Trevor Ariza': 1,
   // 2009-10 Lakers
   'Ron Artest': 1, 'Metta World Peace': 1,
   // 2007-08 Celtics
   'Tony Allen': 1, 'James Posey': 1,
+  'Kendrick Perkins': 1, 'Glen Davis': 1, 'Scot Pollard': 1,
   // 2005-06 Heat
   'Gary Payton': 1, 'Antoine Walker': 1, 'Alonzo Mourning': 1, 'Jason Williams': 1,
   // 2003-04 Pistons
