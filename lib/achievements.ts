@@ -195,9 +195,9 @@ const DEFS: (Achievement & { check: CheckFn })[] = [
   {
     id: 'hof_staff',
     title: 'Hall of Fame Staff',
-    description: 'Win a championship with an A+ coach.',
+    description: 'Win a championship with an A-grade coach.',
     rarity: 'common',
-    check: (_n, _c, run) => run.champion && run.coachGrade === 'A+',
+    check: (_n, _c, run) => run.champion && run.coachGrade === 'A',
   },
 ]
 
