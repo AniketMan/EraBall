@@ -5343,6 +5343,11 @@ export default function Home() {
         </>,
         document.body
       )}
+      {phase === 'era-select' && (
+        <div style={{ background: '#7f1d1d', borderBottom: '1px solid #ef4444', padding: '10px 16px', textAlign: 'center', fontSize: 13, color: '#fca5a5', letterSpacing: '0.05em' }}>
+          ⚠ Era Ball is temporarily unavailable due to high traffic. We'll be back in ~2 hours. Thanks for your patience.
+        </div>
+      )}
       {phase === 'era-select' && <EraSelection onEraSelected={era => { setSimEra(era); setStartSandbox(false); setSalaryCapMode(false); setShowPerfDisclaimer(false); ensureData(); setPhase('draft') }} onSandboxSelected={era => { setSimEra(era); setStartSandbox(true); setSalaryCapMode(false); setShowPerfDisclaimer(false); ensureData(); setPhase('draft') }} onSalaryCapSelected={era => { setSimEra(era); setStartSandbox(false); setSalaryCapMode(true); setShowPerfDisclaimer(false); ensureData(); setPhase('draft') }} onRestart={restart} onLifetimeStats={() => setShowLifetimeStats(true)} onLeaderboard={() => setShowLeaderboard(true)} onAchievements={() => setShowAchievements(true)} onEraPreview={era => setAudioEra(era)} muteBtn={muteBtn} eraThemeBtn={greyscaleBtn} />}
       {showLifetimeStats && <LifetimeStatsModal onClose={() => setShowLifetimeStats(false)} />}
       {showLeaderboard && <LeaderboardModal onClose={() => setShowLeaderboard(false)} />}
