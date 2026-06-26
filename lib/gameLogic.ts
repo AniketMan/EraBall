@@ -392,6 +392,8 @@ export const DUO_PAIRS: Record<string, string[]> = {
   'Anfernee Hardaway':       ["Shaquille O'Neal"],
   'Alonzo Mourning':         ['Tim Hardaway'],
   'Tim Hardaway':            ['Alonzo Mourning'],
+  'Charles Barkley':         ['Kevin Johnson'],
+  'Kevin Johnson':           ['Charles Barkley'],
   'Patrick Ewing':           ['John Starks'],
   'John Starks':             ['Patrick Ewing'],
   // 00s
@@ -403,14 +405,16 @@ export const DUO_PAIRS: Record<string, string[]> = {
   'David Robinson':          ['Tim Duncan'],
   'Tony Parker':             ['Tim Duncan', 'Manu Ginobili'],
   'Manu Ginobili':           ['Tony Parker', 'Tim Duncan'],
-  'Dirk Nowitzki':           ['Jason Terry'],
+  'Dirk Nowitzki':           ['Jason Terry', 'Jason Kidd'],
   'Jason Terry':             ['Dirk Nowitzki'],
+  'Jason Kidd':              ['Dirk Nowitzki'],
   'Steve Nash':              ["Amar'e Stoudemire"],
   "Amar'e Stoudemire":       ['Steve Nash'],
-  'Paul Pierce':             ['Kevin Garnett'],
-  'Kevin Garnett':           ['Paul Pierce'],
+  'Ray Allen':               ['Paul Pierce', 'Kevin Garnett'],
+  'Paul Pierce':             ['Kevin Garnett', 'Ray Allen'],
+  'Kevin Garnett':           ['Paul Pierce', 'Ray Allen'],
   // 10s
-  'Kevin Durant':            ['Russell Westbrook'],
+  'Kevin Durant':            ['Russell Westbrook', 'James Harden', 'Stephen Curry'],
   'Russell Westbrook':       ['Kevin Durant', 'James Harden', 'Paul George'],
   'Paul George':             ['Russell Westbrook', 'Kawhi Leonard'],
   'Kawhi Leonard':           ['Paul George', 'Kyle Lowry'],
@@ -424,9 +428,9 @@ export const DUO_PAIRS: Record<string, string[]> = {
   'Devin Booker':            ['Chris Paul'],
   'Blake Griffin':           ['Chris Paul'],
   'Deandre Jordan':          ['Chris Paul'],
-  'James Harden':            ['Clint Capela', 'Russell Westbrook', 'Joel Embiid'],
+  'James Harden':            ['Clint Capela', 'Russell Westbrook', 'Kevin Durant', 'Joel Embiid'],
   'Clint Capela':            ['James Harden'],
-  'Stephen Curry':           ['Klay Thompson', 'Draymond Green', 'Andre Iguodala'],
+  'Stephen Curry':           ['Klay Thompson', 'Draymond Green', 'Andre Iguodala', 'Kevin Durant'],
   'Andre Iguodala':          ['Stephen Curry'],
   'Klay Thompson':           ['Stephen Curry', 'Draymond Green'],
   'Draymond Green':          ['Stephen Curry', 'Klay Thompson'],
@@ -493,6 +497,10 @@ const TIMELESS_PLAYERS = new Set([
   'Anthony Davis',
   'Moses Malone',
   'Pete Maravich',
+  'Gary Payton',
+  'Steve Nash',
+  'Ben Wallace',
+  'Bruce Bowen',
 ])
 
 export function applyTimeless(player: Player): Player {
@@ -643,6 +651,10 @@ const RATING_STAT_OVERRIDE: Record<string, string> = {
 const BASE_RATING_OVERRIDE: Record<string, number> = {
   // 20s
   'Shai Gilgeous-Alexander:20s:OKC': 67,
+  'Joel Embiid:20s:PHI':             67.7,
+  'Giannis Antetokounmpo:20s:MIL':   70,
+
+  'Damian Lillard:20s:POR':          61,
   'Jalen Brunson:20s:NYK':           55,
   'Anthony Edwards:20s:MIN':         53,
   'Jamal Murray:20s:DEN':            54,
@@ -655,6 +667,9 @@ const BASE_RATING_OVERRIDE: Record<string, number> = {
   // 10s
   'LeBron James:10s:CLE':            72,
   'Stephen Curry:10s:GSW':           70,
+  'James Harden:10s:HOU':            65,
+  'Kevin Durant:10s:OKC':            70,
+  'Kevin Durant:10s:GSW':            67,
   'Russell Westbrook:10s:OKC':       60,
   'Carmelo Anthony:10s:DEN':         57,
   'Tim Duncan:10s:SAS':              55,
@@ -666,17 +681,25 @@ const BASE_RATING_OVERRIDE: Record<string, number> = {
   'Tony Parker:10s:SAS':             40,
   'DeAndre Jordan:10s:LAC':          39,
   // 00s
-  "Shaquille O'Neal:00s:LAL":        66,
-  'Tim Duncan:00s:SAS':              66,
+  "Shaquille O'Neal:00s:LAL":        69,
+  'Tim Duncan:00s:SAS':              69,
   'Kobe Bryant:00s:LAL':             65,
+  'Kevin Durant:00s:OKC':            57,
+  'Kevin Durant:00s:SEA':            57,
+  'Gary Payton:00s:SEA':             55,
   'Yao Ming:00s:HOU':                46.5,
   // 90s
   'Michael Jordan:90s:CHI':          72,
+  'Hakeem Olajuwon:90s:HOU':         69,
+  "Shaquille O'Neal:90s:ORL":        63,
+  "Shaquille O'Neal:90s:LAL":        66,
+  'David Robinson:90s:SAN':          65,
   'Magic Johnson:90s:LAL':           60,
   'Charles Barkley:90s:PHX':         57,
   'Kobe Bryant:90s:LAL':             55,
   // 80s
   'Larry Bird:80s:BOS':              66,
+  'David Robinson:80s:SAN':          66,
   'Alex English:80s:DEN':            57,
   // 70s
   'Oscar Robertson:70s:MIL':         56,
