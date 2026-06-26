@@ -876,6 +876,7 @@ const SUPPORTERS = [
   'Klass',
   "Klass's Friend",
   'TheZDSpecial',
+  'RM',
 ]
 
 function SupporterCard({ name }: { name: string }) {
