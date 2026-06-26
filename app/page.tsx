@@ -880,6 +880,7 @@ function FooterLink({ href, label, color, border, opacity }: { href: string; lab
 const SUPPORTERS = [
   'Klass',
   "Klass's Friend",
+  'TheZDSpecial',
 ]
 
 function SupporterCard({ name }: { name: string }) {
