@@ -1323,7 +1323,7 @@ export function simulateSeason(
   const astWinFactor     = 1.0 + (astFactor - 1.0) * 0.5                                          // ±2.5% on team roll
   const rebOppFactor     = 1.0 - (rebFactor - 1.0) * 0.25                                         // ±2.25% on opp roll (def boards)
   // Tiered: 40%+ = elite (1.25×), 37–40% = good (1.12×), 34–37% = solid (1.0×), below 34% = 0
-  const shooterCount           = entries.reduce((s, e) => { const w = spacingSlotWeight(e.pr.slot, simEra); const f = e.pr.player.FG3_PCT ?? 0; const fg3m = e.pr.player.FG3M ?? 0; if (fg3m < 0.5) return s; const ssm = e.pr.player.shootingStar ? (e.pr.player.shootingStarTier === 1 ? 2.2 : 1.6) : 1.0; return s + (f >= 0.40 ? e.minScale * 1.25 : f >= 0.37 ? e.minScale * 1.12 : f >= 0.34 ? e.minScale : f >= 0.30 ? e.minScale * 0.5 : f >= 0.25 ? e.minScale * 0.25 : 0) * w * ssm }, 0)
+  const shooterCount           = entries.reduce((s, e) => { const w = spacingSlotWeight(e.pr.slot, simEra); const f = e.pr.player.FG3_PCT ?? 0; const fg3m = e.pr.player.FG3M ?? 0; if (fg3m < 0.5) return s; const ssm = e.pr.player.shootingStar ? (e.pr.player.shootingStarTier === 1 ? 2.2 : 1.6) : 1.35; return s + (f >= 0.40 ? e.minScale * 1.25 : f >= 0.37 ? e.minScale * 1.12 : f >= 0.34 ? e.minScale : f >= 0.30 ? e.minScale * 0.5 : f >= 0.25 ? e.minScale * 0.25 : 0) * w * ssm }, 0)
   const highVolumeShooterCount = entries.reduce((s, e) => { const w = spacingSlotWeight(e.pr.slot, simEra); return s + ((e.pr.player.FG3M ?? 0) >= 2.9 ? e.minScale * w : 0) }, 0)
   const isPreThreePt      = simEra === '50s' || simEra === '60s' || simEra === '70s'
   const spacingBaseline   = simEra === '20s' ? 6 : simEra === '10s' ? 5 : simEra === '00s' ? 4 : simEra === '90s' ? 3 : simEra === '80s' ? 2 : 0
