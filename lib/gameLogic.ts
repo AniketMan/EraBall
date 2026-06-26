@@ -501,8 +501,7 @@ const TIMELESS_PLAYERS = new Set([
   'Pete Maravich',
   'Gary Payton',
   'Steve Nash',
-  'Ben Wallace',
-  'Bruce Bowen',
+  'Draymond Green',
   'Shai Gilgeous-Alexander',
 ])
 

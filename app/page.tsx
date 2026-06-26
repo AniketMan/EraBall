@@ -2565,7 +2565,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                 <div className="roster-scroll" style={{ border: `1px solid ${G.border}`, maxHeight: 220, overflowY: 'auto', overflowX: 'hidden' }}>
                   {(() => {
                     const isSpecial = (p: Player) =>
-                      p.greatest_75_flag === 'Y' || (p.rings ?? 0) > 0 || p.defAnchor || p.offAnchor || !!p.flexPositions || !!p.timeless || !!p.shootingStar
+                      p.greatest_75_flag === 'Y' || (p.rings ?? 0) > 0 || p.defAnchor || p.offAnchor || !!p.flexPositions || !!p.timeless || !!p.shootingStar || !!p.duoPartners?.length
                     const posMatch = (p: Player) => {
                       const primary = (p.position?.split('-')[0] ?? '').toLowerCase()
                       if (posFilter === 'G') return primary === 'guard'
@@ -2654,7 +2654,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                     )
                   })})()}
                   {sortBy === 'SPECIAL' && !rosterPool.some(p =>
-                    p.greatest_75_flag === 'Y' || (p.rings ?? 0) > 0 || p.defAnchor || p.offAnchor || !!p.flexPositions || !!p.timeless || !!p.shootingStar
+                    p.greatest_75_flag === 'Y' || (p.rings ?? 0) > 0 || p.defAnchor || p.offAnchor || !!p.flexPositions || !!p.timeless || !!p.shootingStar || !!p.duoPartners?.length
                   ) && (
                     <div className="text-center py-6 text-xs uppercase tracking-widest" style={{ color: G.greyDark }}>
                       No players with special tags
