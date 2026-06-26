@@ -53,7 +53,7 @@ function AchievementCard({ achievement, unlocked }: { achievement: Achievement; 
         </div>
       </div>
       <div style={{ fontFamily: INTER, fontSize: 11, color: unlocked ? G.grey : '#444', lineHeight: 1.5 }}>
-        {unlocked ? achievement.description : 'Keep playing to unlock.'}
+        {unlocked ? achievement.description : achievement.rarity === 'legendary' ? 'Keep playing to unlock.' : achievement.description}
       </div>
       {unlocked && (
         <div style={{ position: 'absolute', top: 8, right: 10, width: 6, height: 6, borderRadius: '50%', background: color, opacity: 0.7 }} />

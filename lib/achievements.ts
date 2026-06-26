@@ -135,9 +135,9 @@ const DEFS: (Achievement & { check: CheckFn })[] = [
   {
     id: 'rebuilder',
     title: 'Rebuilder',
-    description: 'Win a championship with a team rating under 60.',
-    rarity: 'epic',
-    check: (_n, _c, run) => run.champion && run.teamRating < 60,
+    description: 'Win a championship with a team rating of 62 or under.',
+    rarity: 'legendary',
+    check: (_n, _c, run) => run.champion && run.teamRating <= 62,
   },
   {
     id: 'loyal_coach',
