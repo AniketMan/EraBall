@@ -1458,10 +1458,7 @@ function EraSelection({ onEraSelected, onSandboxSelected, onSalaryCapSelected, o
 
         {/* Actions */}
         <div className="flex flex-col items-center gap-3">
-          <div className="text-xs text-center" style={{ color: '#f87171', maxWidth: 280, lineHeight: 1.5 }}>
-            ⚠ Game is temporarily down due to high traffic. Back in ~2 hours.
-          </div>
-          <Btn onClick={spinRandom} disabled={spinning} variant="ghost" className="w-48 py-3">
+<Btn onClick={spinRandom} disabled={spinning} variant="ghost" className="w-48 py-3">
             {spinning ? 'Spinning...' : 'Random'}
           </Btn>
           {era && !spinning && (
