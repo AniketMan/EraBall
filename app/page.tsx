@@ -1458,6 +1458,9 @@ function EraSelection({ onEraSelected, onSandboxSelected, onSalaryCapSelected, o
 
         {/* Actions */}
         <div className="flex flex-col items-center gap-3">
+          <div className="text-xs text-center" style={{ color: '#f87171', maxWidth: 280, lineHeight: 1.5 }}>
+            ⚠ Game is temporarily down due to high traffic. Back in ~2 hours.
+          </div>
           <Btn onClick={spinRandom} disabled={spinning} variant="ghost" className="w-48 py-3">
             {spinning ? 'Spinning...' : 'Random'}
           </Btn>
@@ -5342,11 +5345,6 @@ export default function Home() {
           )}
         </>,
         document.body
-      )}
-      {phase === 'era-select' && (
-        <div style={{ background: '#7f1d1d', borderBottom: '1px solid #ef4444', padding: '10px 16px', textAlign: 'center', fontSize: 13, color: '#fca5a5', letterSpacing: '0.05em' }}>
-          ⚠ Era Ball is temporarily unavailable due to high traffic. We'll be back in ~2 hours. Thanks for your patience.
-        </div>
       )}
       {phase === 'era-select' && <EraSelection onEraSelected={era => { setSimEra(era); setStartSandbox(false); setSalaryCapMode(false); setShowPerfDisclaimer(false); ensureData(); setPhase('draft') }} onSandboxSelected={era => { setSimEra(era); setStartSandbox(true); setSalaryCapMode(false); setShowPerfDisclaimer(false); ensureData(); setPhase('draft') }} onSalaryCapSelected={era => { setSimEra(era); setStartSandbox(false); setSalaryCapMode(true); setShowPerfDisclaimer(false); ensureData(); setPhase('draft') }} onRestart={restart} onLifetimeStats={() => setShowLifetimeStats(true)} onLeaderboard={() => setShowLeaderboard(true)} onAchievements={() => setShowAchievements(true)} onEraPreview={era => setAudioEra(era)} muteBtn={muteBtn} eraThemeBtn={greyscaleBtn} />}
       {showLifetimeStats && <LifetimeStatsModal onClose={() => setShowLifetimeStats(false)} />}
