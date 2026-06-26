@@ -789,6 +789,10 @@ const HOW_TO_PLAY_STEPS = [
     title: 'Awards & Stats',
     body: 'MVP, All-NBA, All-Star, Defensive POY, and 6th Man are awarded based on simulated stats.',
   },
+  {
+    title: 'Salary Cap Draft Mode',
+    body: 'An alternate draft mode with tier-based roster limits. You must build a team within the following tiers: 2 S-tier, 2 A-tier, 2 B-tier, 2 C-tier, and 1 D-tier player. Every spin guarantees at least one player from a tier you still need, but you can always pick anyone from the roster. Build around your strengths. The Salary Cap mode has its own leaderboard.',
+  },
 ]
 
 function HowToPlayModal({ onClose }: { onClose: () => void }) {
