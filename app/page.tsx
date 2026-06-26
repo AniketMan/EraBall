@@ -9,7 +9,7 @@ import LeaderboardModal from './LeaderboardModal'
 import AchievementsModal from './AchievementsModal'
 import { recordRunComplete, getLifetimeStats } from '../lib/lifetimeStats'
 import { checkAchievements, type Achievement } from '../lib/achievements'
-import { submitLeaderboardEntry, fetchScoreRank } from '../lib/supabase'
+import type { ScoreFlags } from '../lib/supabase'
 import {
   ALL_ERAS, SLOT_POSITIONS, SLOT_MPG, ERA_SEASON_GAMES, calcFitPenalty, calcEraModifier, calcTeamRating,
   simulateSeason, simulatePlayoffs, calcTS, coachBonus, effectiveCoachBonus, coachChampBonus, playerMatchesEra, withEraStats, applyFlexTag, applyRings, applyAnchors, applyTimeless, applyShootingStar, applyGlassCleaner, applyDuo,
@@ -3768,7 +3768,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
       : roundName === 'Conference Finals' ? 'conf_finals'
       : roundName === 'Semifinals' ? 'second_round'
       : 'first_round'
-    const score = await submitLeaderboardEntry({
+    const entry = {
       era: simEra ?? 'unknown',
       mode: salaryCapMode ? 'salary_cap' : 'normal',
       team_name: lbTeamName.trim(),
@@ -3783,22 +3783,35 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
       team_rating: Math.round(tr),
       coach_name: coach.name.replace('*', ''),
       coach_grade: coach.overallGrade,
-      roster: {
-        starters: slots.slice(0, 5).filter(s => s.player).map(s => ({
-          slot: s.position,
-          name: s.player!.full_name,
-          era: s.player!.era as string,
-        })),
-        bench: slots.slice(5).filter(s => s.player).map(s => ({
-          name: s.player!.full_name,
-          era: s.player!.era as string,
-        })),
-      },
-    }, { no_timeless, no_s_tier, elite_spacing, elite_rim, elite_playmaking, reb_edge })
+    }
+    const roster = {
+      starters: slots.slice(0, 5).filter(s => s.player).map(s => ({
+        slot: s.position,
+        name: s.player!.full_name,
+        era: s.player!.era as string,
+      })),
+      bench: slots.slice(5).filter(s => s.player).map(s => ({
+        name: s.player!.full_name,
+        era: s.player!.era as string,
+      })),
+    }
+    const flags: ScoreFlags = { no_timeless, no_s_tier, elite_spacing, elite_rim, elite_playmaking, reb_edge }
+    const res = await fetch('/api/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ entry, roster, flags }),
+    })
+    if (!res.ok) {
+      const { error } = await res.json().catch(() => ({ error: 'Submission failed' }))
+      setLbError(error ?? 'Submission failed')
+      setLbSubmitting(false)
+      return
+    }
+    const { score, rank } = await res.json()
     setLbScore(score)
+    setLbRank(rank)
     setLbSubmitted(true)
     setLbSubmitting(false)
-    fetchScoreRank(simEra ?? 'unknown', salaryCapMode ? 'salary_cap' : 'normal', score).then(setLbRank)
   }
 
   const handleShare = async () => {
