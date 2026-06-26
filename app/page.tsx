@@ -549,8 +549,10 @@ function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, acti
   const fitLabelColor = (label: string | null) =>
     label === 'Position Fit' ? G.gold : label?.includes('10%') ? '#C9A030' : label?.includes('25%') ? G.red : G.grey
 
+  const duoActive = (confirmed?.duoActiveCount ?? 0) > 0
+
   const fitBorder = confirmed
-    ? slot.fitLabel === 'Position Fit' ? G.gold : slot.fitLabel?.includes('10%') ? G.grey : G.red
+    ? duoActive ? '#4ECDC4' : slot.fitLabel === 'Position Fit' ? G.gold : slot.fitLabel?.includes('10%') ? G.grey : G.red
     : activeFit
       ? activeFit.penalty === 0   ? G.gold
         : activeFit.penalty === 0.10 ? '#8B6914'
@@ -564,6 +566,8 @@ function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, acti
       : '0 0 8px rgba(204,51,51,0.35)'
     : 'none'
 
+  const duoGlow = '0 0 14px rgba(78,205,196,0.55), 0 0 4px rgba(78,205,196,0.3)'
+
   return (
     <>
     <div
@@ -576,7 +580,7 @@ function CourtSlotView({ slot, onClick, onDrop, highlighted, pendingPlayer, acti
         border: `1px solid ${dragOver ? G.gold : fitBorder}`,
         outline: isPending ? `1px solid ${G.goldDim}` : 'none',
         outlineOffset: '-3px',
-        boxShadow: dragOver ? `0 0 18px rgba(201,168,76,0.45)` : confirmed ? 'none' : fitGlow,
+        boxShadow: dragOver ? `0 0 18px rgba(201,168,76,0.45)` : duoActive ? duoGlow : confirmed ? 'none' : fitGlow,
         transition: 'box-shadow 0.15s ease, border-color 0.15s ease, opacity 0.15s ease',
         opacity: isDragging ? 0.35 : 1,
         cursor: sandboxMode && confirmed ? 'grab' : 'pointer',
@@ -851,25 +855,16 @@ function HowToPlayModal({ onClose }: { onClose: () => void }) {
 
 // ─── Shared top bar ───────────────────────────────────────────────────────────
 function FooterLink({ href, label, color, border, opacity }: { href: string; label: string; color: string; border: string; opacity: number }) {
-  const [hovered, setHovered] = useState(false)
   return (
     <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
       style={{
         fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
-        color: hovered ? '#ffffff' : color,
-        border: `1px solid ${hovered ? '#888888' : border}`,
-        padding: '6px 12px',
-        background: hovered ? '#1a1a1a' : G.surface,
-        textDecoration: 'none',
-        opacity: hovered ? 1 : opacity,
-        transition: 'opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease',
-        cursor: 'pointer',
-        display: 'block',
+        color, border: `1px solid ${border}`, padding: '6px 12px',
+        background: G.surface, textDecoration: 'none', opacity,
+        cursor: 'pointer', display: 'block',
       }}
     >
       {label}
@@ -933,28 +928,12 @@ function SupportersModal({ onClose }: { onClose: () => void }) {
 }
 
 function FooterButton({ label, onClick }: { label: string; onClick: () => void }) {
-  const ref = useRef<HTMLAnchorElement>(null)
   return (
     <a
-      ref={ref}
       role="button"
       tabIndex={0}
       onClick={onClick}
       onKeyDown={e => e.key === 'Enter' && onClick()}
-      onMouseEnter={() => {
-        if (!ref.current) return
-        ref.current.style.color = '#ffffff'
-        ref.current.style.borderColor = '#888888'
-        ref.current.style.background = '#1a1a1a'
-        ref.current.style.opacity = '1'
-      }}
-      onMouseLeave={() => {
-        if (!ref.current) return
-        ref.current.style.color = G.gold
-        ref.current.style.borderColor = G.goldDim
-        ref.current.style.background = G.surface
-        ref.current.style.opacity = '0.85'
-      }}
       style={{
         fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
         color: G.gold,
@@ -963,7 +942,6 @@ function FooterButton({ label, onClick }: { label: string; onClick: () => void }
         background: G.surface,
         textDecoration: 'none',
         opacity: 0.85,
-        transition: 'color 0.15s ease, border-color 0.15s ease, background 0.15s ease, opacity 0.15s ease',
         cursor: 'pointer',
         display: 'block',
       }}
@@ -2111,8 +2089,13 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
     setRosterPool([]); setAwaitingSpin(false)
   }
 
-  const starterSlots = slots.slice(0, 5)
-  const benchSlots = slots.slice(5)
+  const slotsWithDuoForRender = slots.map(slot => {
+    if (!slot.player?.duoPartners) return slot
+    const duoActiveCount = slots.filter(s => s !== slot && s.player && slot.player!.duoPartners!.includes(s.player.full_name)).length
+    return { ...slot, player: { ...slot.player, duoActiveCount } }
+  })
+  const starterSlots = slotsWithDuoForRender.slice(0, 5)
+  const benchSlots = slotsWithDuoForRender.slice(5)
 
   return (
     <div className="min-h-screen" style={{ background: G.black }}>

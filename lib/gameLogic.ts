@@ -23,6 +23,7 @@ const FLEX_PLAYERS: Record<string, SlotPosition[]> = {
   'Magic Johnson':           ['PG', 'SG', 'SF', 'PF'],
   'Luka Doncic':             ['PG', 'SG', 'SF', 'PF'],
   'Jayson Tatum':            ['SG', 'SF', 'PF'],
+  'Michael Jordan':          ['PG', 'SG', 'SF'],
 }
 
 // ─── Position lock ─────────────────────────────────────────────────────────────
@@ -39,6 +40,7 @@ const POSITION_LOCK: Record<string, SlotPosition[]> = {
   'Karl Malone':         ['PF'],
   'Kevin Garnett':       ['PF', 'C'],
   'Shaquille O\'Neal':   ['PF', 'C'],
+  'Hakeem Olajuwon':     ['PF', 'C'],
   'Dirk Nowitzki':       ['PF', 'C'],
   'Kareem Abdul-Jabbar': ['PF', 'C'],
   'Brandon Ingram':      ['SG', 'SF', 'PF'],
@@ -501,6 +503,7 @@ const TIMELESS_PLAYERS = new Set([
   'Steve Nash',
   'Ben Wallace',
   'Bruce Bowen',
+  'Shai Gilgeous-Alexander',
 ])
 
 export function applyTimeless(player: Player): Player {
@@ -915,7 +918,7 @@ export function calcFitPenalty(player: Player, slot: SlotPosition): { penalty: 0
   if (slot === 'SF') {
     if (isForward || isGuardForward || isForwardCenter) return { penalty: 0, label: 'Position Fit' }
     if (isGuard) return { penalty: 0.10, label: 'Positional Penalty -10%' }
-    if (isCenter) return { penalty: 0.10, label: 'Positional Penalty -10%' }
+    if (isCenter) return { penalty: 0.25, label: 'Major Penalty -25%' }
   }
   if (slot === 'PF') {
     if (isForward || isForwardCenter) return { penalty: 0, label: 'Position Fit' }
