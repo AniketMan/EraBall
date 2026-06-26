@@ -2598,7 +2598,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                     return sorted.map(p => {
                     const ts = (calcTS(p) * 100).toFixed(1)
                     const isSel = selectedPlayer?.person_id === p.person_id && selectedPlayer?.era === p.era && selectedPlayer?.eraTeam === p.eraTeam
-                    const capBlocked = salaryCapMode && (() => { const t = playerTier(playerBaseRating(p, simEra)); return tierCounts[t] >= CAP_QUOTAS[t] })()
+                    const capBlocked = salaryCapMode && (() => { const t = playerTier(playerBaseRating(p, p.era as Era)); return tierCounts[t] >= CAP_QUOTAS[t] })()
                     return (
                       <button
                         key={`${p.person_id}-${p.era}-${p.eraTeam ?? ''}`}
@@ -2624,7 +2624,7 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
                           <div className="text-xs" style={{ color: G.grey }}>{p.position}</div>
                         </div>
                         {salaryCapMode && (() => {
-                          const tier = playerTier(playerBaseRating(p, simEra))
+                          const tier = playerTier(playerBaseRating(p, p.era as Era))
                           const TIER_COL: Record<PlayerTier, string> = { s: '#9b6dff', a: '#C9A84C', b: '#4caf78', c: '#5b8fd4', d: '#c47a35' }
                           const col = TIER_COL[tier]
                           const needed = (neededTiers as string[]).includes(tier)
