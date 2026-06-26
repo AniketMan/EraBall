@@ -689,7 +689,7 @@ const BASE_RATING_OVERRIDE: Record<string, number> = {
   'Kobe Bryant:00s:LAL':             65,
   'Kevin Durant:00s:OKC':            57,
   'Kevin Durant:00s:SEA':            57,
-  'Gary Payton:00s:SEA':             55,
+  'Gary Payton:00s:SEA':             54,
   'Yao Ming:00s:HOU':                46.5,
   // 90s
   'Michael Jordan:90s:CHI':          72,
