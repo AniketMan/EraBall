@@ -1165,8 +1165,8 @@ const V1_5_1_NOTES = [
     'New Timeless players: Draymond Green, Jerry West',
     'New Dynamic Duos: Lonzo Ball - Lamelo Ball, Giannis - Thanasis/Kostas, John Wall - Bradley Beal, Magic - James Worthy',
     'New Glass Cleaners: Bill Russell, Charles Barkley',
-    'Champions tag fixes: Jojo white 2x',
-    'New Shooting Stars: Buddy Hield T2, Mark Price Tier 2',
+    'Champions tag fixes: Jojo White 2x',
+    'New Shooting Stars: Buddy Hield T2, Mark Price T2',
     'Tier Changes: Patrick Ewing and Yao Ming downgraded to T2 Defensive Anchor. Walt Frazier Upgraded to T1 Defensive Anchor',
   ]},
   { section: 'Ratings', items: [
