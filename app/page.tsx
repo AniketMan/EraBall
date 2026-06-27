@@ -929,7 +929,7 @@ function SupportersModal({ onClose }: { onClose: () => void }) {
             style={{ marginTop: 4, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', background: 'none', border: `1px solid ${G.border}`, color: G.greyDark, fontSize: 10, letterSpacing: '0.08em', textDecoration: 'none', cursor: 'pointer', alignSelf: 'center' }}
           >
             <span style={{ color: G.goldDim }}>Support on Ko-fi</span>
-            <span>· donate to be added to this list</span>
+            <span>· donate to be here</span>
           </a>
         </div>
       </div>
