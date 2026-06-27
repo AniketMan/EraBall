@@ -1151,6 +1151,36 @@ const V1_5_NOTES = [
   ]},
 ]
 
+const V1_5_1_NOTES = [
+  { section: 'Leaderboard', items: [
+    'New score bonuses for drafting dynamic duos and trios.',
+    'New score bonus for winning championships with F coaches.',
+    'Personal Local stored leaderboard (entries prior to 6/27 wont be there)',
+  ]},
+  { section: 'Achievements', items: [
+    'You can see all the legendary descriptions if you have not unlocked them.',
+    'Added 5 new achievements.',
+  ]},
+  { section: 'Tags', items: [
+    'New Timeless players: Draymond Green, Jerry West',
+    'New Dynamic Duos: Lonzo Ball - Lamelo Ball, Giannis - Thanasis/Kostas, John Wall - Bradley Beal, Magic - James Worthy',
+    'New Glass Cleaners: Bill Russell, Charles Barkley',
+    'Champions tag fixes: Jojo white 2x',
+    'New Shooting Stars: Buddy Hield T2, Mark Price Tier 2',
+    'Tier Changes: Patrick Ewing and Yao Ming downgraded to T2 Defensive Anchor. Walt Frazier Upgraded to T1 Defensive Anchor',
+  ]},
+  { section: 'Ratings', items: [
+    'Buffs: Jo Jo White',
+  ]},
+  { section: 'Positions', items: [
+    'Clyde Drexler SG/SF',
+  ]},
+  { section: 'Bugs', items: [
+    'Box score displays sometimes would end up in a tie. Can no longer happen.',
+    'In rare super team cases in sandbox, teams woud average double the record of assists and wouldnt add up realistically to the team score. Now the assists are scaled properly in those cases.',
+  ]},
+]
+
 const V1_4_NOTES = [
   { section: 'Simulation', items: [
     'Pre-3pt era players who were eligible for an estimated three point rating in modern eras now get a slightly smaller era penalty going forward (like Pete Maravich).',
@@ -1225,6 +1255,7 @@ const V1_2_NOTES = [
 ]
 
 function PatchNotesModal({ onClose }: { onClose: () => void }) {
+  const [showV1_5, setShowV1_5] = useState(false)
   const [showV1_4, setShowV1_4] = useState(false)
   const [showV1_3, setShowV1_3] = useState(false)
   const [showV1_2, setShowV1_2] = useState(false)
@@ -1249,12 +1280,24 @@ function PatchNotesModal({ onClose }: { onClose: () => void }) {
         <div className="flex items-center justify-between mb-4">
           <div>
             <div style={{ ...BEBAS, fontSize: 24, color: G.white, letterSpacing: '0.05em' }}>What's New</div>
-            <div style={{ fontSize: 11, color: G.gold, letterSpacing: '0.12em', textTransform: 'uppercase' }}>v1.5 · June 24</div>
+            <div style={{ fontSize: 11, color: G.gold, letterSpacing: '0.12em', textTransform: 'uppercase' }}>v1.5.1 · June 27</div>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: G.greyDark, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>✕</button>
         </div>
 
-        {renderNotes(V1_5_NOTES)}
+        {renderNotes(V1_5_1_NOTES)}
+
+        {/* v1.5 collapsible */}
+        <div style={{ borderTop: `1px solid ${G.border}`, marginTop: 8, paddingTop: 12 }}>
+          <button
+            onClick={() => setShowV1_5(v => !v)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: 0 }}
+          >
+            <span style={{ fontSize: 11, color: G.greyDark, letterSpacing: '0.12em', textTransform: 'uppercase' }}>V1.5 · June 24</span>
+            <span style={{ fontSize: 10, color: G.greyDark, display: 'inline-block', transform: showV1_5 ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▼</span>
+          </button>
+          {showV1_5 && <div style={{ marginTop: 12 }}>{renderNotes(V1_5_NOTES)}</div>}
+        </div>
 
         {/* v1.4 collapsible */}
         <div style={{ borderTop: `1px solid ${G.border}`, marginTop: 8, paddingTop: 12 }}>
