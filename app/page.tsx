@@ -922,6 +922,15 @@ function SupportersModal({ onClose }: { onClose: () => void }) {
         </div>
         <div style={{ padding: '14px 20px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
           {SUPPORTERS.map(name => <SupporterCard key={name} name={name} />)}
+          <a
+            href="https://ko-fi.com/eshanb"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ marginTop: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px 16px', background: 'none', border: `1px solid ${G.goldDim}`, color: G.gold, fontSize: 12, letterSpacing: '0.1em', textDecoration: 'none', cursor: 'pointer' }}
+          >
+            <span>☕ Support on Ko-fi</span>
+            <span style={{ color: G.greyDark, fontSize: 11 }}>— donate to be added to this list</span>
+          </a>
         </div>
       </div>
     </div>
