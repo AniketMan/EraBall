@@ -926,10 +926,10 @@ function SupportersModal({ onClose }: { onClose: () => void }) {
             href="https://ko-fi.com/eshanb"
             target="_blank"
             rel="noopener noreferrer"
-            style={{ marginTop: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px 16px', background: 'none', border: `1px solid ${G.goldDim}`, color: G.gold, fontSize: 12, letterSpacing: '0.1em', textDecoration: 'none', cursor: 'pointer' }}
+            style={{ marginTop: 4, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', background: 'none', border: `1px solid ${G.border}`, color: G.greyDark, fontSize: 10, letterSpacing: '0.08em', textDecoration: 'none', cursor: 'pointer', alignSelf: 'center' }}
           >
-            <span>Support on Ko-fi</span>
-            <span style={{ color: G.greyDark, fontSize: 11 }}>donate to be added to this list</span>
+            <span style={{ color: G.goldDim }}>Support on Ko-fi</span>
+            <span>· donate to be added to this list</span>
           </a>
         </div>
       </div>
