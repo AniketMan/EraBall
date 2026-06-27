@@ -18,11 +18,12 @@ const PLAYOFF_LABEL: Record<string, string> = {
 const G = {
   gold: '#C9A84C', grey: '#888888', greyDark: '#aaaaaa',
   surface: '#111111', surface2: '#1a1a1a', border: '#252525',
-  white: '#ffffff', black: '#000000', red: '#CC4444',
+  white: '#ffffff', black: '#000000', red: '#CC4444', purple: '#9b6dff', green: '#4caf78',
 }
 const BEBAS = { fontFamily: '"Bebas Neue", Impact, sans-serif' }
 
 type Mode = 'normal' | 'salary_cap'
+type Tab = 'normal' | 'salary_cap' | 'personal'
 
 const LB_STYLES = `
   .lb-mode-btn, .lb-era-btn {
@@ -41,6 +42,10 @@ const LB_STYLES = `
   .lb-mode-btn.cap:hover {
     border-color: #9b6dff !important;
     color: #9b6dff !important;
+  }
+  .lb-mode-btn.personal:hover {
+    border-color: #4caf78 !important;
+    color: #4caf78 !important;
   }
   .lb-roster-panel {
     overflow: hidden;
@@ -90,22 +95,45 @@ function RosterDisplay({ roster }: { roster: LeaderboardRoster }) {
   )
 }
 
+function getPersonalEntries(): LeaderboardEntry[] {
+  try {
+    return JSON.parse(localStorage.getItem('eraball_personal_entries') ?? '[]')
+  } catch {
+    return []
+  }
+}
+
 export default function LeaderboardModal({ onClose }: { onClose: () => void }) {
-  const [mode, setMode] = useState<Mode>('normal')
+  const [tab, setTab] = useState<Tab>('normal')
   const [era, setEra] = useState('20s')
   const [entries, setEntries] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   useEffect(() => {
+    setExpandedId(null)
+    if (tab === 'personal') {
+      const filtered = getPersonalEntries()
+        .filter(e => e.era === era)
+        .slice(0, 20)
+      setEntries(filtered)
+      return
+    }
     setLoading(true)
     setEntries([])
-    setExpandedId(null)
-    fetchLeaderboard(era, mode).then(data => {
+    fetchLeaderboard(era, tab as Mode).then(data => {
       setEntries(data as LeaderboardEntry[])
       setLoading(false)
     })
-  }, [era, mode])
+  }, [era, tab])
+
+  const isPersonal = tab === 'personal'
+
+  const TAB_DEFS: { key: Tab; label: string; color: string; cls: string }[] = [
+    { key: 'normal',     label: 'Normal Draft',      color: G.gold,   cls: 'lb-mode-btn' },
+    { key: 'salary_cap', label: 'Salary Cap Draft',  color: G.purple, cls: 'lb-mode-btn cap' },
+    { key: 'personal',   label: 'Personal',          color: G.green,  cls: 'lb-mode-btn personal' },
+  ]
 
   return (
     <div
@@ -125,25 +153,26 @@ export default function LeaderboardModal({ onClose }: { onClose: () => void }) {
 
         {/* Mode tabs */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-          {(['normal', 'salary_cap'] as Mode[]).map(m => (
+          {TAB_DEFS.map(({ key, label, color, cls }) => (
             <button
-              key={m}
-              onClick={() => setMode(m)}
-              className={`lb-mode-btn${m === 'salary_cap' ? ' cap' : ''}`}
+              key={key}
+              onClick={() => setTab(key)}
+              className={cls}
               style={{
-                padding: '8px 16px', border: `1px solid ${mode === m ? (m === 'salary_cap' ? '#9b6dff' : G.gold) : G.border}`,
-                background: mode === m ? (m === 'salary_cap' ? '#9b6dff18' : `${G.gold}18`) : 'transparent',
-                color: mode === m ? (m === 'salary_cap' ? '#9b6dff' : G.gold) : G.greyDark,
+                padding: '8px 16px',
+                border: `1px solid ${tab === key ? color : G.border}`,
+                background: tab === key ? `${color}18` : 'transparent',
+                color: tab === key ? color : G.greyDark,
                 fontWeight: 700, fontSize: 11, letterSpacing: '0.15em', textTransform: 'uppercase', cursor: 'pointer',
               }}
             >
-              {m === 'normal' ? 'Normal Draft' : 'Salary Cap Draft'}
+              {label}
             </button>
           ))}
         </div>
 
         {/* Era selector */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 20 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: isPersonal ? 12 : 20 }}>
           {ALL_ERAS.map(e => (
             <button
               key={e}
@@ -161,12 +190,19 @@ export default function LeaderboardModal({ onClose }: { onClose: () => void }) {
           ))}
         </div>
 
+        {/* Personal hint */}
+        {isPersonal && (
+          <div style={{ fontSize: 11, color: '#444', marginBottom: 16, letterSpacing: '0.06em' }}>
+            Your top 20 submitted runs for this era. Stored on this device.
+          </div>
+        )}
+
         {/* Table */}
         {loading ? (
           <div style={{ textAlign: 'center', padding: '40px', color: G.greyDark, fontSize: 13, letterSpacing: '0.1em' }}>LOADING...</div>
         ) : entries.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px', color: G.greyDark, fontSize: 13, letterSpacing: '0.1em' }}>
-            No entries yet for {eraLabel(era)} {mode === 'salary_cap' ? 'Salary Cap' : 'Normal Draft'}. Be the first!
+            {isPersonal ? `No personal entries for ${eraLabel(era)} yet. Submit a run to see it here.` : `No entries yet for ${eraLabel(era)} ${tab === 'salary_cap' ? 'Salary Cap' : 'Normal Draft'}. Be the first!`}
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
@@ -174,7 +210,7 @@ export default function LeaderboardModal({ onClose }: { onClose: () => void }) {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
                 <tr style={{ borderBottom: `1px solid ${G.border}` }}>
-                  {['#', 'TEAM', 'SCORE', 'REG W-L', 'PLAYOFF W-L', 'RESULT', 'PT DIFF', 'RATING', 'COACH'].map(h => (
+                  {['#', 'TEAM', ...(isPersonal ? ['ERA', 'MODE'] : []), 'SCORE', 'REG W-L', 'PLAYOFF W-L', 'RESULT', 'PT DIFF', 'RATING', 'COACH'].map(h => (
                     <th key={h} style={{ padding: '8px 10px', textAlign: h === '#' || h === 'SCORE' || h === 'RATING' || h === 'PT DIFF' ? 'center' : 'left', color: G.greyDark, fontWeight: 700, letterSpacing: '0.1em', fontSize: 10, whiteSpace: 'nowrap' }}>
                       {h}
                     </th>
@@ -190,15 +226,12 @@ export default function LeaderboardModal({ onClose }: { onClose: () => void }) {
                   const isExpanded = expandedId === rowId
                   const rowBg = i % 2 === 0 ? 'transparent' : G.surface
                   const hasRoster = !!(entry.roster && (entry.roster.starters?.length || entry.roster.bench?.length))
+                  const colSpan = isPersonal ? 11 : 9
                   return (
                     <React.Fragment key={rowId}>
                       <tr
                         onClick={() => hasRoster && setExpandedId(isExpanded ? null : rowId)}
-                        style={{
-                          borderBottom: `1px solid ${G.border}`,
-                          background: rowBg,
-                          cursor: hasRoster ? 'pointer' : 'default',
-                        }}
+                        style={{ borderBottom: `1px solid ${G.border}`, background: rowBg, cursor: hasRoster ? 'pointer' : 'default' }}
                       >
                         <td style={{ padding: '10px', textAlign: 'center', ...BEBAS, fontSize: isTop3 ? 20 : 14, color: rankColor }}>{i + 1}</td>
                         <td style={{ padding: '10px', color: G.white, fontWeight: 700, fontSize: 13 }}>
@@ -209,13 +242,19 @@ export default function LeaderboardModal({ onClose }: { onClose: () => void }) {
                             </span>
                           )}
                         </td>
+                        {isPersonal && (
+                          <>
+                            <td style={{ padding: '10px', color: G.gold, fontWeight: 700, fontSize: 11, whiteSpace: 'nowrap' }}>{eraLabel(entry.era)}</td>
+                            <td style={{ padding: '10px', color: entry.mode === 'salary_cap' ? G.purple : G.greyDark, fontSize: 10, whiteSpace: 'nowrap' }}>{entry.mode === 'salary_cap' ? 'CAP' : 'NORMAL'}</td>
+                          </>
+                        )}
                         <td style={{ padding: '10px', textAlign: 'center', ...BEBAS, fontSize: 18, color: G.gold }}>{Math.round(entry.score).toLocaleString()}</td>
                         <td style={{ padding: '10px', textAlign: 'left', color: G.greyDark }}>{entry.reg_wins}–{entry.reg_losses} <span style={{ color: '#555', fontSize: 10 }}>({(entry.reg_win_pct * 100).toFixed(0)}%)</span></td>
                         <td style={{ padding: '10px', textAlign: 'left', color: G.greyDark }}>{entry.playoff_wins}–{entry.playoff_losses}</td>
                         <td style={{ padding: '10px', color: entry.playoff_result === 'champion' ? G.gold : G.greyDark, fontWeight: entry.playoff_result === 'champion' ? 700 : 400, whiteSpace: 'nowrap' }}>
                           {entry.playoff_result ? PLAYOFF_LABEL[entry.playoff_result] ?? entry.playoff_result : '—'}
                         </td>
-                        <td style={{ padding: '10px', textAlign: 'center', color: ptDiff > 0 ? '#4caf78' : ptDiff < 0 ? G.red : G.greyDark }}>
+                        <td style={{ padding: '10px', textAlign: 'center', color: ptDiff > 0 ? G.green : ptDiff < 0 ? G.red : G.greyDark }}>
                           {ptDiff > 0 ? '+' : ''}{ptDiff.toFixed(1)}
                         </td>
                         <td style={{ padding: '10px', textAlign: 'center', color: G.greyDark }}>{entry.team_rating + 15}</td>
@@ -225,7 +264,7 @@ export default function LeaderboardModal({ onClose }: { onClose: () => void }) {
                       </tr>
                       {hasRoster && entry.roster && (
                         <tr style={{ borderBottom: `1px solid ${G.border}`, background: rowBg }}>
-                          <td colSpan={9} style={{ padding: 0 }}>
+                          <td colSpan={colSpan} style={{ padding: 0 }}>
                             <div className={`lb-roster-panel${isExpanded ? ' open' : ''}`}>
                               <RosterDisplay roster={entry.roster} />
                             </div>

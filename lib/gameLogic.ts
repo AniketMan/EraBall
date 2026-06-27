@@ -30,6 +30,7 @@ const FLEX_PLAYERS: Record<string, SlotPosition[]> = {
 // Hard positional constraints: 0 penalty only at listed slots.
 // These players do NOT carry a flex tag — they are strictly these positions.
 const POSITION_LOCK: Record<string, SlotPosition[]> = {
+  'Clyde Drexler':       ['SG', 'SF'],
   'Tracy McGrady':       ['SG', 'SF'],
   'Peyton Watson':       ['SF', 'PF'],
   'Scottie Pippen':      ['SG', 'SF', 'PF'],
@@ -96,7 +97,7 @@ const PLAYER_RINGS: Record<string, number> = {
   'Willis Reed': 2, 'Walt Frazier': 2, 'Dave DeBusschere': 2, 'Bill Bradley': 2,
   'Bob McAdoo': 2, 'Bob Dandridge': 2,
   'Mike Miller': 2, 'Norris Cole': 2,
-  'Bailey Howell': 2, 'Jo Jo White': 2, 'Dave Cowens': 2, 'Bill Walton': 2,
+  'Bailey Howell': 2, 'Jojo White': 2, 'Dave Cowens': 2, 'Bill Walton': 2,
   'Norm Nixon': 2, 'Mark Aguirre': 2,
   'Sam Cassell': 2, 'Kenny Smith': 2, 'Tyronn Lue': 2,
   'Luke Walton': 2, 'Jordan Farmar': 2, 'Sasha Vujacic': 2,
@@ -310,6 +311,8 @@ const PLAYER_ANCHOR_TIERS: Record<string, 2> = {
   'Bruce Bowen':         2,
   'Nate Thurmond':       2,
   'Alvin Robertson':     2,
+  'Patrick Ewing':       2,
+  'Yao Ming':            2,
   'Marc Gasol':          2,
   'Luguentz Dort':       2,
   'Andrei Kirilenko':    2,
@@ -336,7 +339,6 @@ const PLAYER_ANCHOR_TIERS: Record<string, 2> = {
   'Andre Iguodala':      2,
   'Metta World Peace':   2,
   'Joakim Noah':         2,
-  'Walt Frazier':        2,
   'Tracy McGrady':       2,
   'Jerry West':          2,
   'Dirk Nowitzki':       2,
@@ -376,8 +378,9 @@ export const DUO_PAIRS: Record<string, string[]> = {
   'Willis Reed':             ['Walt Frazier'],
   'Alex English':            ['Kiki Vandeweghe'],
   'Kiki Vandeweghe':         ['Alex English'],
-  'Magic Johnson':           ['Kareem Abdul-Jabbar'],
+  'Magic Johnson':           ['Kareem Abdul-Jabbar', 'James Worthy'],
   'Kareem Abdul-Jabbar':     ['Magic Johnson', 'Oscar Robertson'],
+  'James Worthy':            ['Magic Johnson'],
   'Larry Bird':              ['Kevin McHale'],
   'Kevin McHale':            ['Larry Bird'],
   'Isiah Thomas':            ['Joe Dumars'],
@@ -440,8 +443,14 @@ export const DUO_PAIRS: Record<string, string[]> = {
   'Kyle Lowry':              ['DeMar DeRozan', 'Kawhi Leonard'],
   'Damian Lillard':          ['CJ McCollum'],
   'CJ McCollum':             ['Damian Lillard'],
-  'Giannis Antetokounmpo':   ['Khris Middleton'],
+  'Giannis Antetokounmpo':   ['Khris Middleton', 'Thanasis Antetokounmpo', 'Kostas Antetokounmpo'],
   'Khris Middleton':         ['Giannis Antetokounmpo'],
+  'Thanasis Antetokounmpo':  ['Giannis Antetokounmpo'],
+  'Kostas Antetokounmpo':    ['Giannis Antetokounmpo'],
+  'LaMelo Ball':             ['Lonzo Ball'],
+  'Lonzo Ball':              ['LaMelo Ball'],
+  'John Wall':               ['Bradley Beal'],
+  'Bradley Beal':            ['John Wall'],
   // 20s
   'Nikola Jokic':            ['Jamal Murray', 'Aaron Gordon'],
   'Jamal Murray':            ['Nikola Jokic', 'Aaron Gordon'],
@@ -503,6 +512,7 @@ const TIMELESS_PLAYERS = new Set([
   'Steve Nash',
   'Draymond Green',
   'Shai Gilgeous-Alexander',
+  'Jerry West',
 ])
 
 export function applyTimeless(player: Player): Player {
@@ -537,6 +547,8 @@ const SHOOTING_STAR_T2 = new Set([
   'Dirk Nowitzki',
   'Kentavious Caldwell-Pope',
   'Kon Knueppel',
+  'Buddy Hield',
+  'Mark Price',
 ])
 
 export function applyShootingStar(player: Player): Player {
@@ -559,6 +571,8 @@ const GLASS_CLEANER_PLAYERS = new Set([
   'Nate Thurmond',
   'Kevin Love',
   'Clint Capela',
+  'Bill Russell',
+  'Charles Barkley',
 ])
 
 export function applyGlassCleaner(player: Player): Player {
@@ -707,6 +721,7 @@ const BASE_RATING_OVERRIDE: Record<string, number> = {
   'Alex English:80s:DEN':            57,
   // 70s
   'Oscar Robertson:70s:MIL':         56,
+  'Jojo White:70s:BOS':              44,
   // 50s
   'Wilt Chamberlain:50s:PHW':        78.4,
 }
@@ -1423,6 +1438,14 @@ export function simulateSeason(
     }
   })
 
+  // Cap team AST to realistic FGM-based maximum (~65% assist rate)
+  const rawTeamAST = seasonStats.reduce((s, p) => s + p.AST, 0)
+  const seasonAstCap = (avgTeamScore / 2.2) * 0.65
+  if (rawTeamAST > seasonAstCap) {
+    const scale = seasonAstCap / rawTeamAST
+    for (const s of seasonStats) s.AST *= scale
+  }
+
   const blkScore = calcBlkScore(entries)
   return {
     wins, losses: seasonGames - wins, games, seasonStats, avgTeamScore, avgOppScore,
@@ -1572,6 +1595,12 @@ export function simulatePlayoffs(
       const gamePTS = expPTS.map(e => Math.max(0, e * (0.6 + Math.random() * 0.8)))
       const gameREB = expREB.map(e => Math.min(28, Math.max(0, Math.round(e * (0.6 + Math.random() * 0.8)))))
       const gameAST = expAST.map(e => Math.min(20, Math.max(0, Math.round(e * (0.6 + Math.random() * 0.8)))))
+      const rawGameAST = gameAST.reduce((s, a) => s + a, 0)
+      const gameAstCap = (teamScore / 2.2) * 0.65
+      if (rawGameAST > gameAstCap) {
+        const scale = gameAstCap / rawGameAST
+        for (let i = 0; i < gameAST.length; i++) gameAST[i] = Math.max(0, Math.round(gameAST[i] * scale))
+      }
       const gameSTL = expSTL.map(e => +Math.max(0, e * (0.6 + Math.random() * 0.8)).toFixed(1))
       const gameBLK = expBLK.map(e => +Math.max(0, e * (0.6 + Math.random() * 0.8)).toFixed(1))
       const gameTOV = expTOV.map(e => +Math.max(0, e * (0.6 + Math.random() * 0.8)).toFixed(1))
@@ -1673,7 +1702,8 @@ export function simulatePlayoffs(
         ft: gameFT[i],
       }))
       const displayTeamScore = scaledPTS.reduce((a, b) => a + b, 0)
-      const displayOppScore = (!win && oppScore <= displayTeamScore) ? displayTeamScore + 2 + Math.round(Math.abs(randn()) * 5) : oppScore
+      let displayOppScore = (!win && oppScore <= displayTeamScore) ? displayTeamScore + 2 + Math.round(Math.abs(randn()) * 5) : oppScore
+      if (win && displayTeamScore <= displayOppScore) displayOppScore = displayTeamScore - 1
       if (win) sW++; else sL++
       allGames.push({ win, roundIndex: r, teamScore: displayTeamScore, oppScore: displayOppScore, gameInSeries, leaders, special, playerLines })
     }

@@ -18,6 +18,8 @@ export interface RunContext {
   teamRating: number
   coachGrade: string
   hasSTierStarter: boolean
+  duo_pair?: boolean
+  duo_trio?: boolean
 }
 
 type CheckFn = (normal: LifetimeStats, cap: LifetimeStats, run: RunContext) => boolean
@@ -198,6 +200,41 @@ const DEFS: (Achievement & { check: CheckFn })[] = [
     description: 'Win a championship with an A-grade coach.',
     rarity: 'common',
     check: (_n, _c, run) => run.champion && run.coachGrade === 'A',
+  },
+  {
+    id: 'miracle_worker',
+    title: 'Miracle Worker',
+    description: 'Win a championship with an F-grade coach.',
+    rarity: 'legendary',
+    check: (_n, _c, run) => run.champion && run.coachGrade === 'F',
+  },
+  {
+    id: 'obsessed',
+    title: 'Obsessed',
+    description: 'Complete 1,000 drafts.',
+    rarity: 'legendary',
+    check: (n, c) => (n.draftsCompleted + c.draftsCompleted) >= 1000,
+  },
+  {
+    id: 'warming_up',
+    title: 'Warming Up',
+    description: 'Complete your first 10 drafts.',
+    rarity: 'common',
+    check: (n, c) => (n.draftsCompleted + c.draftsCompleted) >= 10,
+  },
+  {
+    id: 'dynamic_duo',
+    title: 'Dynamic Duo',
+    description: 'Draft two players with an active dynamic duo.',
+    rarity: 'rare',
+    check: (_n, _c, run) => run.duo_pair === true,
+  },
+  {
+    id: 'big_three',
+    title: 'Big Three',
+    description: 'Draft three players with connected dynamic duos.',
+    rarity: 'epic',
+    check: (_n, _c, run) => run.duo_trio === true,
   },
 ]
 

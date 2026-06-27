@@ -38,6 +38,9 @@ export type ScoreFlags = {
   elite_rim?: boolean
   elite_playmaking?: boolean
   reb_edge?: boolean
+  duo_pair?: boolean
+  duo_trio?: boolean
+  bad_coach?: boolean
 }
 
 export function calcLeaderboardScore(
@@ -59,6 +62,7 @@ export function calcLeaderboardScore(
   if (isChampion) {
     if (flags?.no_timeless) challengeBonus += 75
     if (flags?.no_s_tier) challengeBonus += 150
+    if (flags?.bad_coach) challengeBonus += 75
   }
 
   let teamBonus = 0
@@ -66,6 +70,8 @@ export function calcLeaderboardScore(
   if (flags?.elite_rim)       teamBonus += 50
   if (flags?.elite_playmaking) teamBonus += 40
   if (flags?.reb_edge)        teamBonus += 25
+  if (flags?.duo_pair)        teamBonus += 35
+  if (flags?.duo_trio)        teamBonus += 80
 
   return (
     entry.reg_win_pct * 500 +

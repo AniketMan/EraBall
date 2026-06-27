@@ -365,6 +365,18 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode, fifti
   const sec     = fifties ? '#e2e2e2' : G.grey
   const secDark = fifties ? '#c8c8c8' : G.greyDark
   const tierLabel = r >= 55 ? 'S' : r >= 46 ? 'A' : r >= 38 ? 'B' : r >= 31 ? 'C' : r >= 24 ? 'D' : r >= 16 ? 'E' : 'F'
+  const tagCount = [
+    player.greatest_75_flag === 'Y',
+    (player.rings ?? 0) > 0,
+    !!player.defAnchor,
+    !!player.offAnchor,
+    !!player.shootingStar,
+    !!player.glassClean,
+    !!player.timeless,
+    !!player.duoPartners,
+    !!player.flexPositions,
+  ].filter(Boolean).length
+  const usePillLayout = tagCount > 4
 
   return (
     <div
@@ -388,63 +400,63 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode, fifti
             </div>
           </div>
           <div className="flex flex-col items-end gap-1 ml-2 shrink-0">
-            {player.greatest_75_flag === 'Y' && (
+            {!usePillLayout && player.greatest_75_flag === 'Y' && (
               <TagTooltip tip="Recognized as one of the 75 greatest NBA players of all time, a small boost in every game play play.">
                 <span className="text-xs uppercase tracking-wide inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: G.gold }}>
                   75 Greatest
                 </span>
               </TagTooltip>
             )}
-            {(player.rings ?? 0) > 0 && (
+            {!usePillLayout && (player.rings ?? 0) > 0 && (
               <TagTooltip tip="Champions perform better in the playoffs. The more championships, the better the playoff performer.">
                 <span className="text-xs uppercase tracking-wide inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: G.gold, letterSpacing: '0.08em' }}>
                   {player.rings}× Champion
                 </span>
               </TagTooltip>
             )}
-            {player.defAnchor && (
+            {!usePillLayout && player.defAnchor && (
               <TagTooltip tip={(player.anchorTier ?? 1) === 1 ? "Elite defensive anchor. Defensive impact beyond the stat sheet. T1 carries a larger boost than T2." : "Solid defensive anchor. Defensive impact beyond the stat sheet. T1 carries a larger boost than T2."}>
                 <span className="text-xs uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: '#4A9ECC' }}>
                   Defensive Anchor <span style={{ opacity: 0.7 }}>T{player.anchorTier ?? 1}</span>
                 </span>
               </TagTooltip>
             )}
-            {player.offAnchor && (
+            {!usePillLayout && player.offAnchor && (
               <TagTooltip tip={(player.anchorTier ?? 1) === 1 ? "Elite offensive engine. Major boost to team scoring and ball movement." : "Strong offensive contributor. Elevates the team's offense. T1 anchors carry a larger boost."}>
                 <span className="text-xs uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: G.gold }}>
                   Offensive Anchor <span style={{ opacity: 0.7 }}>T{player.anchorTier ?? 1}</span>
                 </span>
               </TagTooltip>
             )}
-            {player.shootingStar && (
+            {!usePillLayout && player.shootingStar && (
               <TagTooltip tip={(player.shootingStarTier ?? 1) === 1 ? "Boosts team spacing. Elite all-time shooter. T1 carries a larger boost than T2." : "Boosts team spacing. Special shooter. T1 carries a larger boost than T2."}>
                 <span className="text-xs uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: '#F472B6' }}>
                   Shooting Star <span style={{ opacity: 0.7 }}>T{player.shootingStarTier ?? 1}</span>
                 </span>
               </TagTooltip>
             )}
-            {player.glassClean && (
+            {!usePillLayout && player.glassClean && (
               <TagTooltip tip="Elite rebounder. Crashes the boards on both ends, boosting team second-chance points and limiting opponent possessions.">
                 <span className="text-xs uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: '#34D399' }}>
                   Glass Cleaner
                 </span>
               </TagTooltip>
             )}
-            {player.timeless && (
+            {!usePillLayout && player.timeless && (
               <TagTooltip tip="Transcendent skill set. Minimal era penalties across all decades. Minor penalty only if 6+ eras from home era.">
                 <span className="text-xs uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: '#C084FC' }}>
                   Timeless
                 </span>
               </TagTooltip>
             )}
-            {player.duoPartners && (
+            {!usePillLayout && player.duoPartners && (
               <TagTooltip tip={(duoActiveCount ?? 0) > 0 ? `Dynamic Duo active. +${(duoActiveCount ?? 0) * 5} rating boost.` : `Draft ${player.duoPartners.join(' or ')} to activate the Dynamic Duo bonus (+5 per partner).`}>
                 <span className="text-xs uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: (duoActiveCount ?? 0) > 0 ? '#4ECDC4' : '#444444', letterSpacing: '0.08em' }}>
                   Dynamic Duo
                 </span>
               </TagTooltip>
             )}
-            {player.flexPositions && (
+            {!usePillLayout && player.flexPositions && (
               <TagTooltip tip="Can play multiple positions outside of their natural position, without penalty..">
                 <span className="text-xs px-1.5 py-0.5 uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: '#4A9ECC', border: `1px solid #2A6E99`, background: `#4A9ECC18` }}>
                   FLEX
@@ -464,6 +476,55 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode, fifti
           </div>
         </div>
       </div>
+      {usePillLayout && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
+          {player.greatest_75_flag === 'Y' && (
+            <TagTooltip tip="Recognized as one of the 75 greatest NBA players of all time, a small boost in every game play play.">
+              <span style={{ fontSize: 11, padding: '3px 8px', border: `1px solid ${G.gold}44`, color: G.gold, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>75 Greatest</span>
+            </TagTooltip>
+          )}
+          {(player.rings ?? 0) > 0 && (
+            <TagTooltip tip="Champions perform better in the playoffs. The more championships, the better the playoff performer.">
+              <span style={{ fontSize: 11, padding: '3px 8px', border: `1px solid ${G.gold}44`, color: G.gold, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>{player.rings}× Champ</span>
+            </TagTooltip>
+          )}
+          {player.defAnchor && (
+            <TagTooltip tip={(player.anchorTier ?? 1) === 1 ? "Elite defensive anchor. Defensive impact beyond the stat sheet. T1 carries a larger boost than T2." : "Solid defensive anchor. Defensive impact beyond the stat sheet. T1 carries a larger boost than T2."}>
+              <span style={{ fontSize: 11, padding: '3px 8px', border: `1px solid #4A9ECC44`, color: '#4A9ECC', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>Def Anchor T{player.anchorTier ?? 1}</span>
+            </TagTooltip>
+          )}
+          {player.offAnchor && (
+            <TagTooltip tip={(player.anchorTier ?? 1) === 1 ? "Elite offensive engine. Major boost to team scoring and ball movement." : "Strong offensive contributor. Elevates the team's offense. T1 anchors carry a larger boost."}>
+              <span style={{ fontSize: 11, padding: '3px 8px', border: `1px solid ${G.gold}44`, color: G.gold, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>Off Anchor T{player.anchorTier ?? 1}</span>
+            </TagTooltip>
+          )}
+          {player.shootingStar && (
+            <TagTooltip tip={(player.shootingStarTier ?? 1) === 1 ? "Boosts team spacing. Elite all-time shooter. T1 carries a larger boost than T2." : "Boosts team spacing. Special shooter. T1 carries a larger boost than T2."}>
+              <span style={{ fontSize: 11, padding: '3px 8px', border: `1px solid #F472B644`, color: '#F472B6', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>Shooting Star T{player.shootingStarTier ?? 1}</span>
+            </TagTooltip>
+          )}
+          {player.glassClean && (
+            <TagTooltip tip="Elite rebounder. Crashes the boards on both ends, boosting team second-chance points and limiting opponent possessions.">
+              <span style={{ fontSize: 11, padding: '3px 8px', border: `1px solid #34D39944`, color: '#34D399', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>Glass Cleaner</span>
+            </TagTooltip>
+          )}
+          {player.timeless && (
+            <TagTooltip tip="Transcendent skill set. Minimal era penalties across all decades. Minor penalty only if 6+ eras from home era.">
+              <span style={{ fontSize: 11, padding: '3px 8px', border: `1px solid #C084FC44`, color: '#C084FC', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>Timeless</span>
+            </TagTooltip>
+          )}
+          {player.duoPartners && (
+            <TagTooltip tip={(duoActiveCount ?? 0) > 0 ? `Dynamic Duo active. +${(duoActiveCount ?? 0) * 5} rating boost.` : `Draft ${player.duoPartners.join(' or ')} to activate the Dynamic Duo bonus (+5 per partner).`}>
+              <span style={{ fontSize: 11, padding: '3px 8px', border: `1px solid ${(duoActiveCount ?? 0) > 0 ? '#4ECDC444' : '#44444444'}`, color: (duoActiveCount ?? 0) > 0 ? '#4ECDC4' : '#666666', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>Dynamic Duo</span>
+            </TagTooltip>
+          )}
+          {player.flexPositions && (
+            <TagTooltip tip="Can play multiple positions outside of their natural position, without penalty..">
+              <span style={{ fontSize: 11, padding: '3px 8px', border: `1px solid #2A6E99`, color: '#4A9ECC', background: '#4A9ECC18', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>Flex</span>
+            </TagTooltip>
+          )}
+        </div>
+      )}
       {/* Big three */}
       <div className="grid grid-cols-3 gap-px mb-3" style={{ background: G.border }}>
         {[['PTS', player.PTS], ['REB', player.REB], ['AST', player.AST]].map(([k, v]) => (
@@ -507,7 +568,7 @@ function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode, fifti
           return `${seasons} ${seasons === 1 ? 'season' : 'seasons'}`
         })()}
       </div>
-      {devMode && (
+      {(devMode || (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))) && (
         <div className="mt-1 text-xs text-center" style={{ color: G.gold, opacity: 0.6, letterSpacing: '0.08em' }}>
           BASE {r.toFixed(1)}
         </div>
@@ -1394,7 +1455,14 @@ function EraSelection({ onEraSelected, onSandboxSelected, onSalaryCapSelected, o
                   src={`${R2}/${displayEra}.webp`}
                   alt=""
                   className="era-banner-img"
-                  onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+                  onError={e => {
+                    const img = e.currentTarget as HTMLImageElement
+                    if (!img.src.includes('assets.eraball.com')) {
+                      img.src = `https://assets.eraball.com/${displayEra}.webp`
+                    } else {
+                      img.style.display = 'none'
+                    }
+                  }}
                   style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none', zIndex: 0 }}
                 />
                 {/* Left/right fade */}
@@ -2773,14 +2841,6 @@ function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandb
 
           {/* ── Right: Court ── */}
           <div style={{ background: G.black, border: `1px solid ${G.border}`, padding: '20px' }}>
-            {/* Half-court line art */}
-            <div className="relative mb-8" style={{ height: 4 }}>
-              <div className="absolute inset-x-0 top-0 h-px" style={{ background: G.border }} />
-              <div className="absolute left-1/2 -translate-x-1/2 top-0 w-16 h-8 rounded-b-full"
-                style={{ border: `1px solid ${G.border}`, borderTop: 'none' }} />
-              <div className="absolute left-1/2 -translate-x-1/2 top-0 w-2 h-2 rounded-full"
-                style={{ background: G.border, marginTop: -3 }} />
-            </div>
 
             {/* Mobile-only: bridge hint when player selected and court is below the fold */}
             {selectedPlayer && pendingSlotIdx === null && (
@@ -3752,6 +3812,25 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
     const elite_rim       = (teamAnalysis?.blkScore ?? 0) >= BLK_BASELINE * 1.5
     const elite_playmaking = ((teamAnalysis?.astFactor ?? 1) - 1) * 100 > 3
     const reb_edge        = ((teamAnalysis?.rebFactor ?? 1) - 1) * 100 > 5
+    const draftedNames = new Set(draftedPlayers.map(p => p.full_name))
+    const duoAdj: Record<string, string[]> = {}
+    for (const p of draftedPlayers) {
+      if (p.duoPartners) duoAdj[p.full_name] = p.duoPartners.filter(n => draftedNames.has(n))
+    }
+    const duo_pair = draftedPlayers.some(p => (duoAdj[p.full_name]?.length ?? 0) > 0)
+    let duo_trio = false
+    if (duo_pair) {
+      const visited = new Set<string>()
+      for (const p of draftedPlayers) {
+        if (visited.has(p.full_name) || !duoAdj[p.full_name]?.length) continue
+        const queue = [p.full_name]; visited.add(p.full_name); let size = 0
+        while (queue.length) {
+          const curr = queue.shift()!; size++
+          for (const nb of duoAdj[curr] ?? []) { if (!visited.has(nb)) { visited.add(nb); queue.push(nb) } }
+        }
+        if (size >= 3) { duo_trio = true; break }
+      }
+    }
     const playoffWins = playoffResult ? playoffResult.rounds.reduce((s, r) => s + r.seriesWins, 0) : 0
     const playoffLosses = playoffResult ? playoffResult.rounds.reduce((s, r) => s + r.seriesLosses, 0) : 0
     const playoffTotal = playoffWins + playoffLosses
@@ -3789,7 +3868,8 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
         era: s.player!.era as string,
       })),
     }
-    const flags: ScoreFlags = { no_timeless, no_s_tier, elite_spacing, elite_rim, elite_playmaking, reb_edge }
+    const bad_coach = playoffResultKey === 'champion' && entry.coach_grade === 'F'
+    const flags: ScoreFlags = { no_timeless, no_s_tier, elite_spacing, elite_rim, elite_playmaking, reb_edge, duo_pair, duo_trio, bad_coach }
     const res = await fetch('/api/submit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -3802,6 +3882,12 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
       return
     }
     const { score, rank } = await res.json()
+    try {
+      const saved = JSON.parse(localStorage.getItem('eraball_personal_entries') ?? '[]')
+      saved.push({ ...entry, score, roster, created_at: new Date().toISOString() })
+      saved.sort((a: { score: number }, b: { score: number }) => b.score - a.score)
+      localStorage.setItem('eraball_personal_entries', JSON.stringify(saved.slice(0, 100)))
+    } catch {}
     setLbScore(score)
     setLbRank(rank)
     setLbSubmitted(true)
@@ -4076,10 +4162,30 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
       mode: runMode,
       hasSTierStarter,
     })
+    const draftedPlayers = slots.filter(s => s.player).map(s => s.player!)
+    const draftedNames = new Set(draftedPlayers.map(p => p.full_name))
+    const duoAdj: Record<string, string[]> = {}
+    for (const p of draftedPlayers) {
+      if (p.duoPartners) duoAdj[p.full_name] = p.duoPartners.filter(n => draftedNames.has(n))
+    }
+    const duo_pair = draftedPlayers.some(p => (duoAdj[p.full_name]?.length ?? 0) > 0)
+    let duo_trio = false
+    if (duo_pair) {
+      const visited = new Set<string>()
+      for (const p of draftedPlayers) {
+        if (visited.has(p.full_name) || !duoAdj[p.full_name]?.length) continue
+        const queue = [p.full_name]; visited.add(p.full_name); let size = 0
+        while (queue.length) {
+          const curr = queue.shift()!; size++
+          for (const nb of duoAdj[curr] ?? []) { if (!visited.has(nb)) { visited.add(nb); queue.push(nb) } }
+        }
+        if (size >= 3) { duo_trio = true; break }
+      }
+    }
     const newAchievements = checkAchievements(
       getLifetimeStats('normal'),
       getLifetimeStats('salary_cap'),
-      { era: simEra, mode: runMode, wins, losses, champion: playoffResult?.champion ?? false, teamRating: Math.round(tr + 15), coachGrade: coach.overallGrade, hasSTierStarter },
+      { era: simEra, mode: runMode, wins, losses, champion: playoffResult?.champion ?? false, teamRating: Math.round(tr + 15), coachGrade: coach.overallGrade, hasSTierStarter, duo_pair, duo_trio },
     )
     if (newAchievements.length > 0) onAchievementsUnlocked?.(newAchievements)
   }, [allDone])
@@ -4888,11 +4994,12 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
             inset: 0,
             background: 'rgba(0,0,0,0.85)',
             zIndex: 1000,
+            overflowY: 'auto',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
-            padding: '24px',
+            justifyContent: 'flex-start',
+            padding: '60px 24px 40px',
           }}
           onClick={e => { if (e.target === e.currentTarget) { setShareImageUrl(null); setShareHint(null) } }}
         >
@@ -5003,17 +5110,27 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
 // ─── Era audio map ────────────────────────────────────────────────────────────
 const _audioElements = new Map<string, HTMLAudioElement>()
 
+const WORKER_BASE = 'https://assets.eraball.com'
+
 function getAudioElement(src: string): HTMLAudioElement {
   if (!_audioElements.has(src)) {
     const el = new Audio(src)
     el.loop = true
     el.preload = 'none'
+    el.addEventListener('error', () => {
+      if (!el.src.includes('assets.eraball.com')) {
+        const wasPlaying = !el.paused
+        el.src = src.replace(R2, WORKER_BASE)
+        el.load()
+        if (wasPlaying) el.play().catch(() => {})
+      }
+    }, { once: true })
     _audioElements.set(src, el)
   }
   return _audioElements.get(src)!
 }
 
-const R2 = 'https://assets.eraball.com'
+const R2 = 'https://pub-c85456ef7b454894a21cc859fee77b58.r2.dev'
 
 const ERA_AUDIO: Partial<Record<Era, string>> = {
   '50s': `${R2}/50s.mp3`,
