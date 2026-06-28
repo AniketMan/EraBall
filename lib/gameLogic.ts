@@ -49,6 +49,7 @@ const POSITION_LOCK: Record<string, SlotPosition[]> = {
   'Dominique Wilkins':   ['SG', 'SF'],
   'Kevin McHale':        ['PF', 'C'],
   'Evan Mobley':         ['PF', 'C'],
+  'Horace Grant':        ['SF', 'PF'],
 }
 
 export function applyFlexTag(player: Player): Player {
