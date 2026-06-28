@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "storybook": "node node_modules/storybook/bin/index.cjs dev -p 6006 --no-open",
+    "build-storybook": "node node_modules/storybook/bin/index.cjs build"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",
