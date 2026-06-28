@@ -1102,7 +1102,7 @@ const V1_5_NOTES = [
   { section: 'New Mode: Salary Cap', items: [
     'Build a team within tier limits. Draft 2 S – 2 A – 2 B – 2 C – 1 D tier players.',
     'Every spin guarantees at least one player from a tier you still need, but you can pick anyone from the roster. Build around your strengths.',
-    'Only B or higher graded coaches.',
+    'Only C or higher graded coaches.',
   ]},
   { section: 'Leaderboard', items: [
     'Added a leaderboard (no login required) for both game modes and each era.',
@@ -1171,7 +1171,7 @@ const V1_5_1_NOTES = [
     'Tier Changes: Patrick Ewing and Yao Ming downgraded to T2 Defensive Anchor. Walt Frazier Upgraded to T1 Defensive Anchor',
   ]},
   { section: 'Ratings', items: [
-    'Buffs: Jo Jo White',
+    'Buffs: Jo Jo White, 10s CLE: Kevin Love/Richard Jefferson/Kyrie Irving, 20s OKC: Jalen Williams/Cason Wallace',
   ]},
   { section: 'Positions', items: [
     'Clyde Drexler SG/SF',
@@ -2998,7 +2998,7 @@ function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxMode, sa
   coaches: Coach[]; onCoachSelected: (coach: Coach) => void; onRestart: () => void; sandboxMode?: boolean; salaryCapMode?: boolean; greyscaleBtn?: React.ReactNode; muteBtn?: React.ReactNode
 }) {
   const GRADE_RANK: Record<string, number> = { A: 4, B: 3, C: 2, D: 1, F: 0 }
-  const eligibleCoaches = salaryCapMode ? coaches.filter(c => GRADE_RANK[c.overallGrade] >= 3) : coaches
+  const eligibleCoaches = salaryCapMode ? coaches.filter(c => GRADE_RANK[c.overallGrade] >= 2) : coaches
   const [spinning, setSpinning] = useState(false)
   const [coach, setCoach] = useState<Coach | null>(null)
   const [spinsUsed, setSpinsUsed] = useState(0)

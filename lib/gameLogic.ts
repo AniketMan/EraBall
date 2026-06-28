@@ -671,7 +671,7 @@ const RATING_STAT_OVERRIDE: Record<string, string> = {
 // Use when the formula under/over-values a player and a manual correction is needed.
 const BASE_RATING_OVERRIDE: Record<string, number> = {
   // 20s
-  'Shai Gilgeous-Alexander:20s:OKC': 67,
+  'Shai Gilgeous-Alexander:20s:OKC': 69,
   'Joel Embiid:20s:PHI':             67.7,
   'Giannis Antetokounmpo:20s:MIL':   70,
 
