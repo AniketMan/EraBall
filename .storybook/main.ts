@@ -24,6 +24,10 @@ const config: StorybookConfig = {
   async viteFinal(cfg) {
     return mergeConfig(cfg, {
       plugins: [tailwindcss()],
+      // Allow the temporary public proxy domain (the sandbox exposes Storybook through a
+      // generated *.manus.computer host). Vite blocks unknown Host headers by default.
+      server: { allowedHosts: true },
+      preview: { allowedHosts: true },
       resolve: {
         alias: {
           // Mirror the tsconfig path aliases so stories can import shared deps if needed.
