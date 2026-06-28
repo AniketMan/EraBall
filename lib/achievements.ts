@@ -236,6 +236,16 @@ const DEFS: (Achievement & { check: CheckFn })[] = [
     rarity: 'epic',
     check: (_n, _c, run) => run.duo_trio === true,
   },
+  {
+    id: 'undefeated_all_eras',
+    title: 'Untouchable',
+    description: 'Go undefeated in the regular season in every era.',
+    rarity: 'legendary',
+    check: (n, c) => ['50s','60s','70s','80s','90s','00s','10s','20s'].every(
+      e => ((n.bestRecordByEra?.[e]?.losses === 0 && (n.bestRecordByEra?.[e]?.wins ?? 0) > 0)
+         || (c.bestRecordByEra?.[e]?.losses === 0 && (c.bestRecordByEra?.[e]?.wins ?? 0) > 0))
+    ),
+  },
 ]
 
 const ACHIEVEMENTS_KEY = 'eraball_achievements'
