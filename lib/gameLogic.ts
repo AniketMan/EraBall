@@ -732,6 +732,9 @@ const BASE_RATING_OVERRIDE: Record<string, number> = {
   // 70s
   'Oscar Robertson:70s:MIL':         56,
   'Jojo White:70s:BOS':              44,
+  // 60s
+  'Wilt Chamberlain:60s:PHW':        88,
+  'Wilt Chamberlain:60s:SFW':        85,
   // 50s
   'Wilt Chamberlain:50s:PHW':        78.4,
 }
