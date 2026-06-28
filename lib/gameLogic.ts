@@ -167,7 +167,7 @@ const PLAYER_RINGS: Record<string, number> = {
   // 2016-17 Warriors
   'Matt Barnes': 1,
   // 2015-16 Cavs
-  'Kevin Love': 1, 'Tristan Thompson': 1, 'J.R. Smith': 1,
+  'Kevin Love': 1, 'Tristan Thompson': 1, 'JR Smith': 2,
   'Richard Jefferson': 1, 'Matthew Dellavedova': 1, 'Channing Frye': 1,
   'Iman Shumpert': 1,
   // 2014-15 Warriors
@@ -695,7 +695,10 @@ const BASE_RATING_OVERRIDE: Record<string, number> = {
   'Tim Duncan:10s:SAS':              55,
   'Kyrie Irving:10s:CLE':            50,
   'Draymond Green:10s:GSW':          51,
+  'Kevin Love:10s:CLE':              46.6,
   'Paul Millsap:10s:ATL':            46.5,
+  'Tristan Thompson:10s:CLE':        32.6,
+  'Richard Jefferson:10s:CLE':       28,
   'John Wall:10s:WAS':               46,
   'Derrick Rose:10s:CHI':            46,
   'Tony Parker:10s:SAS':             40,
