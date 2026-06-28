@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import type { Player, Coach, CourtSlot, SlotPosition, Era, GamePhase, PlayerSeasonStats, PlayoffResult, PlayoffGame, PlayerRating } from '../lib/types'
+import type { Player, Coach, CourtSlot, SlotPosition, Era, GamePhase, PlayerSeasonStats, PlayoffResult, PlayoffGame, PlayerRating } from '@eraball/engine'
 import ResultCard from './ResultCard'
 import LifetimeStatsModal from './LifetimeStatsModal'
 import LeaderboardModal from './LeaderboardModal'
@@ -15,8 +15,8 @@ import {
   simulateSeason, simulatePlayoffs, calcTS, coachBonus, effectiveCoachBonus, coachChampBonus, playerMatchesEra, withEraStats, applyFlexTag, applyRings, applyAnchors, applyTimeless, applyShootingStar, applyGlassCleaner, applyDuo,
   firstRoundLabel, playerBaseRating, genOppTeamStats, calcTeamDefTotals, calcRebFactor,
   playerTier, CAP_QUOTAS,
-} from '../lib/gameLogic'
-import type { OppTeamStats, PlayerTier } from '../lib/gameLogic'
+} from '@eraball/engine'
+import type { OppTeamStats, PlayerTier } from '@eraball/engine'
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const G = {

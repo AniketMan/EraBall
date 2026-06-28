@@ -1,8 +1,8 @@
 'use client'
 
 import React from 'react'
-import type { PlayerSeasonStats, Coach, Era, Player } from '../lib/types'
-import { playerBaseRating, ALL_ERAS } from '../lib/gameLogic'
+import type { PlayerSeasonStats, Coach, Era, Player } from '@eraball/engine'
+import { playerBaseRating, ALL_ERAS } from '@eraball/engine'
 
 // Literal font strings — no CSS variables so html2canvas resolves them reliably
 const BEBAS = '"Bebas Neue", Impact, sans-serif'

@@ -164,3 +164,29 @@ export interface PlayoffResult {
   playoffStats: PlayerSeasonStats[]
   finalsStats: PlayerSeasonStats[]
 }
+
+// Team-level diagnostic factors produced by a season simulation. These mirror the
+// inline return shape of simulateSeason() and are surfaced so consumers can display
+// roster construction analysis (spacing, rebounding, assist, and block factors).
+export interface TeamAnalysis {
+  spacingWinFactor: number
+  shooterCount: number
+  spacingBaseline: number
+  isPreThreePt: boolean
+  highVolumeShooterCount: number
+  rebFactor: number
+  blkScore: number
+  astFactor: number
+}
+
+// Full result of a regular-season simulation. Mirrors the simulateSeason() return type
+// exactly so the facade can expose a single named contract instead of an inline literal.
+export interface SeasonResult {
+  wins: number
+  losses: number
+  games: boolean[]
+  seasonStats: PlayerSeasonStats[]
+  avgTeamScore: number
+  avgOppScore: number
+  teamAnalysis: TeamAnalysis
+}
