@@ -74,6 +74,12 @@ export function playerTeamForEra(player: Player, era: Era): string {
   return player.teams_by_era?.[era] ?? player.team_abbreviation;
 }
 
+// Shared CDN/asset base URLs. R2 is the primary bucket; WORKER_BASE is the worker-proxied
+// fallback used for audio and era banner assets. Centralized here so feature screens and
+// the audio layer share one source of truth.
+export const R2 = 'https://pub-c85456ef7b454894a21cc859fee77b58.r2.dev';
+export const WORKER_BASE = 'https://assets.eraball.com';
+
 // Builds an empty 5-slot court (one per SLOT_POSITIONS entry).
 export function emptySlots(): CourtSlot[] {
   return SLOT_POSITIONS.map(p => ({ position: p, player: null, fitPenalty: 0, fitLabel: null }));
