@@ -586,10 +586,10 @@ export function applyGlassCleaner(player: Player): Player {
 }
 
 function playoffRingBoost(rings: number): number {
-  if (rings >= 9)  return 0.13
-  if (rings >= 6)  return 0.10
-  if (rings >= 3)  return 0.06
-  if (rings >= 1)  return 0.03
+  if (rings >= 9)  return 0.14
+  if (rings >= 6)  return 0.12
+  if (rings >= 3)  return 0.09
+  if (rings >= 1)  return 0.05
   return 0
 }
 const THREE_PT_ERAS: Era[] = ['10s', '20s']
