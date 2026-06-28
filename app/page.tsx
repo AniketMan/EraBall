@@ -9,7 +9,11 @@ import LeaderboardModal from './LeaderboardModal'
 import AchievementsModal from './AchievementsModal'
 import { recordRunComplete, getLifetimeStats } from '../lib/lifetimeStats'
 import { checkAchievements, type Achievement } from '../lib/achievements'
-import type { ScoreFlags } from '../lib/supabase'
+// Anti-corruption service layer: the UI talks to these modules, never to supabase /
+// fetch / proxy routes directly. Each degrades gracefully (live backend -> static fork).
+import { submitEntry, type ScoreFlags } from '../services/leaderboard'
+import { getShareCardHeadshots, getCoachHeadshot } from '../services/headshots'
+import { loadGameData } from '../services/playerData'
 import {
   ALL_ERAS, SLOT_POSITIONS, SLOT_MPG, ERA_SEASON_GAMES, calcFitPenalty, calcEraModifier, calcTeamRating,
   simulateSeason, simulatePlayoffs, calcTS, coachBonus, effectiveCoachBonus, coachChampBonus, playerMatchesEra, withEraStats, applyFlexTag, applyRings, applyAnchors, applyTimeless, applyShootingStar, applyGlassCleaner, applyDuo,
@@ -85,82 +89,6 @@ function eraLabel(era: Era | string): string {
   return era === '00s' ? '2000s' : era === '10s' ? '2010s' : era === '20s' ? '2020s' : era
 }
 
-// ─── Coach guru overrides ─────────────────────────────────────────────────────
-// Keys must match the name field in coaches.csv exactly (including * for HOF).
-// offGuru / defGuru force that grade to A.
-// offOverride / defOverride set an explicit grade (takes effect after guru check).
-type CoachGuru = { offGuru?: boolean; defGuru?: boolean; offOverride?: Coach['offGrade']; defOverride?: Coach['defGrade'] }
-const COACH_GURUS: Record<string, CoachGuru> = {
-  'Tom Thibodeau':  { defGuru: true },
-  'Hubie Brown':    { offOverride: 'C' },
-  'Mike Fratello':  { defGuru: true },
-  'Dwane Casey':    { defOverride: 'B' },
-  'Nate McMillan':  { defOverride: 'B' },
-  "Jerry Sloan*":   { defGuru: true },
-  "Mike D'Antoni":  { offGuru: true, defOverride: 'D' },
-  'Don Nelson*':    { offGuru: true, defOverride: 'C' },
-  'Byron Scott':    { defOverride: 'C' },
-  'Rick Carlisle':  { offOverride: 'B', defOverride: 'B' },
-  'George Karl*':   { defOverride: 'C' },
-  'Phil Jackson*':  { offGuru: true },
-  'Danny Ainge':    { defOverride: 'B' },
-  'Tex Winter':       { offGuru: true },
-  'Rick Adelman*':    { offGuru: true },
-  'Dick Motta':       { defGuru: true },
-  'Larry Brown*':     { defGuru: true },
-  'Chuck Daly*':      { defGuru: true },
-  'Jeff Van Gundy':   { defGuru: true },
-  'Gregg Popovich*':  { offGuru: true, defGuru: true },
-  'Erik Spoelstra':   { offGuru: true, defGuru: true },
-  'Pat Riley*':       { offGuru: true, defGuru: true },
-  'Red Auerbach*':    { offGuru: true, defGuru: true },
-  'Wes Unseld':       { offOverride: 'B', defOverride: 'A' },
-  'Wes Unseld Jr.':   { offOverride: 'B', defOverride: 'A' },
-  'Richie Guerin':    { offOverride: 'B', defOverride: 'B' },
-  'Cotton Fitzsimmons': { offOverride: 'B', defOverride: 'C' },
-  'Michael Malone':     { offOverride: 'A', defOverride: 'B' },
-  'Stephen Silas':      { offOverride: 'F', defOverride: 'F' },
-  'Kenny Atkinson':     { offOverride: 'A', defOverride: 'B' },
-  'JJ Redick':          { defOverride: 'B' },
-}
-
-// ─── Data ─────────────────────────────────────────────────────────────────────
-function parseCoachesCSV(text: string): Coach[] {
-  const lines = text.split('\n').filter(l => l.trim())
-  const dataLines = lines.slice(3)
-  const coaches: Coach[] = []
-  for (const line of dataLines) {
-    const cols = line.split(',')
-    if (!cols[1]?.trim() || cols[1].trim() === 'Coach') continue
-    const name = cols[1].trim()
-    const from = parseInt(cols[2]) || 0
-    const to = parseInt(cols[3]) || 0
-    const regW = parseInt(cols[6]) || 0
-    const regL = parseInt(cols[7]) || 0
-    const regWLPct = parseFloat(cols[8]) || 0
-    const playoffG = parseInt(cols[10]) || 0
-    const playoffW = parseInt(cols[11]) || 0
-    const playoffL = parseInt(cols[12]) || 0
-    const playoffWLPct = parseFloat(cols[13]) || 0
-    const conf = parseInt(cols[14]) || 0
-    const champ = parseInt(cols[15]) || 0
-    const guru = COACH_GURUS[name] ?? {}
-    const regG = regW + regL
-    const isHOF = name.endsWith('*')
-    const capF = (g: string) => (regG > 200 && g === 'F' ? 'C' : g)
-    // HOF coaches get a minimum grade of B on data-derived grades (manual overrides win)
-    const hofFloor = (g: string) => (isHOF && (g === 'C' || g === 'D' || g === 'F') ? 'B' : g)
-    const rawOffGrade = guru.offGuru ? 'A' : guru.offOverride ?? (regWLPct >= 0.600 ? 'A' : regWLPct >= 0.550 ? 'B' : regWLPct >= 0.500 ? 'C' : regWLPct >= 0.450 ? 'D' : 'F')
-    const rawDefGrade = guru.defGuru ? 'A' : guru.defOverride ?? (playoffG === 0 ? 'C' : playoffWLPct >= 0.550 ? 'A' : playoffWLPct >= 0.500 ? 'B' : playoffWLPct >= 0.450 ? 'C' : playoffWLPct >= 0.400 ? 'D' : 'F')
-    const offGrade = (guru.offGuru || guru.offOverride ? rawOffGrade : hofFloor(capF(rawOffGrade))) as Coach['offGrade']
-    const defGrade = (guru.defGuru || guru.defOverride ? rawDefGrade : hofFloor(capF(rawDefGrade))) as Coach['defGrade']
-    const gradeN = (g: Coach['offGrade']) => ({ A: 4, B: 3, C: 2, D: 1, F: 0 }[g])
-    const avg = (gradeN(offGrade) + gradeN(defGrade)) / 2
-    const overallGrade = (avg >= 3.5 ? 'A' : avg >= 2.5 ? 'B' : avg >= 1.5 ? 'C' : avg >= 0.5 ? 'D' : 'F') as Coach['overallGrade']
-    if (name && (regG >= 100 || champ > 0)) coaches.push({ name, from, to, years: to - from, regG, regW, regL, regWLPct, playoffG, playoffW, playoffL, playoffWLPct, conf, champ, offGrade, defGrade, overallGrade, offGuru: !!guru.offGuru, defGuru: !!guru.defGuru })
-  }
-  return coaches
-}
 
 // Static fallback — replaced at runtime by allTeams derived from player data
 const NBA_TEAMS = ['ATL','BOS','BKN','CHA','CHI','CLE','DAL','DEN','DET','GSW','HOU','IND','LAC','LAL','MEM','MIA','MIL','MIN','NOP','NYK','OKC','ORL','PHI','PHX','POR','SAC','SAS','TOR','UTA','WAS']
@@ -250,38 +178,6 @@ function Btn({ children, onClick, disabled, variant = 'gold', className = '', st
   )
 }
 
-// ─── Headshot cache ────────────────────────────────────────────────────────────
-const HEADSHOT_CACHE = 'eraball-headshots-v1'
-const _sessionCache = new Map<string, string>() // url → objectURL
-
-async function getCachedResponse(url: string): Promise<Response> {
-  if (typeof caches !== 'undefined') {
-    try {
-      const c = await caches.open(HEADSHOT_CACHE)
-      const hit = await c.match(url)
-      if (hit) return hit
-    } catch {}
-  }
-  const res = await fetch(url)
-  if (!res.ok) throw new Error('not found')
-  if (typeof caches !== 'undefined') {
-    try {
-      const c = await caches.open(HEADSHOT_CACHE)
-      await c.put(url, res.clone())
-    } catch {}
-  }
-  return res
-}
-
-async function fetchCachedHeadshot(url: string): Promise<string> {
-  if (_sessionCache.has(url)) return _sessionCache.get(url)!
-  const res = await getCachedResponse(url)
-  const blob = await res.blob()
-  const objectUrl = URL.createObjectURL(blob)
-  _sessionCache.set(url, objectUrl)
-  return objectUrl
-}
-
 // ─── Player headshot ──────────────────────────────────────────────────────────
 function PlayerHeadshot({ personId, size, initial }: { personId: string; size: number; initial?: string; lazy?: boolean }) {
   const [failed, setFailed] = useState(false)
@@ -327,8 +223,11 @@ function CoachHeadshot({ name, size }: { name: string; size: number }) {
   const [failed, setFailed] = useState(false)
   const [src, setSrc] = useState<string | null>(null)
   useEffect(() => {
-    fetchCachedHeadshot(`/api/coach-headshot?name=${encodeURIComponent(name)}`)
-      .then(setSrc)
+    // getCoachHeadshot resolves to an objectURL on success or null on failure (it never
+    // throws). Map null -> failed so the initial-letter placeholder shows, preserving the
+    // original load-empty-circle vs failed-placeholder distinction.
+    getCoachHeadshot(name)
+      .then(url => { if (url) setSrc(url); else setFailed(true) })
       .catch(() => setFailed(true))
   }, [name])
   const base: React.CSSProperties = {
@@ -3804,25 +3703,9 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
   useEffect(() => {
     if (!seasonStats.length) return
     const starters = seasonStats.filter(s => !s.slot.startsWith('B'))
-    Promise.all(
-      starters.map(async s => {
-        const url = `/api/headshot?id=${s.player.person_id}`
-        try {
-          const res = await getCachedResponse(url)
-          if (!res.ok) return [s.player.person_id, null] as [string, null]
-          const blob = await res.blob()
-          const base64 = await new Promise<string | null>(resolve => {
-            const reader = new FileReader()
-            reader.onloadend = () => resolve(reader.result as string)
-            reader.onerror = () => resolve(null)
-            reader.readAsDataURL(blob)
-          })
-          return [s.player.person_id, base64] as [string, string | null]
-        } catch {
-          return [s.player.person_id, null] as [string, null]
-        }
-      })
-    ).then(entries => setHeadshots(Object.fromEntries(entries)))
+    // Share-card headshots route through the headshots service (proxy fetch -> base64 data
+    // URL, null on failure). Caller renders the slot-initial placeholder on null.
+    getShareCardHeadshots(starters.map(s => s.player.person_id)).then(setHeadshots)
   }, [seasonStats])
 
   // ── Share card ──
@@ -3889,7 +3772,7 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
       : 'first_round'
     const entry = {
       era: simEra ?? 'unknown',
-      mode: salaryCapMode ? 'salary_cap' : 'normal',
+      mode: (salaryCapMode ? 'salary_cap' : 'normal') as 'normal' | 'salary_cap',
       team_name: lbTeamName.trim(),
       reg_wins: wins,
       reg_losses: losses,
@@ -3916,18 +3799,22 @@ function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn, muteB
     }
     const bad_coach = playoffResultKey === 'champion' && entry.coach_grade === 'F'
     const flags: ScoreFlags = { no_timeless, no_s_tier, elite_spacing, elite_rim, elite_playmaking, reb_edge, duo_pair, duo_trio, bad_coach }
-    const res = await fetch('/api/submit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ entry, roster, flags }),
-    })
-    if (!res.ok) {
-      const { error } = await res.json().catch(() => ({ error: 'Submission failed' }))
-      setLbError(error ?? 'Submission failed')
+    // submitEntry routes through the leaderboard service: live /api/submit when a backend
+    // is reachable, else a local-only score+rank computed with the identical formula.
+    // It never throws, so the success path below always runs (the static fork has no
+    // server to reject a submission). A try/catch still guards unexpected failures so the
+    // original error UX is preserved if the service ever rejects.
+    let score: number
+    let rank: number
+    try {
+      const result = await submitEntry(entry, roster, flags)
+      score = result.score
+      rank = result.rank
+    } catch {
+      setLbError('Submission failed')
       setLbSubmitting(false)
       return
     }
-    const { score, rank } = await res.json()
     try {
       const saved = JSON.parse(localStorage.getItem('eraball_personal_entries') ?? '[]')
       saved.push({ ...entry, score, roster, created_at: new Date().toISOString() })
@@ -5268,13 +5155,8 @@ export default function Home() {
     if (dataReqRef.current) return
     dataReqRef.current = true
     setLoading(true)
-    Promise.all([
-      fetch('https://pub-c85456ef7b454894a21cc859fee77b58.r2.dev/players_with_stats.json')
-        .then(r => { if (!r.ok) throw new Error('r2'); return r })
-        .catch(() => fetch('https://assets.eraball.com/players_with_stats.json'))
-        .then(r => r.json()),
-      fetch('/coaches.csv').then(r => r.text()).then(parseCoachesCSV)
-    ]).then(([p, c]) => { setPlayers(p); setCoaches(c); setLoading(false) })
+    loadGameData()
+      .then(({ players: p, coaches: c }) => { setPlayers(p); setCoaches(c); setLoading(false) })
       .catch(err => { console.error('Failed to load data:', err); setLoading(false); dataReqRef.current = false })
   }, [])
 

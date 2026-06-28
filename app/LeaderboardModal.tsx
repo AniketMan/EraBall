@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { fetchLeaderboard, type LeaderboardEntry, type LeaderboardRoster } from '../lib/supabase'
+import { getLeaderboard, type LeaderboardEntry, type LeaderboardRoster } from '../services/leaderboard'
 
 const ALL_ERAS = ['50s', '60s', '70s', '80s', '90s', '00s', '10s', '20s']
 const ERA_LABEL: Record<string, string> = { '00s': '2000s', '10s': '2010s', '20s': '2020s' }
@@ -121,7 +121,7 @@ export default function LeaderboardModal({ onClose }: { onClose: () => void }) {
     }
     setLoading(true)
     setEntries([])
-    fetchLeaderboard(era, tab as Mode).then(data => {
+    getLeaderboard(era, tab as Mode).then(data => {
       setEntries(data as LeaderboardEntry[])
       setLoading(false)
     })
