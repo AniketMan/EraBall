@@ -38,7 +38,7 @@ const POSITION_LOCK: Record<string, SlotPosition[]> = {
   'Joel Embiid':         ['PF', 'C'],
   'LaMarcus Aldridge':   ['PF', 'C'],
   'Tim Duncan':          ['PF', 'C'],
-  'Karl Malone':         ['PF'],
+  'Karl Malone':         ['PF', 'C'],
   'Kevin Garnett':       ['PF', 'C'],
   'Shaquille O\'Neal':   ['PF', 'C'],
   'Hakeem Olajuwon':     ['PF', 'C'],
