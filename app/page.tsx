@@ -938,6 +938,7 @@ const SUPPORTERS = [
   "Klass's Friend",
   'TheZDSpecial',
   'RM',
+  'David',
 ]
 
 function SupporterCard({ name }: { name: string }) {
@@ -3727,7 +3728,9 @@ function computeSeasonAwards(
 
 function computeFinalsMVP(finalsStats: PlayerSeasonStats[]): PlayerSeasonStats | null {
   if (!finalsStats.length) return null
-  return [...finalsStats].sort((a, b) => b.PTS !== a.PTS ? b.PTS - a.PTS : b.AST - a.AST)[0]
+  const sorted = [...finalsStats].sort((a, b) => b.PTS !== a.PTS ? b.PTS - a.PTS : b.AST - a.AST)
+  const eligible = sorted.filter(s => !s.slot.startsWith('B') || s.PTS >= 28 || s.REB >= 20)
+  return eligible[0] ?? sorted[0]
 }
 
 function SeasonAwardsPanel({ awards }: { awards: AwardEntry[] }) {
