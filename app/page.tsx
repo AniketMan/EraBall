@@ -14,6 +14,9 @@ import { checkAchievements, type Achievement } from '../lib/achievements'
 import { submitEntry, type ScoreFlags } from '../services/leaderboard'
 import { getShareCardHeadshots, getCoachHeadshot } from '../services/headshots'
 import { loadGameData } from '../services/playerData'
+// Shared presentational component library (pure, prop-driven, Storybook-cataloged).
+// page.tsx keeps its own local G/BEBAS tokens, so only the components are imported here.
+import { Btn, GoldLabel, GradeDisplay, TagTooltip, PlayerHeadshot, FooterLink, FooterButton, SupporterCard } from '../src/components'
 import {
   ALL_ERAS, SLOT_POSITIONS, SLOT_MPG, ERA_SEASON_GAMES, calcFitPenalty, calcEraModifier, calcTeamRating,
   simulateSeason, simulatePlayoffs, calcTS, coachBonus, effectiveCoachBonus, coachChampBonus, playerMatchesEra, withEraStats, applyFlexTag, applyRings, applyAnchors, applyTimeless, applyShootingStar, applyGlassCleaner, applyDuo,
@@ -101,122 +104,6 @@ function playerTeamForEra(player: Player, era: Era): string {
 
 function emptySlots(): CourtSlot[] {
   return SLOT_POSITIONS.map(p => ({ position: p, player: null, fitPenalty: 0, fitLabel: null }))
-}
-
-// ─── Shared UI atoms ──────────────────────────────────────────────────────────
-
-function TagTooltip({ children, tip }: { children: React.ReactNode; tip: string }) {
-  const [show, setShow] = React.useState(false)
-  const [coords, setCoords] = React.useState({ top: 0, left: 0 })
-  const triggerRef = useRef<HTMLSpanElement>(null)
-
-  const handleEnter = () => {
-    if (triggerRef.current) {
-      const r = triggerRef.current.getBoundingClientRect()
-      setCoords({ top: r.top + window.scrollY, left: r.right + window.scrollX })
-    }
-    setShow(true)
-  }
-
-  return (
-    <span ref={triggerRef} style={{ display: 'inline-block' }}
-      onMouseEnter={handleEnter} onMouseLeave={() => setShow(false)}>
-      {children}
-      {show && typeof document !== 'undefined' && createPortal(
-        <span style={{
-          position: 'absolute',
-          top: coords.top - 8,
-          left: coords.left - 188,
-          background: '#1c1c1c', border: `1px solid ${G.border}`,
-          color: G.grey, fontSize: 11, padding: '5px 9px', borderRadius: 4,
-          whiteSpace: 'normal', width: 180, zIndex: 9999, pointerEvents: 'none',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.5)', lineHeight: 1.4,
-          transform: 'translateY(-100%)',
-        }}>
-          {tip}
-        </span>,
-        document.body
-      )}
-    </span>
-  )
-}
-
-function GoldLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="text-xs uppercase tracking-[0.2em]" style={{ color: G.grey }}>
-      {children}
-    </div>
-  )
-}
-
-function GradeDisplay({ grade, label }: { grade: string; label: string }) {
-  const gradeGold = grade === 'A'
-  const gradeWhite = grade === 'B'
-  const gradeRed = grade === 'F'
-  const color = gradeGold ? G.gold : gradeWhite ? G.white : gradeRed ? G.red : G.grey
-  return (
-    <div className="text-center py-4" style={{ background: G.surface2, border: `1px solid ${G.border}` }}>
-      <div className="text-5xl" style={{ ...BEBAS, color }}>{grade}</div>
-      <div className="text-xs mt-1 uppercase tracking-widest" style={{ color: G.grey }}>{label}</div>
-    </div>
-  )
-}
-
-function Btn({ children, onClick, disabled, variant = 'gold', className = '', style }: {
-  children: React.ReactNode; onClick?: () => void; disabled?: boolean; variant?: 'gold' | 'outline' | 'ghost'; className?: string; style?: React.CSSProperties
-}) {
-  const base = 'px-6 py-3 text-sm uppercase tracking-[0.15em] font-semibold active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed'
-  const styles: Record<string, React.CSSProperties> = {
-    gold:    { background: G.gold, color: G.black, border: 'none' },
-    outline: { background: 'transparent', color: G.gold, border: `1px solid ${G.gold}` },
-    ghost:   { background: 'transparent', color: G.grey, border: `1px solid ${G.border}` },
-  }
-  return (
-    <button onClick={onClick} disabled={disabled} className={`${base} btn-${variant} ${className}`} style={{ ...styles[variant], ...style }}>
-      {children}
-    </button>
-  )
-}
-
-// ─── Player headshot ──────────────────────────────────────────────────────────
-function PlayerHeadshot({ personId, size, initial }: { personId: string; size: number; initial?: string; lazy?: boolean }) {
-  const [failed, setFailed] = useState(false)
-  const wrap: React.CSSProperties = {
-    width: size,
-    height: size,
-    borderRadius: '50%',
-    flexShrink: 0,
-    border: `1px solid ${G.goldDim}`,
-    background: G.surface2,
-    overflow: 'hidden',
-    position: 'relative',
-  }
-  if (failed) {
-    return (
-      <div style={{ ...wrap, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ color: G.greyDark, fontSize: size * 0.35, fontWeight: 700 }}>{initial ?? '?'}</span>
-      </div>
-    )
-  }
-  return (
-    <div style={wrap}>
-      <img
-        src={`https://cdn.nba.com/headshots/nba/latest/260x190/${personId}.png`}
-        alt=""
-        referrerPolicy="no-referrer"
-        onError={() => setFailed(true)}
-        style={{
-          position: 'absolute',
-          height: '100%',
-          width: 'auto',
-          maxWidth: 'none',
-          top: 0,
-          left: '50%',
-          transform: 'translateX(-50%)',
-        }}
-      />
-    </div>
-  )
 }
 
 function CoachHeadshot({ name, size }: { name: string; size: number }) {
@@ -813,25 +700,6 @@ function HowToPlayModal({ onClose }: { onClose: () => void }) {
   )
 }
 
-// ─── Shared top bar ───────────────────────────────────────────────────────────
-function FooterLink({ href, label, color, border, opacity }: { href: string; label: string; color: string; border: string; opacity: number }) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      style={{
-        fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
-        color, border: `1px solid ${border}`, padding: '6px 12px',
-        background: G.surface, textDecoration: 'none', opacity,
-        cursor: 'pointer', display: 'block',
-      }}
-    >
-      {label}
-    </a>
-  )
-}
-
 const SUPPORTERS = [
   'Klass',
   "Klass's Friend",
@@ -839,36 +707,6 @@ const SUPPORTERS = [
   'RM',
   'David',
 ]
-
-function SupporterCard({ name }: { name: string }) {
-  const ref = useRef<HTMLDivElement>(null)
-  return (
-    <div
-      ref={ref}
-      onMouseEnter={() => {
-        if (!ref.current) return
-        ref.current.style.transform = 'scale(1.03)'
-        ref.current.style.borderColor = G.goldDim
-      }}
-      onMouseLeave={() => {
-        if (!ref.current) return
-        ref.current.style.transform = 'scale(1)'
-        ref.current.style.borderColor = G.border
-      }}
-      style={{
-        position: 'relative', overflow: 'hidden',
-        display: 'flex', alignItems: 'center', gap: 10,
-        padding: '8px 12px', background: G.black,
-        border: `1px solid ${G.border}`,
-        transition: 'transform 0.15s ease, border-color 0.15s ease',
-      }}
-    >
-      <div className="card-sheen-beam" />
-      <span style={{ color: G.gold, fontSize: 14 }}>★</span>
-      <span style={{ fontSize: 13, color: G.white, letterSpacing: '0.04em' }}>{name}</span>
-    </div>
-  )
-}
 
 function SupportersModal({ onClose }: { onClose: () => void }) {
   return (
@@ -898,29 +736,6 @@ function SupportersModal({ onClose }: { onClose: () => void }) {
   )
 }
 
-function FooterButton({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <a
-      role="button"
-      tabIndex={0}
-      onClick={onClick}
-      onKeyDown={e => e.key === 'Enter' && onClick()}
-      style={{
-        fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
-        color: G.gold,
-        border: `1px solid ${G.goldDim}`,
-        padding: '6px 12px',
-        background: G.surface,
-        textDecoration: 'none',
-        opacity: 0.85,
-        cursor: 'pointer',
-        display: 'block',
-      }}
-    >
-      {label}
-    </a>
-  )
-}
 
 function TopBar({ onRestart, right }: { onRestart: () => void; right?: React.ReactNode }) {
   const [showHelp, setShowHelp] = useState(false)

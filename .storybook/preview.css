@@ -1,0 +1,24 @@
+/* .storybook/preview.css
+   Story-time styling. Imports the app's real global stylesheet so the shared components
+   render with the exact same Tailwind utilities and global classes (.btn-gold,
+   .card-sheen-beam, etc.) as in the app.
+
+   The app loads Bebas Neue / Inter via next/font and exposes them as the CSS variables
+   --font-bebas / --font-inter. Storybook does not run next/font, so we map those
+   variables to webfont families loaded here to preserve the intended typography. */
+
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap');
+
+@import '../app/globals.css';
+
+:root {
+  --font-bebas: 'Bebas Neue', Impact, sans-serif;
+  --font-inter: 'Inter', system-ui, sans-serif;
+}
+
+/* The app body sets a dark background via globals.css; ensure the Storybook canvas
+   matches so the dark-on-gold components read correctly. */
+body {
+  background: #000000;
+  font-family: var(--font-inter);
+}
