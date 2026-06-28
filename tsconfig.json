@@ -19,7 +19,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@eraball/engine": ["./packages/engine/src/index.ts"],
+      "@eraball/engine/*": ["./packages/engine/src/*"]
     }
   },
   "include": [
