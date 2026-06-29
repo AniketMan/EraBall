@@ -36,5 +36,13 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "vite": "^5.4.21"
+  },
+  "pnpm": {
+    "ignoredBuiltDependencies": [
+      "esbuild",
+      "sharp",
+      "unrs-resolver",
+      "workerd"
+    ]
   }
 }
