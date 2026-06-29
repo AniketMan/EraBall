@@ -1,3 +1,5 @@
+export const runtime = 'edge'
+
 import { NextRequest, NextResponse } from 'next/server'
 
 const cache = new Map<string, { buffer: ArrayBuffer; contentType: string }>()

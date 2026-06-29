@@ -1,3 +1,5 @@
+export const runtime = 'edge'
+
 import { NextRequest, NextResponse } from 'next/server'
 
 // In-memory cache — persists across requests in the same server process
