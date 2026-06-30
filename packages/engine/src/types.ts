@@ -37,6 +37,7 @@ export interface Player {
   all_teams_by_era?: Partial<Record<Era, string[]>>
   stats_by_era?: Record<string, EraStats>  // keyed by "era:team" e.g. "20s:MIL"
   rings?: number
+  finalsMVP?: number
   defAnchor?: boolean
   offAnchor?: boolean
   anchorTier?: 1 | 2
@@ -46,6 +47,8 @@ export interface Player {
   glassClean?: boolean
   duoPartners?: string[]
   duoActiveCount?: number
+  sixthMan?: boolean
+  sixthManActive?: boolean
   eraTeam?: string  // set by withEraStats to reflect which team's era stats are loaded
 }
 

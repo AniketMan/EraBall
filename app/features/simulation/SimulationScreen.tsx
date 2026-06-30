@@ -14,6 +14,7 @@ import {
   SLOT_MPG, ERA_SEASON_GAMES, calcTeamRating, simulateSeason, simulatePlayoffs,
   calcTS, firstRoundLabel, playerBaseRating, genOppTeamStats, calcTeamDefTotals,
   calcRebFactor, playerTier, coachBonus, coachChampBonus, effectiveCoachBonus,
+  SIXTH_MAN_PLAYERS,
 } from '@eraball/engine'
 import { recordRunComplete, getLifetimeStats } from '../../../lib/lifetimeStats'
 import { checkAchievements, type Achievement } from '../../../lib/achievements'
@@ -613,7 +614,7 @@ export function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn
     setLbSubmitting(true)
     const draftedPlayers = slots.filter(s => s.player).map(s => s.player!)
     const no_timeless = !draftedPlayers.some(p => p.timeless)
-    const no_s_tier = !draftedPlayers.some(p => playerTier(playerBaseRating({ ...p, duoActiveCount: 0 }, simEra!)) === 's')
+    const no_s_tier = !draftedPlayers.some(p => playerTier(playerBaseRating({ ...p, duoActiveCount: 0, sixthManActive: false }, simEra!)) === 's')
     const BLK_BASELINE = 3.5
     const elite_spacing   = !teamAnalysis?.isPreThreePt && ((teamAnalysis?.spacingWinFactor ?? 1) - 1) * 100 >= 5
     const elite_rim       = (teamAnalysis?.blkScore ?? 0) >= BLK_BASELINE * 1.5
@@ -676,7 +677,8 @@ export function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn
       })),
     }
     const bad_coach = playoffResultKey === 'champion' && entry.coach_grade === 'F'
-    const flags: ScoreFlags = { no_timeless, no_s_tier, elite_spacing, elite_rim, elite_playmaking, reb_edge, duo_pair, duo_trio, bad_coach }
+    const sixth_man_bench = slots.slice(5).some(s => s.player && SIXTH_MAN_PLAYERS.has(s.player.full_name))
+    const flags: ScoreFlags = { no_timeless, no_s_tier, elite_spacing, elite_rim, elite_playmaking, reb_edge, duo_pair, duo_trio, bad_coach, sixth_man_bench }
     // submitEntry routes through the leaderboard service: live /api/submit when a backend
     // is reachable, else a local-only score+rank computed with the identical formula.
     // It never throws, so the success path below always runs (the static fork has no
@@ -760,9 +762,14 @@ export function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn
   const SITE_URL = typeof window !== 'undefined' ? window.location.origin : 'https://eraball.app'
 
   const slotsWithDuo = slots.map(slot => {
-    if (!slot.player?.duoPartners) return slot
-    const duoActiveCount = slots.filter(s => s !== slot && s.player && slot.player!.duoPartners!.includes(s.player.full_name)).length
-    return { ...slot, player: { ...slot.player, duoActiveCount } }
+    if (!slot.player) return slot
+    const isSixthMan = SIXTH_MAN_PLAYERS.has(slot.player.full_name)
+    if (!slot.player.duoPartners && !isSixthMan) return slot
+    const duoActiveCount = slot.player.duoPartners
+      ? slots.filter(s => s !== slot && s.player && slot.player!.duoPartners!.includes(s.player.full_name)).length
+      : (slot.player.duoActiveCount ?? 0)
+    const sixthManActive = isSixthMan && slot.position.startsWith('B')
+    return { ...slot, player: { ...slot.player, duoActiveCount, sixthManActive } }
   })
   const { teamRating: tr, rawRating, playerRatings: pr } = calcTeamRating(slotsWithDuo, coach, simEra)
   // rawRating with champ bonus on the team side — passed to sims so off/def apply separately
@@ -993,10 +1000,22 @@ export function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn
         if (size >= 3) { duo_trio = true; break }
       }
     }
+    const glassCleanerCount = draftedPlayers.filter(p => p.glassClean).length
+    const shootingStarCount = draftedPlayers.filter(p => p.shootingStar).length
+    const BROTHER_PAIRS: [string, string][] = [
+      ['Stephen Curry', 'Seth Curry'],
+      ['Lonzo Ball', 'LaMelo Ball'],
+      ['Giannis Antetokounmpo', 'Thanasis Antetokounmpo'],
+      ['Giannis Antetokounmpo', 'Kostas Antetokounmpo'],
+      ['Pau Gasol', 'Marc Gasol'],
+      ['Brook Lopez', 'Robin Lopez'],
+    ]
+    const brotherDuo = BROTHER_PAIRS.some(([a, b]) => draftedNames.has(a) && draftedNames.has(b))
+    const sixth_man_bench = slots.slice(5).some(s => s.player && SIXTH_MAN_PLAYERS.has(s.player.full_name))
     const newAchievements = checkAchievements(
       getLifetimeStats('normal'),
       getLifetimeStats('salary_cap'),
-      { era: simEra, mode: runMode, wins, losses, champion: playoffResult?.champion ?? false, teamRating: Math.round(tr + 15), coachGrade: coach.overallGrade, hasSTierStarter, duo_pair, duo_trio },
+      { era: simEra, mode: runMode, wins, losses, champion: playoffResult?.champion ?? false, teamRating: Math.round(tr + 15), coachGrade: coach.overallGrade, hasSTierStarter, duo_pair, duo_trio, glassCleanerCount, shootingStarCount, brotherDuo, sixth_man_bench },
     )
     if (newAchievements.length > 0) onAchievementsUnlocked?.(newAchievements)
   }, [allDone])

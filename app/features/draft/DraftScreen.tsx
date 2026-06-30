@@ -8,7 +8,8 @@ import type { Player, Era, CourtSlot, SlotPosition, PlayerTier } from '@eraball/
 import {
   ALL_ERAS, SLOT_POSITIONS, SLOT_MPG, calcFitPenalty, calcEraModifier, calcTS,
   playerBaseRating, playerMatchesEra, withEraStats, playerTier, CAP_QUOTAS,
-  applyFlexTag, applyRings, applyAnchors, applyTimeless, applyShootingStar, applyGlassCleaner, applyDuo,
+  applyFlexTag, applyRings, applyFinalsMVP, applyAnchors, applyTimeless, applyShootingStar, applyGlassCleaner, applyDuo,
+  SIXTH_MAN_PLAYERS,
 } from '@eraball/engine'
 import { G, BEBAS } from '../../../src/components/tokens'
 import { Btn, GoldLabel, PlayerHeadshot } from '../../../src/components'
@@ -218,7 +219,7 @@ export function DraftScreen({ simEra, players, onDraftComplete, onRestart, start
             return ids
           }
           setLockedTeam(team); setLockedEra(era)
-          setRosterPool([...pool].map(p => applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, era, team))))))))).sort((a, b) => (b.PTS ?? 0) - (a.PTS ?? 0)))
+          setRosterPool([...pool].map(p => applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyFinalsMVP(applyRings(applyFlexTag(withEraStats(p, era, team)))))))))).sort((a, b) => (b.PTS ?? 0) - (a.PTS ?? 0)))
           setSpinning(false)
           return ids
         })
@@ -324,7 +325,7 @@ export function DraftScreen({ simEra, players, onDraftComplete, onRestart, start
         const team = isAll
           ? ((p.all_teams_by_era?.[devEra] as string[] | undefined)?.[0] ?? p.team_abbreviation)
           : devTeam
-        return applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, devEra, team))))))))
+        return applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyFinalsMVP(applyRings(applyFlexTag(withEraStats(p, devEra, team)))))))))
       }).sort((a, b) => (b.PTS ?? 0) - (a.PTS ?? 0))
       setLockedTeam(devTeam); setLockedEra(devEra)
       setSpinTeamDisplay(isAll ? devEra : devTeam); setSpinEraDisplay(devEra)
@@ -345,7 +346,7 @@ export function DraftScreen({ simEra, players, onDraftComplete, onRestart, start
       if (pool.length === 0) { alert(`No players found for ${sandboxTeam} - ${sandboxEra}`); return ids }
       const sorted = pool.map(p => {
         const team = sandboxTeam === 'ALL' ? (playerTeamForEra(p, sandboxEra) ?? p.team_abbreviation) : sandboxTeam
-        return applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, sandboxEra, team))))))))
+        return applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyFinalsMVP(applyRings(applyFlexTag(withEraStats(p, sandboxEra, team)))))))))
       }).sort((a, b) => (b.PTS ?? 0) - (a.PTS ?? 0))
       setLockedTeam(sandboxTeam); setLockedEra(sandboxEra)
       setSpinTeamDisplay(sandboxTeam); setSpinEraDisplay(sandboxEra)
@@ -366,7 +367,7 @@ export function DraftScreen({ simEra, players, onDraftComplete, onRestart, start
       const [era, team] = key.split(':') as [Era, string]
       if (!era || !team || seen.has(key)) continue
       seen.add(key)
-      versions.push(applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(match, era, team)))))))))
+      versions.push(applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyFinalsMVP(applyRings(applyFlexTag(withEraStats(match, era, team))))))))))
     }
     if (versions.length === 0) { alert(`No era stats found for ${match.full_name}`); return }
     versions.sort((a, b) => ALL_ERAS.indexOf(a.era as Era) - ALL_ERAS.indexOf(b.era as Era))
@@ -402,7 +403,7 @@ export function DraftScreen({ simEra, players, onDraftComplete, onRestart, start
         const [era, team] = key.split(':') as [Era, string]
         if (!era || !team || seen.has(key)) continue
         seen.add(key)
-        const v = applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, era, team))))))))
+        const v = applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyFinalsMVP(applyRings(applyFlexTag(withEraStats(p, era, team)))))))))
         if (hasTag(v)) tagged.push(v)
       }
     }
@@ -427,7 +428,7 @@ export function DraftScreen({ simEra, players, onDraftComplete, onRestart, start
     const top9 = scored
       .sort((a, b) => b.score - a.score)
       .slice(0, 9)
-      .map(({ p }) => applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(p, p.era as Era, p.team_abbreviation)))))))))
+      .map(({ p }) => applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyFinalsMVP(applyRings(applyFlexTag(withEraStats(p, p.era as Era, p.team_abbreviation))))))))))
     const newSlots = SLOT_POSITIONS.map((pos, i) => {
       const { penalty, label } = calcFitPenalty(top9[i], pos)
       return { position: pos, player: top9[i], fitPenalty: penalty, fitLabel: label }
@@ -442,7 +443,7 @@ export function DraftScreen({ simEra, players, onDraftComplete, onRestart, start
     const shuffled = shuffle(players)
     const picks = shuffled.slice(0, 9)
     const newSlots = SLOT_POSITIONS.map((pos, i) => {
-      const player = applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(picks[i], picks[i].era as Era, picks[i].team_abbreviation))))))))
+      const player = applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyFinalsMVP(applyRings(applyFlexTag(withEraStats(picks[i], picks[i].era as Era, picks[i].team_abbreviation)))))))))
       const { penalty, label } = calcFitPenalty(player, pos)
       return { position: pos, player, fitPenalty: penalty, fitLabel: label }
     })
@@ -474,7 +475,7 @@ export function DraftScreen({ simEra, players, onDraftComplete, onRestart, start
         return teamsForEra?.includes(team)
       })
       if (!match) continue
-      const tagged = applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(match, era, team))))))))
+      const tagged = applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyFinalsMVP(applyRings(applyFlexTag(withEraStats(match, era, team)))))))))
       const slotIdx = SLOT_POSITIONS.indexOf(slot)
       const { penalty, label } = calcFitPenalty(tagged, slot)
       newSlots[slotIdx] = { position: slot, player: tagged, fitPenalty: penalty, fitLabel: label }
@@ -507,7 +508,7 @@ export function DraftScreen({ simEra, players, onDraftComplete, onRestart, start
         return teamsForEra?.includes(team)
       })
       if (!match) continue
-      const tagged = applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(match, era, team))))))))
+      const tagged = applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyFinalsMVP(applyRings(applyFlexTag(withEraStats(match, era, team)))))))))
       const slotIdx = SLOT_POSITIONS.indexOf(slot)
       const { penalty, label } = calcFitPenalty(tagged, slot)
       newSlots[slotIdx] = { position: slot, player: tagged, fitPenalty: penalty, fitLabel: label }
@@ -540,7 +541,7 @@ export function DraftScreen({ simEra, players, onDraftComplete, onRestart, start
         return teamsForEra?.includes(team)
       })
       if (!match) continue
-      const tagged = applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(match, era, team))))))))
+      const tagged = applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyFinalsMVP(applyRings(applyFlexTag(withEraStats(match, era, team)))))))))
       const slotIdx = SLOT_POSITIONS.indexOf(slot)
       const { penalty, label } = calcFitPenalty(tagged, slot)
       newSlots[slotIdx] = { position: slot, player: tagged, fitPenalty: penalty, fitLabel: label }
@@ -573,7 +574,7 @@ export function DraftScreen({ simEra, players, onDraftComplete, onRestart, start
         return teamsForEra?.includes(team)
       })
       if (!match) continue
-      const tagged = applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyRings(applyFlexTag(withEraStats(match, era, team))))))))
+      const tagged = applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyFinalsMVP(applyRings(applyFlexTag(withEraStats(match, era, team)))))))))
       const slotIdx = SLOT_POSITIONS.indexOf(slot)
       const { penalty, label } = calcFitPenalty(tagged, slot)
       newSlots[slotIdx] = { position: slot, player: tagged, fitPenalty: penalty, fitLabel: label }
@@ -586,9 +587,14 @@ export function DraftScreen({ simEra, players, onDraftComplete, onRestart, start
   }
 
   const slotsWithDuoForRender = slots.map(slot => {
-    if (!slot.player?.duoPartners) return slot
-    const duoActiveCount = slots.filter(s => s !== slot && s.player && slot.player!.duoPartners!.includes(s.player.full_name)).length
-    return { ...slot, player: { ...slot.player, duoActiveCount } }
+    if (!slot.player) return slot
+    const isSixthMan = SIXTH_MAN_PLAYERS.has(slot.player.full_name)
+    if (!slot.player.duoPartners && !isSixthMan) return slot
+    const duoActiveCount = slot.player.duoPartners
+      ? slots.filter(s => s !== slot && s.player && slot.player!.duoPartners!.includes(s.player.full_name)).length
+      : (slot.player.duoActiveCount ?? 0)
+    const sixthManActive = isSixthMan && slot.position.startsWith('B')
+    return { ...slot, player: { ...slot.player, duoActiveCount, sixthManActive } }
   })
   const starterSlots = slotsWithDuoForRender.slice(0, 5)
   const benchSlots = slotsWithDuoForRender.slice(5)

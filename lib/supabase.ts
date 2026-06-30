@@ -41,6 +41,7 @@ export type ScoreFlags = {
   duo_pair?: boolean
   duo_trio?: boolean
   bad_coach?: boolean
+  sixth_man_bench?: boolean
 }
 
 export function calcLeaderboardScore(
@@ -49,7 +50,7 @@ export function calcLeaderboardScore(
 ): number {
   const playoffBonus: Record<string, number> = {
     champion: 500,
-    finals: 300,
+    finals: 350,
     conf_finals: 175,
     second_round: 75,
     first_round: 25,
@@ -61,7 +62,7 @@ export function calcLeaderboardScore(
   let challengeBonus = 0
   if (isChampion) {
     if (flags?.no_timeless) challengeBonus += 75
-    if (flags?.no_s_tier) challengeBonus += 150
+    if (flags?.no_s_tier) challengeBonus += 225
     if (flags?.bad_coach) challengeBonus += 75
   }
 
@@ -70,8 +71,9 @@ export function calcLeaderboardScore(
   if (flags?.elite_rim)       teamBonus += 50
   if (flags?.elite_playmaking) teamBonus += 40
   if (flags?.reb_edge)        teamBonus += 25
-  if (flags?.duo_pair)        teamBonus += 35
-  if (flags?.duo_trio)        teamBonus += 80
+  if (flags?.duo_pair)        teamBonus += 30
+  if (flags?.duo_trio)        teamBonus += 65
+  if (flags?.sixth_man_bench) teamBonus += 20
 
   return (
     entry.reg_win_pct * 500 +

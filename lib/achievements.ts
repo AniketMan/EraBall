@@ -20,6 +20,11 @@ export interface RunContext {
   hasSTierStarter: boolean
   duo_pair?: boolean
   duo_trio?: boolean
+  leaderboardRank?: number
+  glassCleanerCount?: number
+  shootingStarCount?: number
+  brotherDuo?: boolean
+  sixth_man_bench?: boolean
 }
 
 type CheckFn = (normal: LifetimeStats, cap: LifetimeStats, run: RunContext) => boolean
@@ -235,6 +240,76 @@ const DEFS: (Achievement & { check: CheckFn })[] = [
     description: 'Draft three players with connected dynamic duos.',
     rarity: 'epic',
     check: (_n, _c, run) => run.duo_trio === true,
+  },
+  {
+    id: 'brother_duo',
+    title: 'Brotherly Love',
+    description: 'Draft a brother dynamic duo.',
+    rarity: 'rare',
+    check: (_n, _c, run) => run.brotherDuo === true,
+  },
+  {
+    id: 'sixth_man_champion',
+    title: 'Sixth Man Champion',
+    description: 'Win a championship with a Sixth Man tagged player on the bench.',
+    rarity: 'epic',
+    check: (_n, _c, run) => !!run.champion && !!run.sixth_man_bench,
+  },
+  {
+    id: 'board_room',
+    title: 'Board Room',
+    description: 'Have 2 or more Glass Cleaners on one roster.',
+    rarity: 'rare',
+    check: (_n, _c, run) => (run.glassCleanerCount ?? 0) >= 2,
+  },
+  {
+    id: 'splash_factory',
+    title: 'Splash Factory',
+    description: 'Have 3 or more Shooting Stars on one roster.',
+    rarity: 'epic',
+    check: (_n, _c, run) => (run.shootingStarCount ?? 0) >= 3,
+  },
+  {
+    id: 'first_submission',
+    title: 'First Entry',
+    description: 'Submit to the leaderboard for the first time.',
+    rarity: 'common',
+    check: (_n, _c, run) => run.leaderboardRank != null,
+  },
+  {
+    id: 'top_200',
+    title: 'Making Moves',
+    description: 'Finish top 200 on any leaderboard.',
+    rarity: 'common',
+    check: (_n, _c, run) => (run.leaderboardRank ?? Infinity) <= 200,
+  },
+  {
+    id: 'top_50',
+    title: 'On The Board',
+    description: 'Finish top 50 on any leaderboard.',
+    rarity: 'rare',
+    check: (_n, _c, run) => (run.leaderboardRank ?? Infinity) <= 50,
+  },
+  {
+    id: 'top_10',
+    title: 'Top 10',
+    description: 'Finish top 10 on any leaderboard.',
+    rarity: 'epic',
+    check: (_n, _c, run) => (run.leaderboardRank ?? Infinity) <= 10,
+  },
+  {
+    id: 'top_3',
+    title: 'Podium',
+    description: 'Finish top 3 on any leaderboard.',
+    rarity: 'legendary',
+    check: (_n, _c, run) => (run.leaderboardRank ?? Infinity) <= 3,
+  },
+  {
+    id: 'number_one',
+    title: '#1',
+    description: 'Reach #1 on any leaderboard.',
+    rarity: 'legendary',
+    check: (_n, _c, run) => run.leaderboardRank === 1,
   },
   {
     id: 'undefeated_all_eras',

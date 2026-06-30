@@ -35,18 +35,24 @@ export {
 
 // ---- Roster preparation (tag pipeline) ------------------------------------------------
 // Consumers must apply these to raw players (in this order) before rating/simulating,
-// exactly as the UI does: withEraStats -> applyFlexTag -> applyRings -> applyAnchors
-// -> applyTimeless -> applyShootingStar -> applyGlassCleaner -> applyDuo.
+// exactly as the UI does: withEraStats -> applyFlexTag -> applyRings -> applyFinalsMVP
+// -> applyAnchors -> applyTimeless -> applyShootingStar -> applyGlassCleaner -> applyDuo.
 export {
   withEraStats,
   applyFlexTag,
   applyRings,
+  applyFinalsMVP,
   applyAnchors,
   applyTimeless,
   applyShootingStar,
   applyGlassCleaner,
   applyDuo,
 } from './gameLogic';
+
+// ---- Sixth Man membership ------------------------------------------------------------
+// Consumers set slot.player.sixthManActive = SIXTH_MAN_PLAYERS.has(name) && slot is bench,
+// exactly as the UI does when constructing court slots.
+export { SIXTH_MAN_PLAYERS } from './gameLogic';
 
 // ---- Player / coach analytics ---------------------------------------------------------
 export {
