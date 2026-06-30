@@ -1,0 +1,15 @@
+# Cloudflare Pages headers. Restores long-lived edge caching for the large,
+# immutable data assets (Pages ignores vercel.json, so this replaces it).
+# Syntax: a path pattern line, then indented "Header: value" lines.
+
+/players_with_stats.json
+  Cache-Control: public, max-age=86400, s-maxage=604800, stale-while-revalidate=604800, immutable
+
+/coaches.csv
+  Cache-Control: public, max-age=86400, s-maxage=604800, stale-while-revalidate=604800, immutable
+
+/audio/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/era-banners/*
+  Cache-Control: public, max-age=31536000, immutable
