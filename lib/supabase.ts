@@ -103,19 +103,30 @@ export async function fetchScoreRank(era: string, mode: 'normal' | 'salary_cap',
     .select('*', { count: 'exact', head: true })
     .eq('era', era)
     .eq('mode', mode)
+    .is('Week', null)
     .gt('score', score)
   if (error) console.error('Rank fetch error:', error)
   return (count ?? 0) + 1
 }
 
-export async function fetchLeaderboard(era: string, mode: 'normal' | 'salary_cap', limit = 50) {
-  const { data, error } = await supabase
+export async function fetchLeaderboard(era: string, mode: 'normal' | 'salary_cap', limit = 50, week?: string | null) {
+  let query = supabase
     .from('leaderboard')
     .select('*')
     .eq('era', era)
     .eq('mode', mode)
     .order('score', { ascending: false })
     .limit(limit)
+  query = week ? query.eq('Week', week) : query.is('Week', null)
+  const { data, error } = await query
   if (error) console.error('Leaderboard fetch error:', error.message, error.code, error.details, error.hint)
   return data ?? []
+}
+
+export async function fetchPastWeeks(): Promise<string[]> {
+  const { data } = await supabase.from('leaderboard').select('Week').not('Week', 'is', null).limit(500)
+  if (!data) return []
+  const seen = new Set<string>()
+  for (const row of data) if (row.Week) seen.add(row.Week as string)
+  return [...seen].sort((a, b) => (parseInt(b.replace('week-', '')) || 0) - (parseInt(a.replace('week-', '')) || 0))
 }

@@ -19,6 +19,7 @@
 import {
   supabase,
   calcLeaderboardScore,
+  fetchPastWeeks,
   type LeaderboardEntry,
   type LeaderboardRoster,
   type ScoreFlags,
@@ -67,23 +68,47 @@ export async function getLeaderboard(
   era: string,
   mode: Mode,
   limit = 50,
+  week?: string | null,
 ): Promise<LeaderboardEntry[]> {
   const t = now();
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('leaderboard')
       .select('*')
       .eq('era', era)
       .eq('mode', mode)
       .order('score', { ascending: false })
       .limit(limit);
+    // All-time view filters to rows with no Week tag; a selected week filters to it.
+    query = week ? query.eq('Week', week) : query.is('Week', null);
+    const { data, error } = await query;
     if (error) throw error;
     logPerf('getLeaderboard', t, 'live');
     return (data ?? []) as LeaderboardEntry[];
   } catch {
+    // Static fixture has no weekly buckets; return the era/mode bucket for the all-time
+    // view and an empty list for any specific week (no offline weekly data exists).
+    if (week) {
+      logPerf('getLeaderboard', t, 'static');
+      return [];
+    }
     const board = await loadStaticBoard();
     logPerf('getLeaderboard', t, 'static');
     return (board[bucketKey(era, mode)] ?? []).slice(0, limit);
+  }
+}
+
+// List the distinct past competition weeks (newest first). Live-only: returns an empty
+// list when no backend is reachable, which the UI renders as "all-time only".
+export async function getPastWeeks(): Promise<string[]> {
+  const t = now();
+  try {
+    const weeks = await fetchPastWeeks();
+    logPerf('getPastWeeks', t, 'live');
+    return weeks;
+  } catch {
+    logPerf('getPastWeeks', t, 'static');
+    return [];
   }
 }
 
@@ -101,6 +126,7 @@ export async function getScoreRank(
       .select('*', { count: 'exact', head: true })
       .eq('era', era)
       .eq('mode', mode)
+      .is('Week', null)
       .gt('score', score);
     if (error) throw error;
     logPerf('getScoreRank', t, 'live');

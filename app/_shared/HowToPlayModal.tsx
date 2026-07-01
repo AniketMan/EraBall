@@ -29,7 +29,7 @@ const HOW_TO_PLAY_STEPS = [
   },
   {
     title: 'Special Players - IMPORTANT',
-    body: 'Special contributors carry special tags. Defensive Anchors (Draymond, Tony Allen, Aaron Gordon, Kawhi, etc.) get a boost to their impact, beyond their stats. Offensive Anchors (LeBron, Jokić, Luka, Embiid, etc.) give an offensive boost to the team. Championship players perform better in the playoffs. The more championships they have, the better performances they will have when the lights are the brightest. Other tags are present such as TIMELESS and Shooting Stars. Check them out!',
+    body: 'Special contributors carry special tags. Defensive Anchors (Draymond, Tony Allen, Aaron Gordon, Kawhi, etc.) get a boost to their impact, beyond their stats. Offensive Anchors (LeBron, Jokić, Luka, Embiid, etc.) give an offensive boost to the team. Championship players perform better in the playoffs. The more championships they have, the better performances they will have when the lights are the brightest. Other tags are present such as TIMELESS, Dynamic Duos, Shooting Stars and more! Check them out!',
   },
   {
     title: 'Draft a Coach',

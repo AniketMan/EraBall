@@ -1,5 +1,5 @@
 import type { Player, Coach, CourtSlot, SlotPosition, Era, PlayerRating, PlayerSeasonStats, EraStats, PlayoffResult, PlayoffGame, SpecialPerformance } from './types'
-// Centralized random source. rng() delegates to rng() when unseeded, so
+// Centralized random source. rng() delegates to Math.random() when unseeded, so
 // production behavior is byte-identical; seedRng() makes the simulation deterministic
 // for the behavior-lock snapshot harness.
 import { rng } from './rng'
@@ -219,7 +219,7 @@ export function applyRings(player: Player): Player {
 // Values are Finals MVP award counts per player.
 const FINALS_MVP_PLAYERS = new Map<string, number>([
   ['Jerry West', 1], ['Willis Reed', 1], ['Kareem Abdul-Jabbar', 2], ['Wilt Chamberlain', 1],
-  ['John Havlicek', 1], ['Rick Barry', 1], ['Jo Jo White', 1], ['Bill Walton', 1], ['Wes Unseld', 1],
+  ['John Havlicek', 1], ['Rick Barry', 1], ['Jojo White', 1], ['Bill Walton', 1], ['Wes Unseld', 1],
   ['Dennis Johnson', 1], ['Magic Johnson', 3], ['Cedric Maxwell', 1], ['Moses Malone', 1],
   ['Larry Bird', 1], ['James Worthy', 1], ['Joe Dumars', 1], ['Isiah Thomas', 1],
   ['Michael Jordan', 6], ['Hakeem Olajuwon', 2], ['Tim Duncan', 3], ['Shaquille O\'Neal', 3],
@@ -305,6 +305,7 @@ const PLAYER_ANCHORS: Record<string, AnchorType> = {
   'Dave Cowens':             'def',
   'Elmore Smith':            'def',
   'Alonzo Mourning':         'def',
+  'Roy Hibbert':             'def',
   // Offensive Anchors — T1
   'Michael Jordan':          'off',
   'Nikola Jokic':            'off',
@@ -381,6 +382,7 @@ const PLAYER_ANCHOR_TIERS: Record<string, 2> = {
   'Dave Cowens':         2,
   'Elmore Smith':        2,
   'Alonzo Mourning':     2,
+  'Roy Hibbert':         2,
   // Offensive T2
   'Rajon Rondo':         2,
   'Tony Parker':         2,
@@ -432,12 +434,14 @@ export const DUO_PAIRS: Record<string, string[]> = {
   'Oscar Robertson':         ['Kareem Abdul-Jabbar', 'Jerry Lucas'],
   'Jerry Lucas':             ['Oscar Robertson'],
   'Nate Thurmond':           ['Rick Barry'],
-  'Rick Barry':              ['Nate Thurmond'],
+  'Rick Barry':              ['Nate Thurmond', 'Brent Barry'],
+  'Brent Barry':             ['Rick Barry'],
   'Julius Erving':           ['Moses Malone'],
   'Moses Malone':            ['Julius Erving'],
   'Elvin Hayes':             ['Wes Unseld'],
   'Wes Unseld':              ['Elvin Hayes'],
-  'Gary Payton':             ['Shawn Kemp'],
+  'Gary Payton':             ['Shawn Kemp', 'Gary Payton II'],
+  'Gary Payton II':          ['Gary Payton'],
   'Shawn Kemp':              ['Gary Payton'],
   'Walt Frazier':            ['Willis Reed'],
   'Willis Reed':             ['Walt Frazier'],
@@ -461,13 +465,15 @@ export const DUO_PAIRS: Record<string, string[]> = {
   "Shaquille O'Neal":        ['Kobe Bryant', 'Anfernee Hardaway', 'Dwyane Wade'],
   'Anfernee Hardaway':       ["Shaquille O'Neal"],
   'Alonzo Mourning':         ['Tim Hardaway'],
-  'Tim Hardaway':            ['Alonzo Mourning'],
+  'Tim Hardaway':            ['Alonzo Mourning', 'Tim Hardaway Jr.'],
+  'Tim Hardaway Jr.':        ['Tim Hardaway'],
   'Charles Barkley':         ['Kevin Johnson'],
   'Kevin Johnson':           ['Charles Barkley'],
   'Patrick Ewing':           ['John Starks'],
   'John Starks':             ['Patrick Ewing'],
   // 00s
-  'Kobe Bryant':             ["Shaquille O'Neal", 'Pau Gasol'],
+  'Kobe Bryant':             ["Shaquille O'Neal", 'Pau Gasol', 'Joe Bryant'],
+  'Joe Bryant':              ['Kobe Bryant'],
   'Pau Gasol':               ['Kobe Bryant', 'Marc Gasol'],
   'Tracy McGrady':           ['Yao Ming', 'Vince Carter'],
   'Vince Carter':            ['Tracy McGrady'],
@@ -489,7 +495,8 @@ export const DUO_PAIRS: Record<string, string[]> = {
   'Russell Westbrook':       ['Kevin Durant', 'James Harden', 'Paul George'],
   'Paul George':             ['Russell Westbrook', 'Kawhi Leonard'],
   'Kawhi Leonard':           ['Paul George', 'Kyle Lowry'],
-  'LeBron James':            ['Dwyane Wade', 'Kyrie Irving', 'Kevin Love', 'Anthony Davis', 'Chris Bosh'],
+  'LeBron James':            ['Dwyane Wade', 'Kyrie Irving', 'Kevin Love', 'Anthony Davis', 'Chris Bosh', 'Bronny James'],
+  'Bronny James':            ['LeBron James'],
   'Dwyane Wade':             ['LeBron James', "Shaquille O'Neal", 'Chris Bosh'],
   'Chris Bosh':              ['LeBron James', 'Dwyane Wade'],
   'Kyrie Irving':            ['LeBron James', 'Luka Doncic'],
@@ -501,17 +508,20 @@ export const DUO_PAIRS: Record<string, string[]> = {
   'DeAndre Jordan':          ['Chris Paul'],
   'James Harden':            ['Clint Capela', 'Russell Westbrook', 'Kevin Durant', 'Joel Embiid'],
   'Clint Capela':            ['James Harden'],
-  'Stephen Curry':           ['Klay Thompson', 'Draymond Green', 'Andre Iguodala', 'Kevin Durant', 'Seth Curry'],
-  'Seth Curry':              ['Stephen Curry'],
+  'Stephen Curry':           ['Klay Thompson', 'Draymond Green', 'Andre Iguodala', 'Kevin Durant', 'Seth Curry', 'Dell Curry'],
+  'Seth Curry':              ['Stephen Curry', 'Dell Curry'],
+  'Dell Curry':              ['Stephen Curry', 'Seth Curry'],
   'Andre Iguodala':          ['Stephen Curry'],
-  'Klay Thompson':           ['Stephen Curry', 'Draymond Green'],
+  'Klay Thompson':           ['Stephen Curry', 'Draymond Green', 'Mychal Thompson'],
+  'Mychal Thompson':         ['Klay Thompson'],
   'Draymond Green':          ['Stephen Curry', 'Klay Thompson'],
   'DeMar DeRozan':           ['Kyle Lowry'],
   'Kyle Lowry':              ['DeMar DeRozan', 'Kawhi Leonard'],
   'Damian Lillard':          ['CJ McCollum'],
   'CJ McCollum':             ['Damian Lillard'],
-  'Giannis Antetokounmpo':   ['Khris Middleton', 'Thanasis Antetokounmpo', 'Kostas Antetokounmpo'],
+  'Giannis Antetokounmpo':   ['Khris Middleton', 'Thanasis Antetokounmpo', 'Kostas Antetokounmpo', 'Jrue Holiday'],
   'Khris Middleton':         ['Giannis Antetokounmpo'],
+  'Jrue Holiday':            ['Giannis Antetokounmpo'],
   'Thanasis Antetokounmpo':  ['Giannis Antetokounmpo'],
   'Kostas Antetokounmpo':    ['Giannis Antetokounmpo'],
   'LaMelo Ball':             ['Lonzo Ball'],
@@ -545,6 +555,8 @@ export const DUO_PAIRS: Record<string, string[]> = {
   'Bam Adebayo':             ['Jimmy Butler'],
   'Brook Lopez':             ['Robin Lopez'],
   'Robin Lopez':             ['Brook Lopez'],
+  'Bol Bol':                 ['Manute Bol'],
+  'Manute Bol':              ['Bol Bol'],
 }
 
 export function applyDuo(player: Player): Player {

@@ -102,6 +102,82 @@ const V1_5_NOTES = [
   ]},
 ]
 
+const V1_5_6_NOTES = [
+  { section: 'Dynamic Duos', items: [
+    'New father/son duos: Dell Curry & Steph Curry, Dell Curry & Seth Curry, LeBron James & Bronny James, Kobe Bryant & Joe Bryant, Klay Thompson & Mychal Thompson, Rick Barry & Brent Barry, Gary Payton & Gary Payton II, Tim Hardaway & Tim Hardaway Jr., Bol Bol & Manute Bol.',
+    'New duo: Jrue Holiday & Giannis Antetokounmpo.',
+  ]},
+  { section: 'Achievements', items: [
+    'New Rare Achievement – LIKE FATHER, LIKE SON: Draft a father and son dynamic duo.',
+    'New Legendary Achievement – BAND OF BROTHERS: Win a championship with a brother dynamic duo.',
+    'New Legendary Achievement – DYNASTY BLOODLINE: Win a championship with a father and son dynamic duo.',
+  ]},
+  { section: 'Tags', items: [
+    'Sandbox TAG filter: Sixth Man and Finals MVP are now searchable tags.',
+    'Sixth Man players now correctly appear when sorting by Tagged in the draft roster.',
+    'New Defensive Anchor T2: Roy Hibbert.',
+  ]},
+  { section: 'Positions', items: [
+    'Moses Malone PF/C.',
+  ]},
+  { section: 'Bug Fixes', items: [
+    'San Antonio: SAN and SAS merged into SAS. Tim Duncan and David Robinson now appear together when spinning 90s San Antonio.',
+    'Jojo White Finals MVP tag now correctly applies.',
+  ]},
+]
+
+const V1_5_5_NOTES = [
+  { section: 'Leaderboard', items: [
+    'Added WEEKLY leaderboards. Each week is its own fresh competition. Top 50 per era and mode are saved from each week. Browse past weeks in the leaderboard modal.',
+    'Updated leaderboard bonus values: Finals +350, No S-tier starters +225, Trio +65, Duo Pair +30.',
+    'Added "How is Score Calculated?" expandable tip in the leaderboard modal.',
+  ]},
+  { section: 'Tags', items: [
+    'New TAG – FINALS MVP: Finals MVP players get a boost in Finals games. 1-2 awards = significant boost, 3+ awards = larger boost.',
+    'New TAG – SIXTH MAN: Elite bench specialists get a +6 rating boost when playing off the bench. No effect when starting. Cap tier is calculated without the boost.',
+    'Dynamic Duo: Jamal Murray and Aaron Gordon direct duo removed. The Jokic/Murray/Gordon trio still activates through Jokic.',
+    'New Offensive Anchor T2: Karl Malone.',
+    'New Defensive Anchor T2: Alonzo Mourning.',
+  ]},
+  { section: 'Achievements', items: [
+    'New Epic Achievement – SIXTH MAN CHAMPION: Win a championship with a Sixth Man tagged player on the bench.',
+  ]},
+  { section: 'Ratings', items: [
+    'Increased: 70s BOS Larry Bird.',
+    'Decreased: 2020s DEN Michael Porter Jr.',
+  ]},
+  { section: 'Positions', items: [
+    'Aaron Gordon PF/C',
+    'Tim Hardaway Jr. SG/SF',
+    'DeMarcus Cousins C/PF',
+  ]},
+]
+
+const V1_5_3_NOTES = [
+  { section: 'Achievements', items: [
+    'Added 9 New achievements.',
+  ]},
+  { section: 'Tags', items: [
+    'New Dynamic Duos: Jerry Lucas/Oscar, Nate Thurmond/Rick Barry, Dave Cowens/John Havlicek, Steph Curry/Seth Curry',
+    'New Glass Cleaners: Dave Cowens, Artis Gilmore',
+    'New Shooting Stars: Trae Young T2, Paul George T2, Sam Hauser T2, Detlef Schrempf T2',
+  ]},
+  { section: 'Ratings', items: [
+    'Buffs: 2010s: Devin Booker, CLE: Lebron James/Kyrie Irving, LAC Chris Paul, OKC Russell Westbrook, CHI Jimmy Butler, Mike Conley',
+    '2020s: BOS: Jrue Holiday/Derrick White, NYK Jalen Brunson, Devin Booker, IND Haliburton, Jaylen Brown, Tyrese Maxey',
+    '2000s: Dwyane Wade, Carmelo Anthony',
+    'Nerfs: 2020s LAC Paul George, 90s Kobe Bryant',
+  ]},
+  { section: 'Positions', items: [
+    'Horace Grant PF/C',
+    'Penny Hardaway PG/SG',
+  ]},
+  { section: 'Bugs', items: [
+    'Submit bug fixed.',
+    'No S tier starter achievement now works with dynamic duos active.',
+  ]},
+]
+
 const V1_5_1_NOTES = [
   { section: 'Leaderboard', items: [
     'New score bonuses for drafting dynamic duos and trios.',
@@ -114,7 +190,7 @@ const V1_5_1_NOTES = [
   ]},
   { section: 'Tags', items: [
     'New Timeless players: Draymond Green, Jerry West',
-    'New Dynamic Duos: Lonzo Ball - Lamelo Ball, Giannis - Thanasis/Kostas, John Wall - Bradley Beal, Magic - James Worthy',
+    'New Dynamic Duos: Lonzo Ball - Lamelo Ball, Giannis - Thanasis/Kostas, John Wall - Bradley Beal, Magic - James Worthy, Devin Booker - KD, Vince Carter - Tmac',
     'New Glass Cleaners: Bill Russell, Charles Barkley',
     'Champions tag fixes: Jojo White 2x',
     'New Shooting Stars: Buddy Hield T2, Mark Price T2',
@@ -122,6 +198,7 @@ const V1_5_1_NOTES = [
   ]},
   { section: 'Ratings', items: [
     'Buffs: Jo Jo White, 10s CLE: Kevin Love/Richard Jefferson/Kyrie Irving, 20s OKC: Jalen Williams/Cason Wallace',
+    'Nerfs: 60s Wilt Chamberlain',
   ]},
   { section: 'Positions', items: [
     'Clyde Drexler SG/SF',
@@ -206,6 +283,9 @@ const V1_2_NOTES = [
 ]
 
 export function PatchNotesModal({ onClose }: { onClose: () => void }) {
+  const [showV1_5_5, setShowV1_5_5] = useState(false)
+  const [showV1_5_3, setShowV1_5_3] = useState(false)
+  const [showV1_5_2, setShowV1_5_2] = useState(false)
   const [showV1_5, setShowV1_5] = useState(false)
   const [showV1_4, setShowV1_4] = useState(false)
   const [showV1_3, setShowV1_3] = useState(false)
@@ -231,79 +311,79 @@ export function PatchNotesModal({ onClose }: { onClose: () => void }) {
         <div className="flex items-center justify-between mb-4">
           <div>
             <div style={{ ...BEBAS, fontSize: 24, color: G.white, letterSpacing: '0.05em' }}>What's New</div>
-            <div style={{ fontSize: 11, color: G.gold, letterSpacing: '0.12em', textTransform: 'uppercase' }}>v1.5.1 · June 27</div>
+            <div style={{ fontSize: 11, color: G.gold, letterSpacing: '0.12em', textTransform: 'uppercase' }}>v1.5.6 · June 30</div>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: G.greyDark, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>✕</button>
         </div>
 
-        {renderNotes(V1_5_1_NOTES)}
+        {renderNotes(V1_5_6_NOTES)}
 
-        {/* v1.5 collapsible */}
         <div style={{ borderTop: `1px solid ${G.border}`, marginTop: 8, paddingTop: 12 }}>
-          <button
-            onClick={() => setShowV1_5(v => !v)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: 0 }}
-          >
+          <button onClick={() => setShowV1_5_5(v => !v)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: 0 }}>
+            <span style={{ fontSize: 11, color: G.greyDark, letterSpacing: '0.12em', textTransform: 'uppercase' }}>V1.5.5 · June 29</span>
+            <span style={{ fontSize: 10, color: G.greyDark, display: 'inline-block', transform: showV1_5_5 ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▼</span>
+          </button>
+          {showV1_5_5 && <div style={{ marginTop: 12 }}>{renderNotes(V1_5_5_NOTES)}</div>}
+        </div>
+
+        <div style={{ borderTop: `1px solid ${G.border}`, marginTop: 8, paddingTop: 12 }}>
+          <button onClick={() => setShowV1_5_3(v => !v)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: 0 }}>
+            <span style={{ fontSize: 11, color: G.greyDark, letterSpacing: '0.12em', textTransform: 'uppercase' }}>V1.5.3 · June 28</span>
+            <span style={{ fontSize: 10, color: G.greyDark, display: 'inline-block', transform: showV1_5_3 ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▼</span>
+          </button>
+          {showV1_5_3 && <div style={{ marginTop: 12 }}>{renderNotes(V1_5_3_NOTES)}</div>}
+        </div>
+
+        <div style={{ borderTop: `1px solid ${G.border}`, marginTop: 8, paddingTop: 12 }}>
+          <button onClick={() => setShowV1_5_2(v => !v)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: 0 }}>
+            <span style={{ fontSize: 11, color: G.greyDark, letterSpacing: '0.12em', textTransform: 'uppercase' }}>V1.5.2 · June 27</span>
+            <span style={{ fontSize: 10, color: G.greyDark, display: 'inline-block', transform: showV1_5_2 ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▼</span>
+          </button>
+          {showV1_5_2 && <div style={{ marginTop: 12 }}>{renderNotes(V1_5_1_NOTES)}</div>}
+        </div>
+
+        <div style={{ borderTop: `1px solid ${G.border}`, marginTop: 8, paddingTop: 12 }}>
+          <button onClick={() => setShowV1_5(v => !v)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: 0 }}>
             <span style={{ fontSize: 11, color: G.greyDark, letterSpacing: '0.12em', textTransform: 'uppercase' }}>V1.5 · June 24</span>
             <span style={{ fontSize: 10, color: G.greyDark, display: 'inline-block', transform: showV1_5 ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▼</span>
           </button>
           {showV1_5 && <div style={{ marginTop: 12 }}>{renderNotes(V1_5_NOTES)}</div>}
         </div>
 
-        {/* v1.4 collapsible */}
         <div style={{ borderTop: `1px solid ${G.border}`, marginTop: 8, paddingTop: 12 }}>
-          <button
-            onClick={() => setShowV1_4(v => !v)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: 0 }}
-          >
+          <button onClick={() => setShowV1_4(v => !v)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: 0 }}>
             <span style={{ fontSize: 11, color: G.greyDark, letterSpacing: '0.12em', textTransform: 'uppercase' }}>V1.4 · June 21</span>
             <span style={{ fontSize: 10, color: G.greyDark, display: 'inline-block', transform: showV1_4 ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▼</span>
           </button>
           {showV1_4 && <div style={{ marginTop: 12 }}>{renderNotes(V1_4_NOTES)}</div>}
         </div>
 
-        {/* v1.3 collapsible */}
         <div style={{ borderTop: `1px solid ${G.border}`, marginTop: 8, paddingTop: 12 }}>
-          <button
-            onClick={() => setShowV1_3(v => !v)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: 0 }}
-          >
+          <button onClick={() => setShowV1_3(v => !v)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: 0 }}>
             <span style={{ fontSize: 11, color: G.greyDark, letterSpacing: '0.12em', textTransform: 'uppercase' }}>V1.3 · June 19</span>
             <span style={{ fontSize: 10, color: G.greyDark, display: 'inline-block', transform: showV1_3 ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▼</span>
           </button>
           {showV1_3 && <div style={{ marginTop: 12 }}>{renderNotes(V1_3_NOTES)}</div>}
         </div>
 
-        {/* v1.2 collapsible */}
         <div style={{ borderTop: `1px solid ${G.border}`, marginTop: 8, paddingTop: 12 }}>
-          <button
-            onClick={() => setShowV1_2(v => !v)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: 0 }}
-          >
+          <button onClick={() => setShowV1_2(v => !v)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: 0 }}>
             <span style={{ fontSize: 11, color: G.greyDark, letterSpacing: '0.12em', textTransform: 'uppercase' }}>V1.2 · June 18</span>
             <span style={{ fontSize: 10, color: G.greyDark, display: 'inline-block', transform: showV1_2 ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▼</span>
           </button>
           {showV1_2 && <div style={{ marginTop: 12 }}>{renderNotes(V1_2_NOTES)}</div>}
         </div>
 
-        {/* v1.1 collapsible */}
         <div style={{ borderTop: `1px solid ${G.border}`, marginTop: 8, paddingTop: 12 }}>
-          <button
-            onClick={() => setShowV1_1(v => !v)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: 0 }}
-          >
+          <button onClick={() => setShowV1_1(v => !v)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: 0 }}>
             <span style={{ fontSize: 11, color: G.greyDark, letterSpacing: '0.12em', textTransform: 'uppercase' }}>V1.1 · June 16</span>
             <span style={{ fontSize: 10, color: G.greyDark, display: 'inline-block', transform: showV1_1 ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▼</span>
           </button>
           {showV1_1 && <div style={{ marginTop: 12 }}>{renderNotes(V1_1_NOTES)}</div>}
         </div>
 
-        {/* v1 collapsible */}
         <div style={{ borderTop: `1px solid ${G.border}`, marginTop: 8, paddingTop: 12 }}>
-          <button
-            onClick={() => setShowV1(v => !v)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: 0 }}
-          >
+          <button onClick={() => setShowV1(v => !v)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: 0 }}>
             <span style={{ fontSize: 11, color: G.greyDark, letterSpacing: '0.12em', textTransform: 'uppercase' }}>V1 · June 12</span>
             <span style={{ fontSize: 10, color: G.greyDark, display: 'inline-block', transform: showV1 ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▼</span>
           </button>

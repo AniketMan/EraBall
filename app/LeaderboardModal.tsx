@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { getLeaderboard, type LeaderboardEntry, type LeaderboardRoster } from '../services/leaderboard'
+import { getLeaderboard, getPastWeeks, type LeaderboardEntry, type LeaderboardRoster } from '../services/leaderboard'
 
 const ALL_ERAS = ['50s', '60s', '70s', '80s', '90s', '00s', '10s', '20s']
 const ERA_LABEL: Record<string, string> = { '00s': '2000s', '10s': '2010s', '20s': '2020s' }
@@ -109,6 +109,13 @@ export default function LeaderboardModal({ onClose }: { onClose: () => void }) {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [showScoreInfo, setShowScoreInfo] = useState(false)
+  const [selectedWeek, setSelectedWeek] = useState<string | null>(null)
+  const [pastWeeks, setPastWeeks] = useState<string[]>([])
+
+  useEffect(() => {
+    getPastWeeks().then(setPastWeeks)
+  }, [])
 
   useEffect(() => {
     setExpandedId(null)
@@ -121,11 +128,11 @@ export default function LeaderboardModal({ onClose }: { onClose: () => void }) {
     }
     setLoading(true)
     setEntries([])
-    getLeaderboard(era, tab as Mode).then(data => {
+    getLeaderboard(era, tab as Mode, 50, selectedWeek).then(data => {
       setEntries(data as LeaderboardEntry[])
       setLoading(false)
     })
-  }, [era, tab])
+  }, [era, tab, selectedWeek])
 
   const isPersonal = tab === 'personal'
 
@@ -190,6 +197,40 @@ export default function LeaderboardModal({ onClose }: { onClose: () => void }) {
           ))}
         </div>
 
+        {/* Week selector */}
+        {!isPersonal && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16, alignItems: 'center' }}>
+            <span style={{ fontSize: 9, color: '#444', letterSpacing: '0.12em', fontWeight: 700, marginRight: 2 }}>WEEK</span>
+            <button
+              onClick={() => setSelectedWeek(null)}
+              className="lb-era-btn"
+              style={{
+                padding: '5px 12px', border: `1px solid ${selectedWeek === null ? G.gold : G.border}`,
+                background: selectedWeek === null ? `${G.gold}18` : 'transparent',
+                color: selectedWeek === null ? G.gold : G.greyDark,
+                fontWeight: 700, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer',
+              }}
+            >
+              THIS WEEK
+            </button>
+            {pastWeeks.map(w => (
+              <button
+                key={w}
+                onClick={() => setSelectedWeek(w)}
+                className="lb-era-btn"
+                style={{
+                  padding: '5px 12px', border: `1px solid ${selectedWeek === w ? G.gold : G.border}`,
+                  background: selectedWeek === w ? `${G.gold}18` : 'transparent',
+                  color: selectedWeek === w ? G.gold : G.greyDark,
+                  fontWeight: 700, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer',
+                }}
+              >
+                {w.replace('week-', 'Week ')}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Personal hint */}
         {isPersonal && (
           <div style={{ fontSize: 11, color: '#444', marginBottom: 16, letterSpacing: '0.06em' }}>
@@ -202,11 +243,56 @@ export default function LeaderboardModal({ onClose }: { onClose: () => void }) {
           <div style={{ textAlign: 'center', padding: '40px', color: G.greyDark, fontSize: 13, letterSpacing: '0.1em' }}>LOADING...</div>
         ) : entries.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px', color: G.greyDark, fontSize: 13, letterSpacing: '0.1em' }}>
-            {isPersonal ? `No personal entries for ${eraLabel(era)} yet. Submit a run to see it here.` : `No entries yet for ${eraLabel(era)} ${tab === 'salary_cap' ? 'Salary Cap' : 'Normal Draft'}. Be the first!`}
+            {isPersonal ? `No personal entries for ${eraLabel(era)} yet. Submit a run to see it here.` : selectedWeek ? `No entries for ${selectedWeek.replace('week-', 'Week ')} — ${eraLabel(era)} ${tab === 'salary_cap' ? 'Salary Cap' : 'Normal Draft'}.` : `No entries yet for ${eraLabel(era)} ${tab === 'salary_cap' ? 'Salary Cap' : 'Normal Draft'}. Be the first!`}
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <div style={{ fontSize: 10, color: '#3a3a3a', marginBottom: 8, letterSpacing: '0.08em' }}>CLICK A ROW TO VIEW ROSTER</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <div style={{ fontSize: 10, color: '#3a3a3a', letterSpacing: '0.08em' }}>CLICK A ROW TO VIEW ROSTER</div>
+              <button
+                onClick={() => setShowScoreInfo(v => !v)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, padding: '2px 0' }}
+              >
+                <span style={{ fontSize: 9, color: showScoreInfo ? G.gold : '#555', letterSpacing: '0.12em', fontWeight: 700, transition: 'color 0.15s' }}>HOW IS SCORE CALCULATED?</span>
+                <span style={{ fontSize: 9, color: showScoreInfo ? G.gold : '#555', display: 'inline-block', transition: 'transform 0.2s', transform: showScoreInfo ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
+              </button>
+            </div>
+            {showScoreInfo && (
+              <div className="grid grid-cols-2 sm:grid-cols-4" style={{ border: `1px solid #1e1e1e`, background: '#080808', padding: '14px 16px', marginBottom: 12, gap: '12px 20px' }}>
+                <div>
+                  <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '0.14em', color: G.gold, marginBottom: 6 }}>BASE</div>
+                  {[['Reg win %', '×500'], ['Playoff %', '×400'], ['Avg pt diff', '×8'], ['Team rating', '×3'], ['Coach (A–F)', '×20']].map(([l, v]) => (
+                    <div key={l} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#666', lineHeight: 1.9 }}>
+                      <span>{l}</span><span style={{ color: '#bbb', fontVariantNumeric: 'tabular-nums' }}>{v}</span>
+                    </div>
+                  ))}
+                </div>
+                <div>
+                  <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '0.14em', color: G.gold, marginBottom: 6 }}>PLAYOFF RESULT</div>
+                  {[['🏆 Champion', '+500'], ['Finals', '+350'], ['Conf Finals', '+175'], ['2nd Round', '+75'], ['1st Round', '+25']].map(([l, v]) => (
+                    <div key={l} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#666', lineHeight: 1.9 }}>
+                      <span>{l}</span><span style={{ color: '#bbb', fontVariantNumeric: 'tabular-nums' }}>{v}</span>
+                    </div>
+                  ))}
+                </div>
+                <div>
+                  <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '0.14em', color: G.gold, marginBottom: 6 }}>CHAMPION CHALLENGES</div>
+                  {[['No S-tier starters', '+225'], ['No Timeless players', '+75'], ['Bad coach', '+75']].map(([l, v]) => (
+                    <div key={l} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#666', lineHeight: 1.9 }}>
+                      <span>{l}</span><span style={{ color: '#bbb', fontVariantNumeric: 'tabular-nums' }}>{v}</span>
+                    </div>
+                  ))}
+                </div>
+                <div>
+                  <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '0.14em', color: G.gold, marginBottom: 6 }}>TEAM COMPOSITION</div>
+                  {[['Trio (3 elite)', '+65'], ['Elite rim prot.', '+50'], ['Elite spacing', '+40'], ['Elite playmaking', '+40'], ['Duo pair', '+30'], ['Rebound edge', '+25'], ['6th Man on bench', '+20']].map(([l, v]) => (
+                    <div key={l} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#666', lineHeight: 1.9 }}>
+                      <span>{l}</span><span style={{ color: '#bbb', fontVariantNumeric: 'tabular-nums' }}>{v}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
                 <tr style={{ borderBottom: `1px solid ${G.border}` }}>

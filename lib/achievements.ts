@@ -24,6 +24,7 @@ export interface RunContext {
   glassCleanerCount?: number
   shootingStarCount?: number
   brotherDuo?: boolean
+  fatherSonDuo?: boolean
   sixth_man_bench?: boolean
 }
 
@@ -247,6 +248,27 @@ const DEFS: (Achievement & { check: CheckFn })[] = [
     description: 'Draft a brother dynamic duo.',
     rarity: 'rare',
     check: (_n, _c, run) => run.brotherDuo === true,
+  },
+  {
+    id: 'brother_duo_champion',
+    title: 'Band of Brothers',
+    description: 'Win a championship with a brother dynamic duo.',
+    rarity: 'legendary',
+    check: (_n, _c, run) => !!run.champion && run.brotherDuo === true,
+  },
+  {
+    id: 'father_son_duo',
+    title: 'Like Father, Like Son',
+    description: 'Draft a father and son dynamic duo.',
+    rarity: 'rare',
+    check: (_n, _c, run) => run.fatherSonDuo === true,
+  },
+  {
+    id: 'father_son_champion',
+    title: 'Dynasty Bloodline',
+    description: 'Win a championship with a father and son dynamic duo.',
+    rarity: 'legendary',
+    check: (_n, _c, run) => !!run.champion && run.fatherSonDuo === true,
   },
   {
     id: 'sixth_man_champion',

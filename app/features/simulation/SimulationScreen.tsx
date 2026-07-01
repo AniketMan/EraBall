@@ -1011,11 +1011,23 @@ export function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn
       ['Brook Lopez', 'Robin Lopez'],
     ]
     const brotherDuo = BROTHER_PAIRS.some(([a, b]) => draftedNames.has(a) && draftedNames.has(b))
+    const FATHER_SON_PAIRS: [string, string][] = [
+      ['Dell Curry', 'Stephen Curry'],
+      ['Dell Curry', 'Seth Curry'],
+      ['LeBron James', 'Bronny James'],
+      ['Manute Bol', 'Bol Bol'],
+      ['Mychal Thompson', 'Klay Thompson'],
+      ['Rick Barry', 'Brent Barry'],
+      ['Gary Payton', 'Gary Payton II'],
+      ['Joe Bryant', 'Kobe Bryant'],
+      ['Tim Hardaway', 'Tim Hardaway Jr.'],
+    ]
+    const fatherSonDuo = FATHER_SON_PAIRS.some(([a, b]) => draftedNames.has(a) && draftedNames.has(b))
     const sixth_man_bench = slots.slice(5).some(s => s.player && SIXTH_MAN_PLAYERS.has(s.player.full_name))
     const newAchievements = checkAchievements(
       getLifetimeStats('normal'),
       getLifetimeStats('salary_cap'),
-      { era: simEra, mode: runMode, wins, losses, champion: playoffResult?.champion ?? false, teamRating: Math.round(tr + 15), coachGrade: coach.overallGrade, hasSTierStarter, duo_pair, duo_trio, glassCleanerCount, shootingStarCount, brotherDuo, sixth_man_bench },
+      { era: simEra, mode: runMode, wins, losses, champion: playoffResult?.champion ?? false, teamRating: Math.round(tr + 15), coachGrade: coach.overallGrade, hasSTierStarter, duo_pair, duo_trio, glassCleanerCount, shootingStarCount, brotherDuo, fatherSonDuo, sixth_man_bench },
     )
     if (newAchievements.length > 0) onAchievementsUnlocked?.(newAchievements)
   }, [allDone])

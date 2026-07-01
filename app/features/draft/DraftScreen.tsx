@@ -8,7 +8,7 @@ import type { Player, Era, CourtSlot, SlotPosition, PlayerTier } from '@eraball/
 import {
   ALL_ERAS, SLOT_POSITIONS, SLOT_MPG, calcFitPenalty, calcEraModifier, calcTS,
   playerBaseRating, playerMatchesEra, withEraStats, playerTier, CAP_QUOTAS,
-  applyFlexTag, applyRings, applyFinalsMVP, applyAnchors, applyTimeless, applyShootingStar, applyGlassCleaner, applyDuo,
+  applyFlexTag, applyRings, applyFinalsMVP, applySixthMan, applyAnchors, applyTimeless, applyShootingStar, applyGlassCleaner, applyDuo,
   SIXTH_MAN_PLAYERS,
 } from '@eraball/engine'
 import { G, BEBAS } from '../../../src/components/tokens'
@@ -17,7 +17,10 @@ import { shuffle, eraLabel, NBA_TEAMS, playerTeamForEra, emptySlots } from '../.
 import { PlayerCard, CourtSlotView, TopBar } from '../../_shared'
 
 // ─── Phase 2: Draft ───────────────────────────────────────────────────────────
-type TagKey = 'timeless' | 'offAnchor' | 'defAnchor' | 'shootingStar' | 'glassClean' | 'flex' | 'champion' | 'dynamicDuo'
+type TagKey = 'timeless' | 'offAnchor' | 'defAnchor' | 'shootingStar' | 'glassClean' | 'flex' | 'champion' | 'dynamicDuo' | 'sixthMan' | 'finalsMvp'
+// Franchise aliases — old abbreviations merged into the canonical modern one
+const TEAM_ALIAS: Record<string, string> = { 'SAN': 'SAS' }
+const normalizeTeam = (t: string) => TEAM_ALIAS[t] ?? t
 const TAG_OPTIONS: { key: TagKey; label: string; color: string }[] = [
   { key: 'timeless',     label: 'Timeless',         color: '#C084FC' },
   { key: 'offAnchor',    label: 'Offensive Anchor',  color: G.gold },
@@ -27,6 +30,8 @@ const TAG_OPTIONS: { key: TagKey; label: string; color: string }[] = [
   { key: 'flex',         label: 'Flex',              color: '#4A9ECC' },
   { key: 'champion',     label: 'Champion',          color: G.gold },
   { key: 'dynamicDuo',   label: 'Dynamic Duo',       color: '#4ECDC4' },
+  { key: 'sixthMan',     label: 'Sixth Man',         color: '#FB923C' },
+  { key: 'finalsMvp',   label: 'Finals MVP',        color: '#FBBF24' },
 ]
 
 export function DraftScreen({ simEra, players, onDraftComplete, onRestart, startInSandbox, salaryCapMode, greyscaleBtn, muteBtn, themeFilter }: {
@@ -80,11 +85,11 @@ export function DraftScreen({ simEra, players, onDraftComplete, onRestart, start
     const teams = new Set<string>()
     for (const p of players) {
       for (const teamList of Object.values(p.all_teams_by_era ?? {})) {
-        for (const t of (teamList as string[])) { if (t) teams.add(t) }
+        for (const t of (teamList as string[])) { if (t) teams.add(normalizeTeam(t)) }
       }
       // fallback for old data without all_teams_by_era
-      for (const t of Object.values(p.teams_by_era ?? {})) { if (t) teams.add(t) }
-      if (p.team_abbreviation) teams.add(p.team_abbreviation)
+      for (const t of Object.values(p.teams_by_era ?? {})) { if (t) teams.add(normalizeTeam(t)) }
+      if (p.team_abbreviation) teams.add(normalizeTeam(p.team_abbreviation))
     }
     return Array.from(teams).sort()
   }, [players])
@@ -98,15 +103,17 @@ export function DraftScreen({ simEra, players, onDraftComplete, onRestart, start
       const allTeamsByEra = p.all_teams_by_era
       if (allTeamsByEra && Object.keys(allTeamsByEra).length > 0) {
         for (const [era, teamList] of Object.entries(allTeamsByEra)) {
-          for (const team of (teamList as string[])) {
-            if (!team) continue
+          for (const rawTeam of (teamList as string[])) {
+            if (!rawTeam) continue
+            const team = normalizeTeam(rawTeam)
             const key = `${team}:${era}`
             if (!seen.has(key)) { seen.add(key); combos.push({ team, era: era as Era }) }
           }
         }
       } else {
-        for (const [era, team] of Object.entries(p.teams_by_era ?? {})) {
-          if (!team) continue
+        for (const [era, rawTeam] of Object.entries(p.teams_by_era ?? {})) {
+          if (!rawTeam) continue
+          const team = normalizeTeam(rawTeam as string)
           const key = `${team}:${era}`
           if (!seen.has(key)) { seen.add(key); combos.push({ team, era: era as Era }) }
         }
@@ -186,7 +193,7 @@ export function DraftScreen({ simEra, players, onDraftComplete, onRestart, start
             const freshShuffled = shuffle([...filteredCombos])
             const getPool = (t: string, e: Era) => players.filter(p => {
               const eraTeams = p.all_teams_by_era?.[e] as string[] | undefined
-              const onTeam = eraTeams ? eraTeams.includes(t) : playerTeamForEra(p, e) === t
+              const onTeam = eraTeams ? eraTeams.map(normalizeTeam).includes(t) : normalizeTeam(playerTeamForEra(p, e)) === t
               return onTeam && playerMatchesEra(p, e) && !ids.has(p.person_id)
             })
             let found = false
@@ -210,7 +217,7 @@ export function DraftScreen({ simEra, players, onDraftComplete, onRestart, start
           }
           const pool = players.filter(p => {
             const allTeams = p.all_teams_by_era?.[era] as string[] | undefined
-            const onTeam = allTeams ? allTeams.includes(team) : playerTeamForEra(p, era) === team
+            const onTeam = allTeams ? allTeams.map(normalizeTeam).includes(team) : normalizeTeam(playerTeamForEra(p, era)) === team
             return onTeam && playerMatchesEra(p, era) && !ids.has(p.person_id)
           })
           if (pool.length < 3) {
@@ -393,6 +400,8 @@ export function DraftScreen({ simEra, players, onDraftComplete, onRestart, start
         case 'flex':         return !!p.flexPositions
         case 'champion':     return (p.rings ?? 0) > 0
         case 'dynamicDuo':   return !!p.duoPartners
+        case 'sixthMan':     return !!p.sixthMan
+        case 'finalsMvp':   return (p.finalsMVP ?? 0) > 0
         default:             return false
       }
     }
@@ -403,7 +412,7 @@ export function DraftScreen({ simEra, players, onDraftComplete, onRestart, start
         const [era, team] = key.split(':') as [Era, string]
         if (!era || !team || seen.has(key)) continue
         seen.add(key)
-        const v = applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyFinalsMVP(applyRings(applyFlexTag(withEraStats(p, era, team)))))))))
+        const v = applyDuo(applyGlassCleaner(applyShootingStar(applyTimeless(applyAnchors(applyFinalsMVP(applySixthMan(applyRings(applyFlexTag(withEraStats(p, era, team))))))))))
         if (hasTag(v)) tagged.push(v)
       }
     }
@@ -1067,7 +1076,7 @@ export function DraftScreen({ simEra, players, onDraftComplete, onRestart, start
                 <div className="roster-scroll" style={{ border: `1px solid ${G.border}`, maxHeight: 220, overflowY: 'auto', overflowX: 'hidden' }}>
                   {(() => {
                     const isSpecial = (p: Player) =>
-                      p.greatest_75_flag === 'Y' || (p.rings ?? 0) > 0 || p.defAnchor || p.offAnchor || !!p.flexPositions || !!p.timeless || !!p.shootingStar || !!p.duoPartners?.length
+                      p.greatest_75_flag === 'Y' || (p.rings ?? 0) > 0 || p.defAnchor || p.offAnchor || !!p.flexPositions || !!p.timeless || !!p.shootingStar || !!p.duoPartners?.length || !!p.sixthMan
                     const posMatch = (p: Player) => {
                       const primary = (p.position?.split('-')[0] ?? '').toLowerCase()
                       if (posFilter === 'G') return primary === 'guard'

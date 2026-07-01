@@ -35,12 +35,13 @@ export {
 
 // ---- Roster preparation (tag pipeline) ------------------------------------------------
 // Consumers must apply these to raw players (in this order) before rating/simulating,
-// exactly as the UI does: withEraStats -> applyFlexTag -> applyRings -> applyFinalsMVP
-// -> applyAnchors -> applyTimeless -> applyShootingStar -> applyGlassCleaner -> applyDuo.
+// exactly as the UI does: withEraStats -> applyFlexTag -> applyRings -> applySixthMan
+// -> applyFinalsMVP -> applyAnchors -> applyTimeless -> applyShootingStar -> applyGlassCleaner -> applyDuo.
 export {
   withEraStats,
   applyFlexTag,
   applyRings,
+  applySixthMan,
   applyFinalsMVP,
   applyAnchors,
   applyTimeless,
