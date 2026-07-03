@@ -73,7 +73,7 @@ export function calcLeaderboardScore(
   if (flags?.reb_edge)        teamBonus += 25
   if (flags?.duo_pair)        teamBonus += 30
   if (flags?.duo_trio)        teamBonus += 65
-  if (flags?.sixth_man_bench) teamBonus += 20
+  if (flags?.sixth_man_bench) teamBonus += 15
 
   return (
     entry.reg_win_pct * 500 +

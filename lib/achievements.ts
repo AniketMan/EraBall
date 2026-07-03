@@ -25,6 +25,7 @@ export interface RunContext {
   shootingStarCount?: number
   brotherDuo?: boolean
   fatherSonDuo?: boolean
+  fullFamilyTrio?: boolean
   sixth_man_bench?: boolean
 }
 
@@ -107,8 +108,15 @@ const DEFS: (Achievement & { check: CheckFn })[] = [
     id: 'perfect_season',
     title: '82-0',
     description: 'Go 82-0 in the regular season.',
-    rarity: 'legendary',
+    rarity: 'epic',
     check: (_n, _c, run) => run.wins >= 82 && run.losses === 0,
+  },
+  {
+    id: 'perfect_season_cap',
+    title: '82-0 (Cap)',
+    description: 'Go 82-0 in the regular season in Salary Cap mode.',
+    rarity: 'legendary',
+    check: (_n, _c, run) => run.wins >= 82 && run.losses === 0 && run.mode === 'salary_cap',
   },
   {
     id: 'true_perfect',
@@ -269,6 +277,47 @@ const DEFS: (Achievement & { check: CheckFn })[] = [
     description: 'Win a championship with a father and son dynamic duo.',
     rarity: 'legendary',
     check: (_n, _c, run) => !!run.champion && run.fatherSonDuo === true,
+  },
+  {
+    id: 'family_ties',
+    title: 'Family Ties',
+    description: 'Win a championship with any brother pair and any father-son pair both active in the same run.',
+    rarity: 'legendary',
+    check: (_n, _c, run) => !!run.champion && !!run.brotherDuo && !!run.fatherSonDuo,
+  },
+  {
+    id: 'full_family',
+    title: 'Full Family',
+    description: 'Win a championship with all three members of the same family.',
+    rarity: 'legendary',
+    check: (_n, _c, run) => !!run.champion && !!run.fullFamilyTrio,
+  },
+  {
+    id: 'franchise_player',
+    title: 'Franchise Player',
+    description: 'Have one player appear in the Top 50 on any leaderboard 5 times across your career.',
+    rarity: 'legendary',
+    check: (n, c) =>
+      Object.values(n.playerLeaderboardCounts ?? {}).some(e => e.top50 >= 5) ||
+      Object.values(c.playerLeaderboardCounts ?? {}).some(e => e.top50 >= 5),
+  },
+  {
+    id: 'favorite_son',
+    title: 'Favorite Son',
+    description: 'Draft the same player 40 times.',
+    rarity: 'epic',
+    check: (n, c) =>
+      Object.values(n.playerDraftCounts).some(p => p.count >= 40) ||
+      Object.values(c.playerDraftCounts).some(p => p.count >= 40),
+  },
+  {
+    id: 'bench_loyalty',
+    title: 'Bench Loyalty',
+    description: 'Draft the same player to the bench 20 times.',
+    rarity: 'rare',
+    check: (n, c) =>
+      Object.values(n.playerBenchCounts ?? {}).some(p => p.count >= 20) ||
+      Object.values(c.playerBenchCounts ?? {}).some(p => p.count >= 20),
   },
   {
     id: 'sixth_man_champion',

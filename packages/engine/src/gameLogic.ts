@@ -1,5 +1,5 @@
 import type { Player, Coach, CourtSlot, SlotPosition, Era, PlayerRating, PlayerSeasonStats, EraStats, PlayoffResult, PlayoffGame, SpecialPerformance } from './types'
-// Centralized random source. rng() delegates to Math.random() when unseeded, so
+// Centralized random source. rng() delegates to rng() when unseeded, so
 // production behavior is byte-identical; seedRng() makes the simulation deterministic
 // for the behavior-lock snapshot harness.
 import { rng } from './rng'
@@ -48,6 +48,9 @@ const POSITION_LOCK: Record<string, SlotPosition[]> = {
   'Hakeem Olajuwon':     ['PF', 'C'],
   'Dirk Nowitzki':       ['PF', 'C'],
   'Kareem Abdul-Jabbar': ['PF', 'C'],
+  'Victor Wembanyama':   ['PF', 'C'],
+  'Jerry Lucas':         ['PF', 'C'],
+  'George Gervin':       ['SG', 'SF'],
   'Brandon Ingram':      ['SG', 'SF', 'PF'],
   'Josh Hart':           ['SG', 'SF'],
   'Luguentz Dort':       ['SG', 'SF'],
@@ -64,6 +67,9 @@ const POSITION_LOCK: Record<string, SlotPosition[]> = {
   'Chris Bosh':          ['PF', 'C'],
   'Karl-Anthony Towns':  ['PF', 'C'],
   'Moses Malone':        ['PF', 'C'],
+  'Kevon Looney':        ['C'],
+  'Ty Jerome':           ['PG', 'SG'],
+  'Rudy Fernandez':      ['SG', 'SF'],
 }
 
 export function applyFlexTag(player: Player): Player {
@@ -79,30 +85,34 @@ const PLAYER_RINGS: Record<string, number> = {
   // 10
   'Sam Jones': 10,
   // 8
-  'Tom Heinsohn': 8, 'K.C. Jones': 8, 'John Havlicek': 8, 'Tom Sanders': 8,
+  'Tom Heinsohn': 8, 'K.C. Jones': 8, 'John Havlicek': 8, 'Tom Sanders': 8, 'Thomas Sanders': 8,
   // 7
-  'Frank Ramsey': 7, 'Robert Horry': 7,
+  'Frank Ramsey': 7, 'Robert Horry': 7, 'Jim Loscutoff': 7,
   // 6
   'Michael Jordan': 6, 'Scottie Pippen': 6, 'Kareem Abdul-Jabbar': 6, 'Bob Cousy': 6,
   // 5
   'Magic Johnson': 5, 'Kobe Bryant': 5, 'Tim Duncan': 5, 'Dennis Rodman': 5,
   'Derek Fisher': 5, 'Ron Harper': 5, 'Steve Kerr': 5, 'Michael Cooper': 5,
-  'George Mikan': 5,
+  'George Mikan': 5, 'Slater Martin': 5, 'Jim Pollard': 5, 'Larry Siegfried': 5,
   // 4
   'Shaquille O\'Neal': 4, 'LeBron James': 4, 'Stephen Curry': 4, 'Draymond Green': 4,
   'Klay Thompson': 4, 'Robert Parish': 4, 'Tony Parker': 4, 'Manu Ginobili': 4,
   'Andre Iguodala': 4, 'Bill Sharman': 4, 'John Salley': 4,
-  'Kevon Looney': 4, 'Horace Grant': 4,
+  'Kevon Looney': 3, 'Horace Grant': 4,
   'Jamaal Wilkes': 4, 'Kurt Rambis': 4,
-  'Vern Mikkelsen': 4,
+  'Vern Mikkelsen': 4, 'Gene Guarilia': 4, 'Will Perdue': 4, 'Frank Saul': 4,
   // 3
   'Larry Bird': 3, 'Kevin McHale': 3, 'James Worthy': 3, 'Byron Scott': 3,
-  'Dwyane Wade': 3, 'Udonis Haslem': 3, 'A.C. Green': 3, 'Mychal Thompson': 3,
+  'Dwyane Wade': 3, 'Udonis Haslem': 3, 'A.C. Green': 3, 'Mychal Thompson': 2,
   'Danny Green': 3, 'Rick Fox': 3, 'Toni Kukoc': 3, 'Luc Longley': 3,
   'Dennis Johnson': 3, 'John Paxson': 3, 'Bill Cartwright': 3,
   'James Jones': 3,
   'Clyde Lovellette': 3,
   'Shaun Livingston': 3, 'Mario Elie': 3, 'JaVale McGee': 3, 'Patrick McCaw': 3,
+  'B.J. Armstrong': 3, 'Bruce Bowen': 3, 'Brian Shaw': 3, 'Devean George': 3, 'James Edwards': 3,
+  'Randy Brown': 3, 'Jud Buechler': 3, 'Gene Conley': 3, 'Stacey King': 3, 'Mitch Kupchak': 3,
+  'Willie Naulls': 3, 'Dickey Simpkins': 3, 'Myer Skoog': 3, 'Bill Wennington': 3,
+  'Scott Williams': 3, 'Bob Harrison': 3,
   // 2
   'Hakeem Olajuwon': 2,
   'Wilt Chamberlain': 2, 'Isiah Thomas': 2, 'Joe Dumars': 2, 'Kevin Durant': 2,
@@ -117,7 +127,7 @@ const PLAYER_RINGS: Record<string, number> = {
   'Mike Miller': 2, 'Norris Cole': 2,
   'Bailey Howell': 2, 'Jojo White': 2, 'Dave Cowens': 2, 'Bill Walton': 2,
   'Norm Nixon': 2, 'Mark Aguirre': 2,
-  'Sam Cassell': 2, 'Kenny Smith': 2, 'Tyronn Lue': 2,
+  'Sam Cassell': 3, 'Kenny Smith': 2, 'Tyronn Lue': 2,
   'Luke Walton': 2, 'Jordan Farmar': 2, 'Sasha Vujacic': 2,
   'David West': 2, 'Zaza Pachulia': 2,
   // 1
@@ -135,6 +145,9 @@ const PLAYER_RINGS: Record<string, number> = {
   'Jon McGlocklin': 1, 'Jerry Lucas': 1, 'Gail Goodrich': 1, 'Jim McMillan': 1,
   'Wes Unseld': 1, 'Elvin Hayes': 1,
   'Maurice Lucas': 1, 'Gus Williams': 1, 'Fred Brown': 1,
+  // 70s–80s Celtics
+  'Don Nelson': 5, 'Paul Silas': 3, 'Paul Westphal': 1,
+  'Cedric Maxwell': 2, 'M.L. Carr': 2, 'Gerald Henderson': 3,
   // 80s champions
   'Spencer Haywood': 1,
   // 1982-83 76ers
@@ -246,12 +259,23 @@ export const SIXTH_MAN_PLAYERS = new Set([
   'Payton Pritchard', 'Naz Reid', 'Clifford Robinson', 'Rodney Rogers',
   'JR Smith', 'John Starks', 'Roy Tarpley', 'Jason Terry',
   'Bill Walton', 'Corliss Williamson',
-  'Vinnie Johnson', 'Kevin McHale', 'James Harden', 'Steve Kerr',
+  'Vinnie Johnson', 'Kevin McHale', 'Steve Kerr',
   'Andre Iguodala', 'Junior Bridgeman', 'J.J. Barea', 'Robert Horry',
+  'Bruce Brown',
 ])
 
+const SIXTH_MAN_TEAM_KEYS: Record<string, string[]> = {
+  'James Harden': ['OKC'],
+}
+
 export function applySixthMan(player: Player): Player {
-  return SIXTH_MAN_PLAYERS.has(player.full_name) ? { ...player, sixthMan: true } : player
+  if (SIXTH_MAN_PLAYERS.has(player.full_name)) return { ...player, sixthMan: true }
+  const teamOverrides = SIXTH_MAN_TEAM_KEYS[player.full_name]
+  if (teamOverrides) {
+    const team = player.eraTeam ?? player.teams_by_era?.[player.era as Era]
+    if (team && teamOverrides.includes(team)) return { ...player, sixthMan: true }
+  }
+  return player
 }
 
 // ─── Player anchors ────────────────────────────────────────────────────────────
@@ -306,6 +330,12 @@ const PLAYER_ANCHORS: Record<string, AnchorType> = {
   'Elmore Smith':            'def',
   'Alonzo Mourning':         'def',
   'Roy Hibbert':             'def',
+  'Tyson Chandler':          'def',
+  'Marcus Camby':            'def',
+  'Mark Eaton':              'def',
+  'Michael Cooper':          'def',
+  'Sidney Moncrief':         'def',
+  'Mikal Bridges':           'def',
   // Offensive Anchors — T1
   'Michael Jordan':          'off',
   'Nikola Jokic':            'off',
@@ -383,6 +413,11 @@ const PLAYER_ANCHOR_TIERS: Record<string, 2> = {
   'Elmore Smith':        2,
   'Alonzo Mourning':     2,
   'Roy Hibbert':         2,
+  'Tyson Chandler':      2,
+  'Marcus Camby':        2,
+  'Mark Eaton':          2,
+  'Michael Cooper':      2,
+  'Sidney Moncrief':     2,
   // Offensive T2
   'Rajon Rondo':         2,
   'Tony Parker':         2,
@@ -413,6 +448,8 @@ const PLAYER_ANCHOR_TIERS: Record<string, 2> = {
 }
 
 export function applyAnchors(player: Player): Player {
+  // Patrick Ewing 10s is the son — don't inherit the father's anchor tag
+  if (player.full_name === 'Patrick Ewing' && player.era === '10s') return player
   const eraKey = player.era ? `${player.full_name}:${player.era}` : null
   const anchor = (eraKey && ERA_PLAYER_ANCHORS[eraKey]) ?? PLAYER_ANCHORS[player.full_name]
   if (!anchor) return player
@@ -426,7 +463,10 @@ export const DUO_PAIRS: Record<string, string[]> = {
   'Hal Greer':               ['Wilt Chamberlain'],
   'Jerry West':              ['Elgin Baylor'],
   'Elgin Baylor':            ['Jerry West'],
-  'Bill Russell':            ['John Havlicek', 'Bob Cousy'],
+  'Bill Russell':            ['John Havlicek', 'Bob Cousy', 'Sam Jones'],
+  'Sam Jones':               ['Bill Russell'],
+  'Jack Twyman':             ['Maurice Stokes'],
+  'Maurice Stokes':          ['Jack Twyman'],
   'John Havlicek':           ['Bill Russell', 'Dave Cowens'],
   'Bob Cousy':               ['Bill Russell'],
   'Dave Cowens':             ['John Havlicek'],
@@ -448,7 +488,8 @@ export const DUO_PAIRS: Record<string, string[]> = {
   'Alex English':            ['Kiki Vandeweghe'],
   'Kiki Vandeweghe':         ['Alex English'],
   'Magic Johnson':           ['Kareem Abdul-Jabbar', 'James Worthy'],
-  'Kareem Abdul-Jabbar':     ['Magic Johnson', 'Oscar Robertson'],
+  'Kareem Abdul-Jabbar':     ['Magic Johnson', 'Oscar Robertson', 'Lucius Allen'],
+  'Lucius Allen':            ['Kareem Abdul-Jabbar'],
   'James Worthy':            ['Magic Johnson'],
   'Larry Bird':              ['Kevin McHale'],
   'Kevin McHale':            ['Larry Bird'],
@@ -456,7 +497,8 @@ export const DUO_PAIRS: Record<string, string[]> = {
   'Joe Dumars':              ['Isiah Thomas'],
   // 90s
   'Michael Jordan':          ['Scottie Pippen', 'Dennis Rodman'],
-  'Scottie Pippen':          ['Michael Jordan', 'Dennis Rodman'],
+  'Scottie Pippen':          ['Michael Jordan', 'Dennis Rodman', 'Scottie Pippen Jr.'],
+  'Scottie Pippen Jr.':      ['Scottie Pippen'],
   'Dennis Rodman':           ['Michael Jordan', 'Scottie Pippen'],
   'John Stockton':           ['Karl Malone'],
   'Karl Malone':             ['John Stockton'],
@@ -519,11 +561,12 @@ export const DUO_PAIRS: Record<string, string[]> = {
   'Kyle Lowry':              ['DeMar DeRozan', 'Kawhi Leonard'],
   'Damian Lillard':          ['CJ McCollum'],
   'CJ McCollum':             ['Damian Lillard'],
-  'Giannis Antetokounmpo':   ['Khris Middleton', 'Thanasis Antetokounmpo', 'Kostas Antetokounmpo', 'Jrue Holiday'],
+  'Giannis Antetokounmpo':   ['Khris Middleton', 'Thanasis Antetokounmpo', 'Kostas Antetokounmpo', 'Alex Antetokounmpo', 'Jrue Holiday'],
   'Khris Middleton':         ['Giannis Antetokounmpo'],
   'Jrue Holiday':            ['Giannis Antetokounmpo'],
   'Thanasis Antetokounmpo':  ['Giannis Antetokounmpo'],
   'Kostas Antetokounmpo':    ['Giannis Antetokounmpo'],
+  'Alex Antetokounmpo':      ['Giannis Antetokounmpo'],
   'LaMelo Ball':             ['Lonzo Ball'],
   'Lonzo Ball':              ['LaMelo Ball'],
   'John Wall':               ['Bradley Beal'],
@@ -535,7 +578,8 @@ export const DUO_PAIRS: Record<string, string[]> = {
   'Anthony Davis':           ['LeBron James'],
   'Jayson Tatum':            ['Jaylen Brown'],
   'Jaylen Brown':            ['Jayson Tatum'],
-  'Jalen Brunson':           ['Josh Hart', 'Mikal Bridges'],
+  'Jalen Brunson':           ['Josh Hart', 'Mikal Bridges', 'Rick Brunson'],
+  'Rick Brunson':            ['Jalen Brunson'],
   'Josh Hart':               ['Jalen Brunson', 'Mikal Bridges'],
   'Mikal Bridges':           ['Jalen Brunson', 'Josh Hart'],
   'Donovan Mitchell':        ['Rudy Gobert'],
@@ -555,11 +599,34 @@ export const DUO_PAIRS: Record<string, string[]> = {
   'Bam Adebayo':             ['Jimmy Butler'],
   'Brook Lopez':             ['Robin Lopez'],
   'Robin Lopez':             ['Brook Lopez'],
+  'Amen Thompson':           ['Ausar Thompson'],
+  'Ausar Thompson':          ['Amen Thompson'],
   'Bol Bol':                 ['Manute Bol'],
   'Manute Bol':              ['Bol Bol'],
+  'Arvydas Sabonis':         ['Domantas Sabonis'],
+  'Domantas Sabonis':        ['Arvydas Sabonis'],
+  'Gary Trent':              ['Gary Trent Jr.'],
+  'Gary Trent Jr.':          ['Gary Trent'],
+  'Winston Garland':         ['Darius Garland'],
+  'Darius Garland':          ['Winston Garland'],
+  'Markieff Morris':         ['Marcus Morris Sr.'],
+  'Marcus Morris Sr.':       ['Markieff Morris'],
+  'Ron Harper':              ['Ron Harper Jr.', 'Dylan Harper'],
+  'Ron Harper Jr.':          ['Ron Harper', 'Dylan Harper'],
+  'Dylan Harper':            ['Ron Harper', 'Ron Harper Jr.'],
+  'Gerald Henderson':        ['Gerald Henderson Jr.'],
+  'Gerald Henderson Jr.':    ['Gerald Henderson'],
+  'Larry Nance':             ['Larry Nance Jr.'],
+  'Larry Nance Jr.':         ['Larry Nance'],
+  'Doc Rivers':              ['Austin Rivers'],
+  'Austin Rivers':           ['Doc Rivers'],
 }
 
 export function applyDuo(player: Player): Player {
+  // Patrick Ewing 10s is the son — give him duo with his father, not John Starks
+  if (player.full_name === 'Patrick Ewing' && player.era === '10s') {
+    return { ...player, duoPartners: ['Patrick Ewing'] }
+  }
   const partners = DUO_PAIRS[player.full_name]
   if (!partners) return player
   return { ...player, duoPartners: partners }
@@ -608,12 +675,13 @@ const SHOOTING_STAR_T1 = new Set([
   'Reggie Miller',
   'Kyle Korver',
   'Damian Lillard',
-  'Steve Kerr',
   'Larry Bird',
   'JJ Redick',
+  'Kevin Durant',
 ])
 
 const SHOOTING_STAR_T2 = new Set([
+  'Steve Kerr',
   'Peja Stojakovic',
   'Dell Curry',
   'Joe Harris',
@@ -634,6 +702,7 @@ const SHOOTING_STAR_T2 = new Set([
   'Paul George',
   'Sam Hauser',
   'Detlef Schrempf',
+  'Kevin Love',
 ])
 
 export function applyShootingStar(player: Player): Player {
@@ -682,11 +751,15 @@ const ERA_LEAGUE_AVG_3PT: Partial<Record<Era, number>> = {
   '80s': 0.278, '90s': 0.340, '00s': 0.350, '10s': 0.362, '20s': 0.362,
 }
 
+// Players who would clearly have shot 3s in modern eras regardless of TS% threshold
+const ESTIMATED_SHOOTER_OVERRIDES = new Set(['Pete Maravich'])
+
 // Pre-3PT era guard with TS ≥ 52% and no 3PT data — would adapt and shoot some 3s in modern eras
 function isEstimatedShooter(player: Player, simEra: Era): boolean {
   if (player.FG3_PCT != null) return false
   if (!PRE_THREE_PT_ERAS.includes(player.era)) return false
   if (PRE_THREE_PT_ERAS.includes(simEra)) return false
+  if (ESTIMATED_SHOOTER_OVERRIDES.has(player.full_name)) return true
   const pos = (player.position ?? '').toUpperCase()
   const isGuard = pos.includes('GUARD') || pos.includes('PG') || pos.includes('SG') || pos === 'G'
   if (!isGuard) return false
@@ -708,8 +781,8 @@ const ERA_OPP_BASELINE: Record<Era, number> = {
 
 // Modern eras have deeper, more competitive leagues — opponents are proportionally harder
 const ERA_DIFFICULTY: Partial<Record<Era, number>> = {
-  '50s': 1.04, '60s': 1.05, '70s': 1.05, '80s': 1.06,
-  '90s': 1.10, '00s': 1.08, '10s': 1.08, '20s': 1.10,
+  '50s': 1.04, '60s': 1.05, '70s': 1.05, '80s': 1.08,
+  '90s': 1.10, '00s': 1.06, '10s': 1.08, '20s': 1.10,
 }
 
 // Era-appropriate score caps (elite teams in 50s/60s historically hit 120-130 PPG)
@@ -836,6 +909,7 @@ const BASE_RATING_OVERRIDE: Record<string, number> = {
   'Alex English:80s:DEN':            57,
   'Isiah Thomas:80s:DET':            55.7,
   // 70s
+  'Julius Erving:70s:PHL':           58,
   'Oscar Robertson:70s:MIL':         56,
   'Jojo White:70s:BOS':              44,
   // 60s
@@ -856,7 +930,7 @@ export function withEraStats(player: Player, era: Era, team?: string): Player {
     player.stats_by_era?.[era]
   if (!eraData) return { ...player, era }
   const { team: eraTeam, GP, ...stats } = eraData
-  return { ...player, era, eraTeam, GP, ...stats }
+  return { ...player, era, eraTeam: eraTeam ?? team, GP, ...stats }
 }
 
 export function playerMatchesEra(player: Player, era: Era): boolean {
@@ -973,7 +1047,11 @@ export function playerBaseRating(player: Player, simEra?: Era): number {
   const t1 = (player.anchorTier ?? 1) === 1
   const anchorBonus = player.defAnchor ? (t1 ? 12 : 6) : player.offAnchor ? (t1 ? 8 : 4) : 0
   const top75Bonus = player.greatest_75_flag === 'Y' ? 3 : 0
-  const sixthManBonus = SIXTH_MAN_PLAYERS.has(player.full_name) && player.sixthManActive ? 6 : 0
+  const sixthTeamOverrides = SIXTH_MAN_TEAM_KEYS[player.full_name]
+  const sixthEffectiveTeam = player.eraTeam ?? player.teams_by_era?.[player.era as Era]
+  const isSixthMan = SIXTH_MAN_PLAYERS.has(player.full_name) ||
+    (!!sixthTeamOverrides && !!sixthEffectiveTeam && sixthTeamOverrides.includes(sixthEffectiveTeam))
+  const sixthManBonus = isSixthMan && player.sixthManActive ? 5 : 0
   return (
     (ratingPlayer.PTS ?? 0)     * 1.0 +
     (ratingPlayer.REB ?? 0)     * 0.7 +
@@ -1521,6 +1599,9 @@ export function simulateSeason(
   // Re-normalize so PTS shares still sum correctly after variance
   const varPTSWeights = weights.map((w, i) => w.PTS * seasonVar[i])
   const totalVarPTS = varPTSWeights.reduce((a, b) => a + b, 0)
+  // Add a minScale floor so zero-PTS players don't cause one player to absorb all team scoring
+  const varPTSAdj = varPTSWeights.map((w, i) => w + entries[i].assignedMPG * 0.08)
+  const totalVarPTSAdj = varPTSAdj.reduce((a, b) => a + b, 0)
 
   // ── Team context efficiency modifiers ──────────────────────────────────
   const spacingMod    = spacingDev * spacingPerShooter  // used for win factor only — excluded from displayed FG% (spacing already penalizes PPG via generateGameScore)
@@ -1544,7 +1625,7 @@ export function simulateSeason(
       slot:    pr.slot,
       GP:      seasonGames,
       MPG:     assignedMPG,
-      PTS:     totalVarPTS > 0 ? (varPTSWeights[i] / totalVarPTS) * avgTeamScore : 0,
+      PTS:     (varPTSAdj[i] / totalVarPTSAdj) * avgTeamScore,
       REB:     w.REB * v * rebSlotMod(pr.slot),
       AST:     w.AST * v,
       STL:     w.STL * v,
@@ -1564,6 +1645,26 @@ export function simulateSeason(
   const seasonAstCap = (avgTeamScore / 2.2) * 0.65
   if (rawTeamAST > seasonAstCap) {
     const scale = seasonAstCap / rawTeamAST
+    for (const s of seasonStats) s.AST *= scale
+  }
+
+  // Floor team REB and AST to era-appropriate minimums (even bad teams can't go below historical lows)
+  const ERA_TEAM_REB_FLOOR: Record<Era, number> = {
+    '50s': 52, '60s': 48, '70s': 43, '80s': 40, '90s': 38, '00s': 36, '10s': 35, '20s': 35,
+  }
+  const ERA_TEAM_AST_FLOOR: Record<Era, number> = {
+    '50s': 18, '60s': 20, '70s': 22, '80s': 22, '90s': 20, '00s': 20, '10s': 20, '20s': 20,
+  }
+  const teamREB = seasonStats.reduce((s, p) => s + p.REB, 0)
+  const teamAST = seasonStats.reduce((s, p) => s + p.AST, 0)
+  const rebFloor = ERA_TEAM_REB_FLOOR[simEra] * (0.82 + rng() * 0.18)
+  const astFloor = ERA_TEAM_AST_FLOOR[simEra] * (0.82 + rng() * 0.18)
+  if (teamREB < rebFloor) {
+    const scale = rebFloor / teamREB
+    for (const s of seasonStats) s.REB *= scale
+  }
+  if (teamAST < astFloor) {
+    const scale = astFloor / teamAST
     for (const s of seasonStats) s.AST *= scale
   }
 
@@ -1738,9 +1839,11 @@ export function simulatePlayoffs(
       const gameFG3 = baseFG3.map(b => b == null ? null : +Math.min(0.70, Math.max(0.10, b - lossPenalty + (rng() - 0.5) * 0.18)).toFixed(3))
       const gameFT  = baseFT.map(b => +Math.min(0.99, Math.max(0.30, b - (win ? 0 : 0.02) + (rng() - 0.5) * 0.12)).toFixed(3))
 
-      // Scale PTS so they sum to teamScore
+      // Scale PTS so they sum to teamScore; floor prevents one player absorbing all points when others score 0
       const rawPTSTotal = gamePTS.reduce((a, b) => a + b, 0)
-      const scaledPTS = gamePTS.map(p => Math.max(0, Math.round(totalExpPTS > 0 ? (p / rawPTSTotal) * teamScore : 0)))
+      const gamePTSAdj = gamePTS.map((p, i) => p + entries[i].assignedMPG * 0.08)
+      const rawPTSTotalAdj = gamePTSAdj.reduce((a, b) => a + b, 0)
+      const scaledPTS = gamePTSAdj.map(p => Math.max(0, Math.round((p / rawPTSTotalAdj) * teamScore)))
 
       // Special performance: inflate one player's stats
       let special: SpecialPerformance | undefined

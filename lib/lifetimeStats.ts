@@ -1,5 +1,7 @@
 export interface EraRecord { wins: number; losses: number }
 
+export interface PlayerLeaderboardEntry { name: string; top50: number; top10: number; top3: number; first: number }
+
 export interface LifetimeStats {
   draftsCompleted:             number
   totalWins:                   number
@@ -14,6 +16,7 @@ export interface LifetimeStats {
   playerDraftCounts:           Record<string, { name: string; count: number }>
   playerChampionshipCounts:    Record<string, { name: string; count: number }>
   playerBenchCounts:           Record<string, { name: string; count: number }>
+  playerLeaderboardCounts:     Record<string, PlayerLeaderboardEntry>
   coachDraftCounts:            Record<string, { name: string; count: number }>
   eraSpinCount:                Partial<Record<string, number>>
   highestTeamRating:           { rating: number; era: string } | null
@@ -30,6 +33,7 @@ function defaults(): LifetimeStats {
     recordByEra: {}, championshipsByEra: {}, bestRecord: null,
     bestRecordByEra: {}, worstRecord: null, worstRecordByEra: {},
     playerDraftCounts: {}, playerChampionshipCounts: {}, playerBenchCounts: {},
+    playerLeaderboardCounts: {},
     coachDraftCounts: {}, eraSpinCount: {}, highestTeamRating: null,
   }
 }
@@ -112,6 +116,25 @@ export function recordRunComplete(params: {
   existingCoach.count++
   s.coachDraftCounts[coach] = existingCoach
 
+  save(s, mode)
+}
+
+export function recordLeaderboardPlacement(params: {
+  rank: number
+  players: { personId: string; name: string }[]
+  mode?: 'normal' | 'salary_cap'
+}) {
+  const { rank, players, mode = 'normal' } = params
+  if (rank > 50) return
+  const s = getLifetimeStats(mode)
+  for (const p of players) {
+    const e = s.playerLeaderboardCounts[p.personId] ?? { name: p.name, top50: 0, top10: 0, top3: 0, first: 0 }
+    e.top50++
+    if (rank <= 10) e.top10++
+    if (rank <= 3)  e.top3++
+    if (rank === 1) e.first++
+    s.playerLeaderboardCounts[p.personId] = e
+  }
   save(s, mode)
 }
 

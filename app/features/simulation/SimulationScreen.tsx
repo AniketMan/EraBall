@@ -16,7 +16,7 @@ import {
   calcRebFactor, playerTier, coachBonus, coachChampBonus, effectiveCoachBonus,
   SIXTH_MAN_PLAYERS,
 } from '@eraball/engine'
-import { recordRunComplete, getLifetimeStats } from '../../../lib/lifetimeStats'
+import { recordRunComplete, getLifetimeStats, recordLeaderboardPlacement } from '../../../lib/lifetimeStats'
 import { checkAchievements, type Achievement } from '../../../lib/achievements'
 import { submitEntry, type ScoreFlags } from '../../../services/leaderboard'
 import { getShareCardHeadshots } from '../../../services/headshots'
@@ -578,6 +578,20 @@ export function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn
 
   // ── Headshots ──
   const [headshots, setHeadshots] = useState<Record<string, string | null>>({})
+  const [coachHeadshotUrl, setCoachHeadshotUrl] = useState<string | null>(null)
+
+  // Coach share-card photo: pull the Wikipedia summary thumbnail for the coach. This is a
+  // display-only enhancement; failures are swallowed so the card renders without a photo.
+  useEffect(() => {
+    const clean = coach.name.replace(/\*/g, '').trim()
+    const title = encodeURIComponent(clean.replace(/ /g, '_'))
+    fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${title}`, {
+      headers: { 'Api-User-Agent': 'EraBall/1.0 (NBA draft simulator)' }
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.thumbnail?.source) setCoachHeadshotUrl(d.thumbnail.source) })
+      .catch(() => {})
+  }, [coach.name])
 
   useEffect(() => {
     if (!seasonStats.length) return
@@ -705,6 +719,11 @@ export function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn
     setLbRank(rank)
     setLbSubmitted(true)
     setLbSubmitting(false)
+    recordLeaderboardPlacement({
+      rank,
+      players: slots.filter(s => s.player).map(s => ({ personId: s.player!.person_id, name: s.player!.full_name })),
+      mode: salaryCapMode ? 'salary_cap' : 'normal',
+    })
   }
 
   const handleShare = async () => {
@@ -763,7 +782,7 @@ export function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn
 
   const slotsWithDuo = slots.map(slot => {
     if (!slot.player) return slot
-    const isSixthMan = SIXTH_MAN_PLAYERS.has(slot.player.full_name)
+    const isSixthMan = !!slot.player.sixthMan
     if (!slot.player.duoPartners && !isSixthMan) return slot
     const duoActiveCount = slot.player.duoPartners
       ? slots.filter(s => s !== slot && s.player && slot.player!.duoPartners!.includes(s.player.full_name)).length
@@ -1007,8 +1026,12 @@ export function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn
       ['Lonzo Ball', 'LaMelo Ball'],
       ['Giannis Antetokounmpo', 'Thanasis Antetokounmpo'],
       ['Giannis Antetokounmpo', 'Kostas Antetokounmpo'],
+      ['Giannis Antetokounmpo', 'Alex Antetokounmpo'],
       ['Pau Gasol', 'Marc Gasol'],
       ['Brook Lopez', 'Robin Lopez'],
+      ['Amen Thompson', 'Ausar Thompson'],
+      ['Markieff Morris', 'Marcus Morris Sr.'],
+      ['Ron Harper Jr.', 'Dylan Harper'],
     ]
     const brotherDuo = BROTHER_PAIRS.some(([a, b]) => draftedNames.has(a) && draftedNames.has(b))
     const FATHER_SON_PAIRS: [string, string][] = [
@@ -1021,13 +1044,31 @@ export function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn
       ['Gary Payton', 'Gary Payton II'],
       ['Joe Bryant', 'Kobe Bryant'],
       ['Tim Hardaway', 'Tim Hardaway Jr.'],
+      ['Scottie Pippen', 'Scottie Pippen Jr.'],
+      ['Arvydas Sabonis', 'Domantas Sabonis'],
+      ['Rick Brunson', 'Jalen Brunson'],
+      ['Gary Trent', 'Gary Trent Jr.'],
+      ['Winston Garland', 'Darius Garland'],
+      ['Ron Harper', 'Ron Harper Jr.'],
+      ['Ron Harper', 'Dylan Harper'],
+      ['Gerald Henderson', 'Gerald Henderson Jr.'],
+      ['Larry Nance', 'Larry Nance Jr.'],
+      ['Doc Rivers', 'Austin Rivers'],
     ]
-    const fatherSonDuo = FATHER_SON_PAIRS.some(([a, b]) => draftedNames.has(a) && draftedNames.has(b))
+    // Patrick Ewing (80s/90s) + Patrick Ewing (10s = Jr.) - same name, check by era
+    const ewingFatherSon = draftedPlayers.some(p => p.full_name === 'Patrick Ewing' && (p.era === '80s' || p.era === '90s'))
+      && draftedPlayers.some(p => p.full_name === 'Patrick Ewing' && p.era === '10s')
+    const fatherSonDuo = FATHER_SON_PAIRS.some(([a, b]) => draftedNames.has(a) && draftedNames.has(b)) || ewingFatherSon
+    const FULL_FAMILY_TRIOS: string[][] = [
+      ['Dell Curry', 'Stephen Curry', 'Seth Curry'],
+      ['Ron Harper', 'Ron Harper Jr.', 'Dylan Harper'],
+    ]
+    const fullFamilyTrio = FULL_FAMILY_TRIOS.some(trio => trio.every(name => draftedNames.has(name)))
     const sixth_man_bench = slots.slice(5).some(s => s.player && SIXTH_MAN_PLAYERS.has(s.player.full_name))
     const newAchievements = checkAchievements(
       getLifetimeStats('normal'),
       getLifetimeStats('salary_cap'),
-      { era: simEra, mode: runMode, wins, losses, champion: playoffResult?.champion ?? false, teamRating: Math.round(tr + 15), coachGrade: coach.overallGrade, hasSTierStarter, duo_pair, duo_trio, glassCleanerCount, shootingStarCount, brotherDuo, fatherSonDuo, sixth_man_bench },
+      { era: simEra, mode: runMode, wins, losses, champion: playoffResult?.champion ?? false, teamRating: Math.round(tr + 15), coachGrade: coach.overallGrade, hasSTierStarter, duo_pair, duo_trio, glassCleanerCount, shootingStarCount, brotherDuo, fatherSonDuo, fullFamilyTrio, sixth_man_bench },
     )
     if (newAchievements.length > 0) onAchievementsUnlocked?.(newAchievements)
   }, [allDone])
@@ -1713,6 +1754,7 @@ export function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn
             coach={coach}
             teamRating={tr}
             headshots={headshots}
+            coachHeadshotUrl={coachHeadshotUrl}
             sandboxMode={sandboxMode}
             salaryCapMode={salaryCapMode}
             playoffOutcome={

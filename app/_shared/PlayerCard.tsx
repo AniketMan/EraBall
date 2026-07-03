@@ -22,6 +22,13 @@ export function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode
   const sec     = fifties ? '#e2e2e2' : G.grey
   const secDark = fifties ? '#c8c8c8' : G.greyDark
   const tierLabel = r >= 55 ? 'S' : r >= 46 ? 'A' : r >= 38 ? 'B' : r >= 31 ? 'C' : r >= 24 ? 'D' : r >= 16 ? 'E' : 'F'
+  const isSixthMan = !!player.sixthMan
+  // Some players appear in multiple eras under the same name but represent different
+  // people (e.g. Patrick Ewing Sr. vs Jr.). Override the display name by name:era key.
+  const DISPLAY_NAME_OVERRIDES: Record<string, string> = {
+    'Patrick Ewing:10s': 'Patrick Ewing Jr.',
+  }
+  const displayName = DISPLAY_NAME_OVERRIDES[`${player.full_name}:${player.era}`] ?? player.full_name
   const tagCount = [
     player.greatest_75_flag === 'Y',
     (player.rings ?? 0) > 0,
@@ -32,6 +39,7 @@ export function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode
     !!player.timeless,
     !!player.duoPartners,
     !!player.flexPositions,
+    isSixthMan,
   ].filter(Boolean).length
   const usePillLayout = tagCount > 4
 
@@ -51,7 +59,7 @@ export function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode
         <PlayerHeadshot personId={player.person_id} size={80} initial={player.position?.[0]} />
         <div className="flex-1 flex items-start justify-between min-w-0">
           <div className="min-w-0">
-            <div className="font-bold text-white text-base leading-tight truncate">{player.full_name}</div>
+            <div className="font-bold text-white text-base leading-tight truncate">{displayName}</div>
             <div className="text-xs mt-0.5 uppercase tracking-wide" style={{ color: sec }}>
               {player.position} - {eraLabel(player.era)} - {player.eraTeam ?? (displayEra ? playerTeamForEra(player, displayEra) : player.team_abbreviation)}
             </div>
@@ -108,7 +116,7 @@ export function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode
             )}
             {!usePillLayout && player.duoPartners && (
               <TagTooltip tip={(duoActiveCount ?? 0) > 0 ? `Dynamic Duo active. +${(duoActiveCount ?? 0) * 5} rating boost.` : `Draft ${player.duoPartners.join(' or ')} to activate the Dynamic Duo bonus (+5 per partner).`}>
-                <span className="text-xs uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: (duoActiveCount ?? 0) > 0 ? '#4ECDC4' : '#444444', letterSpacing: '0.08em' }}>
+                <span className="text-xs uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: (duoActiveCount ?? 0) > 0 ? '#4ECDC4' : '#666666', letterSpacing: '0.08em', border: `1px solid ${(duoActiveCount ?? 0) > 0 ? '#4ECDC4' : '#4ECDC466'}`, padding: '1px 5px' }}>
                   Dynamic Duo
                 </span>
               </TagTooltip>
@@ -117,6 +125,13 @@ export function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode
               <TagTooltip tip="Can play multiple positions outside of their natural position, without penalty..">
                 <span className="text-xs px-1.5 py-0.5 uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: '#4A9ECC', border: `1px solid #2A6E99`, background: `#4A9ECC18` }}>
                   FLEX
+                </span>
+              </TagTooltip>
+            )}
+            {!usePillLayout && isSixthMan && (
+              <TagTooltip tip="Sixth Man. Elite bench performer. Gets a +6 rating boost when playing off the bench.">
+                <span className="text-xs uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: '#FF8C42', letterSpacing: '0.08em' }}>
+                  6th Man
                 </span>
               </TagTooltip>
             )}
@@ -137,47 +152,52 @@ export function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
           {player.greatest_75_flag === 'Y' && (
             <TagTooltip tip="Recognized as one of the 75 greatest NBA players of all time, a small boost in every game play play.">
-              <span style={{ fontSize: 11, padding: '3px 8px', border: `1px solid ${G.gold}44`, color: G.gold, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>75 Greatest</span>
+              <span className="inline-block transition-transform duration-150 hover:scale-110" style={{ fontSize: 11, padding: '3px 8px', border: `1px solid ${G.gold}44`, color: G.gold, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>75 Greatest</span>
             </TagTooltip>
           )}
           {(player.rings ?? 0) > 0 && (
             <TagTooltip tip="Champions perform better in the playoffs. The more championships, the better the playoff performer.">
-              <span style={{ fontSize: 11, padding: '3px 8px', border: `1px solid ${G.gold}44`, color: G.gold, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>{player.rings}× Champ</span>
+              <span className="inline-block transition-transform duration-150 hover:scale-110" style={{ fontSize: 11, padding: '3px 8px', border: `1px solid ${G.gold}44`, color: G.gold, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>{player.rings}× Champ</span>
             </TagTooltip>
           )}
           {player.defAnchor && (
             <TagTooltip tip={(player.anchorTier ?? 1) === 1 ? "Elite defensive anchor. Defensive impact beyond the stat sheet. T1 carries a larger boost than T2." : "Solid defensive anchor. Defensive impact beyond the stat sheet. T1 carries a larger boost than T2."}>
-              <span style={{ fontSize: 11, padding: '3px 8px', border: `1px solid #4A9ECC44`, color: '#4A9ECC', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>Def Anchor T{player.anchorTier ?? 1}</span>
+              <span className="inline-block transition-transform duration-150 hover:scale-110" style={{ fontSize: 11, padding: '3px 8px', border: `1px solid #4A9ECC44`, color: '#4A9ECC', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>Def Anchor T{player.anchorTier ?? 1}</span>
             </TagTooltip>
           )}
           {player.offAnchor && (
             <TagTooltip tip={(player.anchorTier ?? 1) === 1 ? "Elite offensive engine. Major boost to team scoring and ball movement." : "Strong offensive contributor. Elevates the team's offense. T1 anchors carry a larger boost."}>
-              <span style={{ fontSize: 11, padding: '3px 8px', border: `1px solid ${G.gold}44`, color: G.gold, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>Off Anchor T{player.anchorTier ?? 1}</span>
+              <span className="inline-block transition-transform duration-150 hover:scale-110" style={{ fontSize: 11, padding: '3px 8px', border: `1px solid ${G.gold}44`, color: G.gold, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>Off Anchor T{player.anchorTier ?? 1}</span>
             </TagTooltip>
           )}
           {player.shootingStar && (
             <TagTooltip tip={(player.shootingStarTier ?? 1) === 1 ? "Boosts team spacing. Elite all-time shooter. T1 carries a larger boost than T2." : "Boosts team spacing. Special shooter. T1 carries a larger boost than T2."}>
-              <span style={{ fontSize: 11, padding: '3px 8px', border: `1px solid #F472B644`, color: '#F472B6', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>Shooting Star T{player.shootingStarTier ?? 1}</span>
+              <span className="inline-block transition-transform duration-150 hover:scale-110" style={{ fontSize: 11, padding: '3px 8px', border: `1px solid #F472B644`, color: '#F472B6', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>Shooting Star T{player.shootingStarTier ?? 1}</span>
             </TagTooltip>
           )}
           {player.glassClean && (
             <TagTooltip tip="Elite rebounder. Crashes the boards on both ends, boosting team second-chance points and limiting opponent possessions.">
-              <span style={{ fontSize: 11, padding: '3px 8px', border: `1px solid #34D39944`, color: '#34D399', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>Glass Cleaner</span>
+              <span className="inline-block transition-transform duration-150 hover:scale-110" style={{ fontSize: 11, padding: '3px 8px', border: `1px solid #34D39944`, color: '#34D399', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>Glass Cleaner</span>
             </TagTooltip>
           )}
           {player.timeless && (
             <TagTooltip tip="Transcendent skill set. Minimal era penalties across all decades. Minor penalty only if 6+ eras from home era.">
-              <span style={{ fontSize: 11, padding: '3px 8px', border: `1px solid #C084FC44`, color: '#C084FC', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>Timeless</span>
+              <span className="inline-block transition-transform duration-150 hover:scale-110" style={{ fontSize: 11, padding: '3px 8px', border: `1px solid #C084FC44`, color: '#C084FC', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>Timeless</span>
             </TagTooltip>
           )}
           {player.duoPartners && (
             <TagTooltip tip={(duoActiveCount ?? 0) > 0 ? `Dynamic Duo active. +${(duoActiveCount ?? 0) * 5} rating boost.` : `Draft ${player.duoPartners.join(' or ')} to activate the Dynamic Duo bonus (+5 per partner).`}>
-              <span style={{ fontSize: 11, padding: '3px 8px', border: `1px solid ${(duoActiveCount ?? 0) > 0 ? '#4ECDC444' : '#44444444'}`, color: (duoActiveCount ?? 0) > 0 ? '#4ECDC4' : '#666666', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>Dynamic Duo</span>
+              <span className="inline-block transition-transform duration-150 hover:scale-110" style={{ fontSize: 11, padding: '3px 8px', border: `1px solid ${(duoActiveCount ?? 0) > 0 ? '#4ECDC4' : '#4ECDC466'}`, color: (duoActiveCount ?? 0) > 0 ? '#4ECDC4' : '#666666', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>Dynamic Duo</span>
             </TagTooltip>
           )}
           {player.flexPositions && (
             <TagTooltip tip="Can play multiple positions outside of their natural position, without penalty..">
-              <span style={{ fontSize: 11, padding: '3px 8px', border: `1px solid #2A6E99`, color: '#4A9ECC', background: '#4A9ECC18', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>Flex</span>
+              <span className="inline-block transition-transform duration-150 hover:scale-110" style={{ fontSize: 11, padding: '3px 8px', border: `1px solid #2A6E99`, color: '#4A9ECC', background: '#4A9ECC18', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>Flex</span>
+            </TagTooltip>
+          )}
+          {isSixthMan && (
+            <TagTooltip tip="Sixth Man. Elite bench performer. Gets a +6 rating boost when playing off the bench.">
+              <span className="inline-block transition-transform duration-150 hover:scale-110" style={{ fontSize: 11, padding: '3px 8px', border: `1px solid #FF8C4244`, color: '#FF8C42', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>6th Man</span>
             </TagTooltip>
           )}
         </div>

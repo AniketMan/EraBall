@@ -47,6 +47,7 @@ interface ResultCardProps {
   coach: Coach
   teamRating: number
   headshots: Record<string, string | null>
+  coachHeadshotUrl?: string | null
   playoffOutcome?: PlayoffOutcome | null
   playerAwards?: Record<string, string[]>   // person_id → short award labels
   finalsMVPId?: string | null
@@ -157,7 +158,7 @@ function StatRow({ lbl, val, lead }: { lbl: string; val: string; lead: boolean }
 }
 
 const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
-  function ResultCard({ simEra, wins, losses, seasonStats, coach, teamRating, headshots, playoffOutcome, playerAwards = {}, finalsMVPId, finalsMVPStats, sandboxMode, salaryCapMode, customEraRange }, ref) {
+  function ResultCard({ simEra, wins, losses, seasonStats, coach, teamRating, headshots, coachHeadshotUrl, playoffOutcome, playerAwards = {}, finalsMVPId, finalsMVPStats, sandboxMode, salaryCapMode, customEraRange }, ref) {
     const starters = seasonStats.filter(s => !s.slot.startsWith('B'))
     const bench    = seasonStats.filter(s =>  s.slot.startsWith('B'))
 
@@ -566,18 +567,21 @@ const ResultCard = React.forwardRef<HTMLDivElement, ResultCardProps>(
           }}>
             {/* Coach section */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
-              <img
-                src={`/api/coach-headshot?name=${encodeURIComponent(coach.name)}`}
-                alt=""
-                style={{
-                  width: 48, height: 48, borderRadius: '50%',
-                  objectFit: 'cover', objectPosition: 'center top',
-                  border: `1px solid ${C.goldDim}`,
-                  background: C.surface2,
-                  flexShrink: 0,
-                }}
-                onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-              />
+              {coachHeadshotUrl && (
+                <img
+                  src={coachHeadshotUrl}
+                  alt=""
+                  crossOrigin="anonymous"
+                  style={{
+                    width: 48, height: 48, borderRadius: '50%',
+                    objectFit: 'cover', objectPosition: 'center top',
+                    border: `1px solid ${C.goldDim}`,
+                    background: C.surface2,
+                    flexShrink: 0,
+                  }}
+                  onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                />
+              )}
               <div style={{ minWidth: 0 }}>
                 <div style={{
                   fontFamily: INTER,

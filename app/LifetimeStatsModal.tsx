@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { getLifetimeStats, clearLifetimeStats, type LifetimeStats } from '../lib/lifetimeStats'
+import { getLifetimeStats, clearLifetimeStats, type LifetimeStats, type PlayerLeaderboardEntry } from '../lib/lifetimeStats'
 
 const ALL_ERAS = ['50s','60s','70s','80s','90s','00s','10s','20s']
 
@@ -141,6 +141,7 @@ function PlayerHighlightCard({ label, name, count, sub }: { label: string; name:
   )
 }
 
+
 function StatsPanel({ stats, isMobile }: { stats: LifetimeStats; isMobile: boolean }) {
   const winPct = stats.totalWins + stats.totalLosses > 0
     ? ((stats.totalWins / (stats.totalWins + stats.totalLosses)) * 100).toFixed(1)
@@ -152,6 +153,15 @@ function StatsPanel({ stats, isMobile }: { stats: LifetimeStats; isMobile: boole
   const mostDraftedCoach = Object.values(stats.coachDraftCounts).sort((a, b) => b.count - a.count)[0]
   const favoriteEra      = Object.entries(stats.eraSpinCount).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]
   const erasWithRecord   = ALL_ERAS.filter(e => stats.recordByEra[e])
+
+  const lbEntries = Object.values(stats.playerLeaderboardCounts ?? {})
+  const lbTabs = [
+    { key: 'top50', label: 'Top 50', color: G.grey,    entries: lbEntries.filter(e => e.top50 > 0).sort((a, b) => b.top50 - a.top50).slice(0, 5) },
+    { key: 'top10', label: 'Top 10', color: G.gold,    entries: lbEntries.filter(e => e.top10 > 0).sort((a, b) => b.top10 - a.top10).slice(0, 5) },
+    { key: 'top3',  label: 'Top 3',  color: '#fb923c', entries: lbEntries.filter(e => e.top3  > 0).sort((a, b) => b.top3  - a.top3 ).slice(0, 5) },
+    { key: 'first', label: '#1',     color: '#4ade80', entries: lbEntries.filter(e => e.first > 0).sort((a, b) => b.first - a.first).slice(0, 5) },
+  ]
+  const [lbTab, setLbTab] = useState<'top50' | 'top10' | 'top3' | 'first'>('top10')
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -201,6 +211,46 @@ function StatsPanel({ stats, isMobile }: { stats: LifetimeStats; isMobile: boole
         {mostBenched && <PlayerHighlightCard label="Most Benched Player" name={mostBenched.name} count={mostBenched.count} sub="times benched" />}
         {mostDraftedCoach && <PlayerHighlightCard label="Most Drafted Coach" name={mostDraftedCoach.name} count={mostDraftedCoach.count} />}
       </div>
+
+      {/* Leaderboard appearances */}
+      {lbEntries.length > 0 && (
+        <div style={{ background: G.surface, border: `1px solid ${G.border}` }}>
+          <div style={{ padding: '12px 16px', borderBottom: `1px solid ${G.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ fontFamily: INTER, fontSize: 9, color: G.grey, letterSpacing: '0.18em', textTransform: 'uppercase' }}>Leaderboard Appearances</div>
+            <div style={{ display: 'flex', gap: 4 }}>
+              {lbTabs.map(t => (
+                <button
+                  key={t.key}
+                  onClick={() => setLbTab(t.key as typeof lbTab)}
+                  style={{
+                    padding: '3px 10px', fontSize: 10, fontFamily: INTER, fontWeight: 700,
+                    background: 'none', cursor: 'pointer', letterSpacing: '0.08em',
+                    border: `1px solid ${lbTab === t.key ? t.color : G.border}`,
+                    color: lbTab === t.key ? t.color : G.grey,
+                    transition: 'color 0.15s, border-color 0.15s',
+                  }}
+                >{t.label}</button>
+              ))}
+            </div>
+          </div>
+          {(() => {
+            const active = lbTabs.find(t => t.key === lbTab)!
+            const countKey = lbTab as keyof PlayerLeaderboardEntry
+            return active.entries.length > 0
+              ? (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: G.border }}>
+                  {active.entries.map(e => (
+                    <div key={e.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 12px', background: G.surface, gap: 8 }}>
+                      <div style={{ fontFamily: INTER, fontSize: 11, color: G.white, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.name}</div>
+                      <span style={{ fontFamily: BEBAS, fontSize: 13, color: active.color, letterSpacing: '0.06em', flexShrink: 0 }}>{e[countKey] as number}×</span>
+                    </div>
+                  ))}
+                </div>
+              )
+              : <div style={{ padding: '12px 16px', fontFamily: INTER, fontSize: 12, color: G.grey }}>No {active.label} appearances yet.</div>
+          })()}
+        </div>
+      )}
 
       {/* Record by era */}
       {erasWithRecord.length > 0 && (

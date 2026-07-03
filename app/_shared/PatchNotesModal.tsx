@@ -102,6 +102,55 @@ const V1_5_NOTES = [
   ]},
 ]
 
+const V1_5_8_NOTES = [
+  { section: 'Sixth Man', items: [
+    'Sixth Man bench boost adjusted to +5 (from +6).',
+    'OKC James Harden now carries the Sixth Man tag. Only applies to his Oklahoma City versions.',
+  ]},
+  { section: 'Drafting', items: [
+    'You now get 3 random coaches to choose from and 1 respin.',
+  ]},
+  { section: 'Lifetime Stats', items: [
+    'New stat: Leaderboard Appearances. Tracks how many times each player has appeared in a Top 50, Top 10, Top 3, or #1 leaderboard finish. Visible in the Lifetime Stats modal.',
+  ]},
+  { section: 'Sandbox', items: [
+    'New "Fill Rest with Random" button. Fills all empty slots with random players at the correct position. No position penalty for starters. Appears at the bottom of the sandbox panel on all tabs.',
+  ]},
+  { section: 'Ratings and Stats', items: [
+    'Julius Erving 70s PHL base rating increased to S tier.',
+    'Pete Maravich correctly gets an estimated three point % in modern eras. Bug is fixed.',
+  ]},
+  { section: 'Tags', items: [
+    'Steve Kerr moved from Shooting Star T1 → T2.',
+    'Kevin Love added as Shooting Star T2.',
+  ]},
+  { section: 'Dynamic Duos', items: [
+    'New duos: Kareem Abdul-Jabbar & Lucius Allen, Bill Russell & Sam Jones, Jack Twyman & Maurice Stokes.',
+    'New family trio: Ron Harper, Ron Harper Jr., and Dylan Harper (father/son and brothers).',
+  ]},
+  { section: 'Positions', items: [
+    'Victor Wembanyama and Jerry Lucas locked to PF/C, George Gervin SG/SF',
+  ]},
+  { section: 'Simulation', items: [
+    '80s regular season difficulty increased.',
+    '00s regular season difficulty increased.',
+  ]},
+  { section: 'Salary Cap', items: [
+    'You can now always draft a D tier player even if you need one more C slot.'
+  ]},
+  { section: 'Draft', items: [
+    'Save your player draft re-spin and it carries over as an extra re-spin during the coach draft.',
+  ]},
+  { section: 'Bug Fixes', items: [
+    'Players with 0 scoring stats no longer absorb all team points. Scoring is now distributed proportionally across the roster based on minutes for horrible rosters.',
+    'Bad teams now have a minimum realistic floor for rebounds and assists per game, scaled by era. Previously, rosters of poor rebounders or non-playmakers could produce impossible team totals.',
+    'Supporters Hall of Fame fixed with the new supporters!',
+  ]},
+  { section: 'Achievements', items: [
+    'Added 5 new achievements',
+  ]},
+]
+
 const V1_5_6_NOTES = [
   { section: 'Dynamic Duos', items: [
     'New father/son duos: Dell Curry & Steph Curry, Dell Curry & Seth Curry, LeBron James & Bronny James, Kobe Bryant & Joe Bryant, Klay Thompson & Mychal Thompson, Rick Barry & Brent Barry, Gary Payton & Gary Payton II, Tim Hardaway & Tim Hardaway Jr., Bol Bol & Manute Bol.',
@@ -283,6 +332,7 @@ const V1_2_NOTES = [
 ]
 
 export function PatchNotesModal({ onClose }: { onClose: () => void }) {
+  const [showV1_5_6, setShowV1_5_6] = useState(false)
   const [showV1_5_5, setShowV1_5_5] = useState(false)
   const [showV1_5_3, setShowV1_5_3] = useState(false)
   const [showV1_5_2, setShowV1_5_2] = useState(false)
@@ -311,12 +361,20 @@ export function PatchNotesModal({ onClose }: { onClose: () => void }) {
         <div className="flex items-center justify-between mb-4">
           <div>
             <div style={{ ...BEBAS, fontSize: 24, color: G.white, letterSpacing: '0.05em' }}>What's New</div>
-            <div style={{ fontSize: 11, color: G.gold, letterSpacing: '0.12em', textTransform: 'uppercase' }}>v1.5.6 · June 30</div>
+            <div style={{ fontSize: 11, color: G.gold, letterSpacing: '0.12em', textTransform: 'uppercase' }}>v1.5.8 · July 2</div>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: G.greyDark, fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>✕</button>
         </div>
 
-        {renderNotes(V1_5_6_NOTES)}
+        {renderNotes(V1_5_8_NOTES)}
+
+        <div style={{ borderTop: `1px solid ${G.border}`, marginTop: 8, paddingTop: 12 }}>
+          <button onClick={() => setShowV1_5_6(v => !v)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: 0 }}>
+            <span style={{ fontSize: 11, color: G.greyDark, letterSpacing: '0.12em', textTransform: 'uppercase' }}>V1.5.6 · June 30</span>
+            <span style={{ fontSize: 10, color: G.greyDark, display: 'inline-block', transform: showV1_5_6 ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▼</span>
+          </button>
+          {showV1_5_6 && <div style={{ marginTop: 12 }}>{renderNotes(V1_5_6_NOTES)}</div>}
+        </div>
 
         <div style={{ borderTop: `1px solid ${G.border}`, marginTop: 8, paddingTop: 12 }}>
           <button onClick={() => setShowV1_5_5(v => !v)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: 0 }}>

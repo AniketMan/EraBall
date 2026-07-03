@@ -1,54 +1,62 @@
 'use client'
 // app/features/coach-draft/CoachDraftScreen.tsx
-// Feature screen: the coach draft (slot-machine spin, reroll, sandbox/dev search pickers).
-// Stateful feature module - composes shared atoms/modals and the component library.
+// Feature screen: the coach draft. v1.5.8 flow - a single spin reveals THREE coach
+// choices; the player picks one. Respin budget is 3 when a bonus re-spin was carried
+// over from the player draft (unused player re-spin), otherwise 2. Sandbox/dev pickers
+// select a coach directly. Stateful feature module - composes shared atoms/modals and
+// the component library.
 
 import React, { useState } from 'react'
 import type { Coach } from '@eraball/engine'
-import { coachChampBonus } from '@eraball/engine'
 import { G, BEBAS } from '../../../src/components/tokens'
-import { Btn, GradeDisplay, TagTooltip } from '../../../src/components'
+import { Btn } from '../../../src/components'
 import { TopBar, CoachHeadshot } from '../../_shared'
 
-export function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxMode, salaryCapMode, greyscaleBtn, muteBtn }: {
-  coaches: Coach[]; onCoachSelected: (coach: Coach) => void; onRestart: () => void; sandboxMode?: boolean; salaryCapMode?: boolean; greyscaleBtn?: React.ReactNode; muteBtn?: React.ReactNode
+// Grade -> color. Local to this module to match upstream's coach-draft palette
+// (distinct from ResultCard's gradeColor, which uses a different mapping).
+const gradeColor = (g: string) =>
+  g === 'A' ? '#4ade80' : g === 'B' ? '#86efac' : g === 'C' ? G.gold : g === 'D' ? '#fb923c' : '#f87171'
+
+export function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxMode, salaryCapMode, bonusCoachRespin, greyscaleBtn, muteBtn }: {
+  coaches: Coach[]; onCoachSelected: (coach: Coach) => void; onRestart: () => void; sandboxMode?: boolean; salaryCapMode?: boolean; bonusCoachRespin?: boolean; greyscaleBtn?: React.ReactNode; muteBtn?: React.ReactNode
 }) {
   const GRADE_RANK: Record<string, number> = { A: 4, B: 3, C: 2, D: 1, F: 0 }
   const eligibleCoaches = salaryCapMode ? coaches.filter(c => GRADE_RANK[c.overallGrade] >= 2) : coaches
   const [spinning, setSpinning] = useState(false)
-  const [coach, setCoach] = useState<Coach | null>(null)
+  const [choices, setChoices] = useState<Coach[]>([])
   const [spinsUsed, setSpinsUsed] = useState(0)
-  const [displayName, setDisplayName] = useState('')
-  const [spinKey, setSpinKey] = useState(0)
-  const [spinPhase, setSpinPhase] = useState<'fast' | 'slow' | 'land'>('fast')
+  const [reelNames, setReelNames] = useState<[string, string, string]>(['', '', ''])
+  const [reelKeys, setReelKeys] = useState<[number, number, number]>([0, 0, 0])
+  const [reelPhase, setReelPhase] = useState<'fast' | 'slow' | 'land'>('fast')
   const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   const [devMode, setDevMode] = useState(false)
   const [devSearch, setDevSearch] = useState('')
   const [sandboxSearch, setSandboxSearch] = useState('')
 
   const spin = () => {
+    const three = [...eligibleCoaches].sort(() => Math.random() - 0.5).slice(0, Math.min(3, eligibleCoaches.length)) as [Coach, Coach, Coach]
     setSpinning(true)
+    setChoices([])
     setSpinsUsed(n => n + 1)
-    setCoach(null)
     const schedule = [
       ...Array(10).fill(65),
       ...Array(5).fill(120),
       ...Array(3).fill(220),
     ]
     let ticks = 0
+    const rnd = () => eligibleCoaches[Math.floor(Math.random() * eligibleCoaches.length)].name
     const doTick = () => {
       const phase: 'fast' | 'slow' = ticks < 10 ? 'fast' : 'slow'
-      setSpinPhase(phase)
-      setDisplayName(eligibleCoaches[Math.floor(Math.random() * eligibleCoaches.length)].name)
-      setSpinKey(k => k + 1)
+      setReelPhase(phase)
+      setReelNames([rnd(), rnd(), rnd()])
+      setReelKeys(ks => [ks[0] + 1, ks[1] + 1, ks[2] + 1])
       if (ticks < schedule.length) {
         setTimeout(doTick, schedule[ticks++])
       } else {
-        const picked = eligibleCoaches[Math.floor(Math.random() * eligibleCoaches.length)]
-        setSpinPhase('land')
-        setSpinKey(k => k + 1)
-        setDisplayName(picked.name)
-        setCoach(picked)
+        setReelPhase('land')
+        setReelNames([three[0].name, three[1].name, three[2].name])
+        setReelKeys(ks => [ks[0] + 1, ks[1] + 1, ks[2] + 1])
+        setChoices(three)
         setTimeout(() => setSpinning(false), 350)
       }
     }
@@ -66,11 +74,11 @@ export function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxM
             Draft a Coach
           </div>
           <div className="text-xs mt-2 uppercase tracking-widest" style={{ color: G.grey }}>
-            A great coach elevates your roster, a bad one can hold it back. You have 3 chances.
+            Spin to reveal 3 coaches. Pick the best fit for your roster.
           </div>
         </div>
 
-        {!coach && !spinning && (
+        {!choices.length && !spinning && (
           <Btn onClick={spin} variant="gold" className="w-full py-4 text-base mb-4">
             Spin Coach
           </Btn>
@@ -91,7 +99,7 @@ export function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxM
                 {eligibleCoaches.filter(c => c.name.toLowerCase().includes(sandboxSearch.toLowerCase())).slice(0, 12).map(c => (
                   <div
                     key={`${c.name}-${c.from}`}
-                    onClick={() => { setCoach(c); setDisplayName(c.name); setSandboxSearch('') }}
+                    onClick={() => { onCoachSelected(c); setSandboxSearch('') }}
                     style={{ padding: '8px 12px', cursor: 'pointer', fontSize: 13, color: G.white, borderBottom: `1px solid ${G.border}` }}
                     onMouseEnter={e => (e.currentTarget.style.background = G.surface2)}
                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
@@ -105,82 +113,66 @@ export function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxM
           </div>
         )}
 
-        {(spinning || displayName) && (
-          <div className="flex items-center justify-center gap-4 mb-4 py-4" style={{ borderTop: `1px solid ${G.border}`, borderBottom: `1px solid ${G.border}` }}>
-            {!spinning && <CoachHeadshot name={displayName} size={52} />}
-            <div style={{ ...BEBAS, fontSize: 28, color: spinning ? G.greyDark : G.white, letterSpacing: '0.05em' }}>
-              <span className="slot-reel-window">
-                <span
-                  key={spinKey}
-                  className={spinning || spinPhase === 'land' ? `slot-reel${spinPhase === 'slow' ? ' slot-reel--slow' : spinPhase === 'land' ? ' slot-reel--land' : ''}` : ''}
-                >
-                  {displayName}
-                </span>
-              </span>
-            </div>
-          </div>
-        )}
-
-        {coach && !spinning && (
-          <div style={{ background: G.surface, border: `1px solid ${G.border}`, padding: '20px', marginBottom: 16 }}>
-            <div className="flex items-start gap-4 mb-4">
-              <CoachHeadshot name={coach.name} size={72} />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <div style={{ ...BEBAS, fontSize: 28, color: G.white, letterSpacing: '0.04em' }}>
-                        {coach.name.replace('*', '')}
-                        {coach.name.endsWith('*') && <span style={{ color: G.gold, fontSize: 18, marginLeft: 4 }}>★</span>}
-                      </div>
-                      {coach.offGuru && coach.defGuru ? (
-                        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: G.black, background: 'linear-gradient(90deg, #C9A84C, #4A9ECC)', padding: '2px 8px', borderRadius: 3, textTransform: 'uppercase' }}>COMPLETE</span>
-                      ) : (<>
-                        {coach.offGuru && (
-                          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: G.black, background: G.gold, padding: '2px 7px', borderRadius: 3, textTransform: 'uppercase' }}>OFF GURU</span>
-                        )}
-                        {coach.defGuru && (
-                          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: G.black, background: '#4A9ECC', padding: '2px 7px', borderRadius: 3, textTransform: 'uppercase' }}>DEF GURU</span>
-                        )}
-                      </>)}
-                    </div>
-                    <div className="text-xs mt-1" style={{ color: G.grey }}>
-                      {coach.from}–{coach.to} - {coach.regW}W–{coach.regL}L ({(coach.regWLPct * 100).toFixed(1)}%)
-                    </div>
-                    <div className="flex flex-wrap gap-x-3 mt-1.5" style={{ fontSize: 11, color: G.greyDark }}>
-                      <span style={{ color: G.grey }}>{coach.playoffG > 0 ? `${(coach.playoffWLPct * 100).toFixed(1)}% playoffs` : 'No playoffs'}</span>
-                      {coach.champ > 0 && <><span>·</span>
-                        <TagTooltip tip={`${Math.min(coach.champ, 8)}× title${coach.champ > 8 ? ' (capped at 8)' : ''}. Coaches who've won it all provide a small but real edge to your team. +${(coachChampBonus(coach) * 100).toFixed(1)}% team rating.`}>
-                          <span style={{ color: G.gold }}>{coach.champ}× Champion</span>
-                        </TagTooltip>
-                      </>}
-                      {coach.conf > 0 && coach.champ === 0 && <><span>·</span><span style={{ color: G.grey }}>{coach.conf} conf title{coach.conf !== 1 ? 's' : ''}</span></>}
-                    </div>
-                  </div>
-                  <div style={{ ...BEBAS, fontSize: 48, color: G.gold, letterSpacing: '0.05em', lineHeight: 1 }}>
-                    {coach.overallGrade}
-                  </div>
+        {spinning && (
+          <div className="flex flex-col gap-2 mb-4">
+            {([0, 1, 2] as const).map(i => (
+              <div key={i} style={{ background: G.surface, border: `1px solid ${G.border}`, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 72 }}>
+                <div style={{ ...BEBAS, fontSize: 28, color: G.greyDark, letterSpacing: '0.05em' }}>
+                  <span className="slot-reel-window">
+                    <span
+                      key={reelKeys[i]}
+                      className={`slot-reel${reelPhase === 'slow' ? ' slot-reel--slow' : reelPhase === 'land' ? ' slot-reel--land' : ''}`}
+                    >
+                      {reelNames[i]}
+                    </span>
+                  </span>
                 </div>
               </div>
-            </div>
-            <div className="grid grid-cols-3 gap-px" style={{ background: G.border }}>
-              <GradeDisplay grade={coach.offGrade} label="Offense" />
-              <GradeDisplay grade={coach.defGrade} label="Defense" />
-              <GradeDisplay grade={coach.overallGrade} label="Overall" />
-            </div>
+            ))}
           </div>
         )}
 
-        {coach && !spinning && (
-          <div className="flex gap-2">
-            {spinsUsed < 3 && (
-              <Btn onClick={spin} variant="ghost" className="flex-1 py-3">
-                Reroll ({3 - spinsUsed} left)
-              </Btn>
-            )}
-            <Btn onClick={() => onCoachSelected(coach)} variant="gold" className="flex-1 py-3">
-              Accept Coach
-            </Btn>
+        {!spinning && choices.length > 0 && spinsUsed < (bonusCoachRespin ? 3 : 2) && (
+          <Btn onClick={spin} variant="ghost" className="w-full py-3 mb-3">
+            Respin ({bonusCoachRespin ? 3 - spinsUsed : 2 - spinsUsed} left)
+          </Btn>
+        )}
+
+        {!spinning && choices.length > 0 && (
+          <div className="flex flex-col gap-2 mb-4">
+            {choices.map(c => (
+              <button
+                key={`${c.name}-${c.from}`}
+                onClick={() => onCoachSelected(c)}
+                style={{ width: '100%', background: G.surface, border: `1px solid ${G.border}`, padding: '12px 16px', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 12, transition: 'border-color 0.15s, background 0.15s' }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = G.gold; e.currentTarget.style.background = G.surface2 }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = G.border; e.currentTarget.style.background = G.surface }}
+              >
+                <CoachHeadshot name={c.name} size={52} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <span style={{ ...BEBAS, fontSize: 20, color: G.white, letterSpacing: '0.04em' }}>
+                      {c.name.replace('*', '')}
+                    </span>
+                    {c.name.endsWith('*') && <span style={{ color: G.gold, fontSize: 13 }}>★</span>}
+                    {c.offGuru && c.defGuru && <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: G.black, background: 'linear-gradient(90deg, #C9A84C, #4A9ECC)', padding: '1px 6px', textTransform: 'uppercase' }}>COMPLETE</span>}
+                    {c.offGuru && !c.defGuru && <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: G.black, background: G.gold, padding: '1px 6px', textTransform: 'uppercase' }}>OFF GURU</span>}
+                    {c.defGuru && !c.offGuru && <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: G.black, background: '#4A9ECC', padding: '1px 6px', textTransform: 'uppercase' }}>DEF GURU</span>}
+                  </div>
+                  <div style={{ fontSize: 11, color: G.grey, marginTop: 2 }}>
+                    {c.from}–{c.to} · {c.regW}W–{c.regL}L
+                    {c.champ > 0 && <span style={{ color: G.gold, marginLeft: 8 }}>{c.champ}× Champ</span>}
+                    {c.conf > 0 && c.champ === 0 && <span style={{ color: G.greyDark, marginLeft: 8 }}>{c.conf} conf</span>}
+                  </div>
+                  <div style={{ display: 'flex', gap: 10, marginTop: 3 }}>
+                    <span style={{ fontSize: 10, color: G.greyDark }}>OFF: <span style={{ color: gradeColor(c.offGrade), fontWeight: 600 }}>{c.offGrade}</span></span>
+                    <span style={{ fontSize: 10, color: G.greyDark }}>DEF: <span style={{ color: gradeColor(c.defGrade), fontWeight: 600 }}>{c.defGrade}</span></span>
+                    <span style={{ fontSize: 10, color: G.greyDark }}>{c.playoffG > 0 ? `${(c.playoffWLPct * 100).toFixed(0)}% Playoffs` : 'No Playoffs'}</span>
+                  </div>
+                </div>
+                <div style={{ ...BEBAS, fontSize: 44, color: gradeColor(c.overallGrade), lineHeight: 1, flexShrink: 0 }}>{c.overallGrade}</div>
+              </button>
+            ))}
           </div>
         )}
         <div className="text-xs text-center mt-4" style={{ color: G.greyDark }}>
@@ -219,7 +211,7 @@ export function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxM
                   return (
                     <div
                       key={preset.label}
-                      onClick={() => { setCoach(testCoach); setDisplayName(testCoach.name); setDevMode(false) }}
+                      onClick={() => { onCoachSelected(testCoach); setDevMode(false) }}
                       style={{ padding: '6px 10px', cursor: 'pointer', fontSize: 12, color: G.white, border: `1px solid ${G.border}`, background: G.surface }}
                       onMouseEnter={e => (e.currentTarget.style.background = G.surface2)}
                       onMouseLeave={e => (e.currentTarget.style.background = G.surface)}
@@ -243,7 +235,7 @@ export function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxM
                   {coaches.filter(c => c.name.toLowerCase().includes(devSearch.toLowerCase())).slice(0, 10).map(c => (
                     <div
                       key={`${c.name}-${c.from}`}
-                      onClick={() => { setCoach(c); setDisplayName(c.name); setDevSearch(''); setDevMode(false) }}
+                      onClick={() => { onCoachSelected(c); setDevSearch(''); setDevMode(false) }}
                       style={{ padding: '8px 12px', cursor: 'pointer', fontSize: 13, color: G.white, borderBottom: `1px solid ${G.border}` }}
                       onMouseEnter={e => (e.currentTarget.style.background = G.surface2)}
                       onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
