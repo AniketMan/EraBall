@@ -101,7 +101,7 @@ function loadCoach(targetName: string): Coach {
     const rawDefGrade = playoffG === 0 ? 'C' : playoffWLPct >= 0.550 ? 'A' : playoffWLPct >= 0.500 ? 'B' : playoffWLPct >= 0.450 ? 'C' : playoffWLPct >= 0.400 ? 'D' : 'F';
     const offGrade = hofFloor(capF(rawOffGrade)) as Coach['offGrade'];
     const defGrade = hofFloor(capF(rawDefGrade)) as Coach['defGrade'];
-    const gradeN = (g: Coach['offGrade']) => ({ A: 4, B: 3, C: 2, D: 1, F: 0 }[g]);
+    const gradeN = (g: Coach['offGrade']) => ({ S: 5, A: 4, B: 3, C: 2, D: 1, F: 0 }[g]);
     const avg = (gradeN(offGrade) + gradeN(defGrade)) / 2;
     const overallGrade = (avg >= 3.5 ? 'A' : avg >= 2.5 ? 'B' : avg >= 1.5 ? 'C' : avg >= 0.5 ? 'D' : 'F') as Coach['overallGrade'];
     return { name, from, to, years: to - from, regG, regW, regL, regWLPct, playoffG, playoffW, playoffL, playoffWLPct, conf, champ, offGrade, defGrade, overallGrade, offGuru: false, defGuru: false };

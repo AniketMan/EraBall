@@ -1,8 +1,10 @@
-import type { Player, Coach, CourtSlot, SlotPosition, Era, PlayerRating, PlayerSeasonStats, EraStats, PlayoffResult, PlayoffGame, SpecialPerformance } from './types'
-// Centralized random source. rng() delegates to rng() when unseeded, so
-// production behavior is byte-identical; seedRng() makes the simulation deterministic
-// for the behavior-lock snapshot harness.
+// packages/engine/src/gameLogic.ts
+// Canonical game-logic module for the @eraball/engine package.
+// Derived from upstream lib/gameLogic.ts with a single mechanical transform:
+// every Math.random() call is replaced by rng() for deterministic snapshot testing.
 import { rng } from './rng'
+
+import type { Player, Coach, CourtSlot, SlotPosition, Era, PlayerRating, PlayerSeasonStats, EraStats, PlayoffResult, PlayoffGame, SpecialPerformance } from './types'
 
 const ERA_ORDER: Era[] = ['50s', '60s', '70s', '80s', '90s', '00s', '10s', '20s']
 
@@ -220,6 +222,9 @@ const PLAYER_RINGS: Record<string, number> = {
   'Tayshaun Prince': 1, 'Richard Hamilton': 1,
   // 1998-99 Spurs
   'Avery Johnson': 1,
+  // Players who also coached
+  'Phil Jackson': 2,
+  'Pat Riley': 1,
 }
 
 export function applyRings(player: Player): Player {
@@ -341,12 +346,8 @@ const PLAYER_ANCHORS: Record<string, AnchorType> = {
   'Nikola Jokic':            'off',
   'LeBron James':            'off',
   'Stephen Curry':           'off',
-  'Steve Nash':              'off',
-  'Chris Paul':              'off',
-  'Magic Johnson':           'off',
   'Luka Doncic':             'off',
   'Kareem Abdul-Jabbar':     'off',
-  'John Stockton':           'off',
   'James Harden':            'off',
   'Shai Gilgeous-Alexander': 'off',
   'Joel Embiid':             'off',
@@ -357,9 +358,6 @@ const PLAYER_ANCHORS: Record<string, AnchorType> = {
   'Elgin Baylor':            'off',
   'Larry Bird':              'off',
   // Offensive Anchors — T2
-  'Rajon Rondo':             'off',
-  'Tony Parker':             'off',
-  'Isiah Thomas':            'off',
   'Allen Iverson':           'off',
   'Damian Lillard':          'off',
   'Russell Westbrook':       'off',
@@ -369,7 +367,6 @@ const PLAYER_ANCHORS: Record<string, AnchorType> = {
   'Kobe Bryant':             'off',
   'Dwyane Wade':             'off',
   'Tracy McGrady':           'off',
-  'Jerry West':              'off',
   'Dirk Nowitzki':           'off',
   'George Gervin':           'off',
   'Pete Maravich':           'off',
@@ -419,9 +416,6 @@ const PLAYER_ANCHOR_TIERS: Record<string, 2> = {
   'Michael Cooper':      2,
   'Sidney Moncrief':     2,
   // Offensive T2
-  'Rajon Rondo':         2,
-  'Tony Parker':         2,
-  'Isiah Thomas':        2,
   'Allen Iverson':       2,
   'Damian Lillard':      2,
   'Russell Westbrook':   2,
@@ -437,7 +431,6 @@ const PLAYER_ANCHOR_TIERS: Record<string, 2> = {
   'Metta World Peace':   2,
   'Joakim Noah':         2,
   'Tracy McGrady':       2,
-  'Jerry West':          2,
   'Dirk Nowitzki':       2,
   'George Gervin':       2,
   'Pete Maravich':       2,
@@ -620,6 +613,14 @@ export const DUO_PAIRS: Record<string, string[]> = {
   'Larry Nance Jr.':         ['Larry Nance'],
   'Doc Rivers':              ['Austin Rivers'],
   'Austin Rivers':           ['Doc Rivers'],
+  'Jabari Smith':            ['Jabari Smith Jr.'],
+  'Jabari Smith Jr.':        ['Jabari Smith'],
+  'Alex Sarr':               ['Olivier Sarr'],
+  'Olivier Sarr':            ['Alex Sarr'],
+  'Jaden McDaniels':         ['Jalen McDaniels'],
+  'Jalen McDaniels':         ['Jaden McDaniels'],
+  'Bill Walton':             ['Luke Walton'],
+  'Luke Walton':             ['Bill Walton'],
 }
 
 export function applyDuo(player: Player): Player {
@@ -642,11 +643,9 @@ const TIMELESS_PLAYERS = new Set([
   'Tim Duncan',
   'Nikola Jokic',
   'Michael Jordan',
-  'Rudy Gobert',
   'Russell Westbrook',
   'Larry Bird',
   'Kobe Bryant',
-  'Dwight Howard',
   'Shaquille O\'Neal',
   'Kevin Garnett',
   'Hakeem Olajuwon',
@@ -657,15 +656,58 @@ const TIMELESS_PLAYERS = new Set([
   'Moses Malone',
   'Pete Maravich',
   'Gary Payton',
-  'Steve Nash',
-  'Draymond Green',
-  'Shai Gilgeous-Alexander',
   'Jerry West',
 ])
 
+const TIMELESS_T2_PLAYERS = new Set([
+  // Moved down from T1
+  'Rudy Gobert',
+  'Dwight Howard',
+  'Draymond Green',
+  'Shai Gilgeous-Alexander',
+  'Steve Nash',
+  // New T2 additions
+  'Julius Erving',
+  'Elgin Baylor',
+  'Scottie Pippen',
+  'Bill Russell',
+  'Clyde Drexler',
+  'Tracy McGrady',
+  'Penny Hardaway',
+  'Bob Pettit',
+  'Walt Frazier',
+  'Dennis Rodman',
+])
+
 export function applyTimeless(player: Player): Player {
-  if (!TIMELESS_PLAYERS.has(player.full_name)) return player
-  return { ...player, timeless: true }
+  if (TIMELESS_PLAYERS.has(player.full_name)) return { ...player, timeless: true, timelessTier: 1 }
+  if (TIMELESS_T2_PLAYERS.has(player.full_name)) return { ...player, timeless: true, timelessTier: 2 }
+  return player
+}
+
+const FLOOR_GENERAL_T1 = new Set([
+  'Magic Johnson',
+  'John Stockton',
+  'Steve Nash',
+  'Chris Paul',
+  'Rajon Rondo',
+  'Bob Cousy',
+  'Jason Kidd',
+])
+
+const FLOOR_GENERAL_T2 = new Set([
+  'Tony Parker',
+  'Isiah Thomas',
+  'Kevin Johnson',
+  'Ricky Rubio',
+  'Mark Price',
+  'Jerry West',
+])
+
+export function applyFloorGeneral(player: Player): Player {
+  if (FLOOR_GENERAL_T1.has(player.full_name)) return { ...player, floorGeneral: true, floorGeneralTier: 1 }
+  if (FLOOR_GENERAL_T2.has(player.full_name)) return { ...player, floorGeneral: true, floorGeneralTier: 2 }
+  return player
 }
 
 const SHOOTING_STAR_T1 = new Set([
@@ -1045,7 +1087,8 @@ export function playerBaseRating(player: Player, simEra?: Era): number {
     ? 0
     : (ratingPlayer.FG3M ?? 0) * 1.5
   const t1 = (player.anchorTier ?? 1) === 1
-  const anchorBonus = player.defAnchor ? (t1 ? 12 : 6) : player.offAnchor ? (t1 ? 8 : 4) : 0
+  const fgT1 = (player.floorGeneralTier ?? 1) === 1
+  const anchorBonus = player.defAnchor ? (t1 ? 12 : 6) : player.offAnchor ? (t1 ? 8 : 4) : player.floorGeneral ? (fgT1 ? 5 : 3) : 0
   const top75Bonus = player.greatest_75_flag === 'Y' ? 3 : 0
   const sixthTeamOverrides = SIXTH_MAN_TEAM_KEYS[player.full_name]
   const sixthEffectiveTeam = player.eraTeam ?? player.teams_by_era?.[player.era as Era]
@@ -1167,7 +1210,7 @@ export function calcEraModifier(player: Player, simEra: Era): number {
   const playerIdx = ERA_ORDER.indexOf(player.era)
   const simIdx = ERA_ORDER.indexOf(simEra)
   const dist = Math.abs(playerIdx - simIdx)
-  if (player.timeless) return dist >= 6 ? 0.95 : 1.0
+  if (player.timeless && (player.timelessTier ?? 1) === 1) return dist >= 6 ? 0.95 : 1.0
   // 10s and 20s are the same modern era — only 2% apart in either direction
   if ((player.era === '10s' && simEra === '20s') || (player.era === '20s' && simEra === '10s')) return 0.98
   // Chris Paul — elite fit in the 90s and any modern era forward
@@ -1198,7 +1241,10 @@ export function calcEraModifier(player: Player, simEra: Era): number {
       else if (simEra === '90s') mod -= 0.05
     }
   }
-  return Math.max(mod, 0.50)
+  const rawMod = Math.max(mod, 0.50)
+  // Timeless T2: halve whatever penalty the player would have taken
+  if (player.timeless && player.timelessTier === 2) return 1.0 - (1.0 - rawMod) * 0.5
+  return rawMod
 }
 
 export function calcPlayerAdjustedRating(
@@ -1221,20 +1267,23 @@ export function gradeFromPct(pct: number, thresholds: [number, number, number, n
   return 'F'
 }
 
-export function coachOffGrade(coach: Coach): 'A' | 'B' | 'C' | 'D' | 'F' {
+export function coachOffGrade(coach: Coach): CoachGrade {
   return gradeFromPct(coach.regWLPct, [0.600, 0.550, 0.500, 0.450])
 }
 
-export function coachDefGrade(coach: Coach): 'A' | 'B' | 'C' | 'D' | 'F' {
+export function coachDefGrade(coach: Coach): CoachGrade {
   if (coach.playoffG === 0) return 'C'
   return gradeFromPct(coach.playoffWLPct, [0.550, 0.500, 0.450, 0.400])
 }
 
-export function gradeToNumber(g: 'A' | 'B' | 'C' | 'D' | 'F'): number {
-  return { A: 4, B: 3, C: 2, D: 1, F: 0 }[g]
+export type CoachGrade = 'S' | 'A' | 'B' | 'C' | 'D' | 'F'
+
+export function gradeToNumber(g: CoachGrade): number {
+  return { S: 5, A: 4, B: 3, C: 2, D: 1, F: 0 }[g]
 }
 
-export function numberToGrade(n: number): 'A' | 'B' | 'C' | 'D' | 'F' {
+export function numberToGrade(n: number): CoachGrade {
+  if (n >= 4.5) return 'S'
   if (n >= 3.5) return 'A'
   if (n >= 2.5) return 'B'
   if (n >= 1.5) return 'C'
@@ -1242,18 +1291,40 @@ export function numberToGrade(n: number): 'A' | 'B' | 'C' | 'D' | 'F' {
   return 'F'
 }
 
-export function coachOverallGrade(coach: Coach): 'A' | 'B' | 'C' | 'D' | 'F' {
+export function coachOverallGrade(coach: Coach): CoachGrade {
   return numberToGrade((gradeToNumber(coach.offGrade) + gradeToNumber(coach.defGrade)) / 2)
 }
 
-export function coachBonus(grade: 'A' | 'B' | 'C' | 'D' | 'F'): number {
-  return { A: 0.05, B: 0.025, C: 0, D: -0.025, F: -0.03 }[grade]
+export function coachBonus(grade: CoachGrade): number {
+  return { S: 0.07, A: 0.05, B: 0.025, C: 0, D: -0.025, F: -0.03 }[grade]
 }
 
 export function effectiveCoachBonus(coach: Coach, side: 'off' | 'def'): number {
   if (side === 'off' && coach.offGuru) return 0.06
   if (side === 'def' && coach.defGuru) return 0.06
   return coachBonus(side === 'off' ? coach.offGrade : coach.defGrade)
+}
+
+export function upgradeGrade(grade: CoachGrade): CoachGrade {
+  const map: Record<CoachGrade, CoachGrade> = { S: 'S', A: 'S', B: 'A', C: 'B', D: 'C', F: 'D' }
+  return map[grade]
+}
+
+export const FRANCHISE_PAIRS: Record<string, string[]> = {
+  'Phil Jackson':      ['Michael Jordan', 'Scottie Pippen', 'Kobe Bryant', "Shaquille O'Neal"],
+  'Gregg Popovich':    ['Tim Duncan', 'Tony Parker', 'David Robinson', 'Kawhi Leonard'],
+  'Pat Riley':         ['Magic Johnson', 'Kareem Abdul-Jabbar', 'LeBron James', 'Dwyane Wade'],
+  'Red Auerbach':      ['Bill Russell', 'Bob Cousy'],
+  'Jerry Sloan':       ['John Stockton', 'Karl Malone'],
+  'Chuck Daly':        ['Isiah Thomas'],
+  'Larry Brown*':      ['Allen Iverson'],
+  'Don Nelson':        ['Steve Nash', 'Dirk Nowitzki'],
+  'Rick Carlisle':     ['Dirk Nowitzki', 'Luka Doncic'],
+  'Scott Brooks':      ['Kevin Durant', 'Russell Westbrook'],
+  'Doc Rivers':        ['Kevin Garnett', 'Paul Pierce', 'Rajon Rondo'],
+  'Billy Cunningham':  ['Julius Erving', 'Moses Malone'],
+  'Red Holzman':       ['Walt Frazier'],
+  'Erik Spoelstra':    ['LeBron James', 'Dwyane Wade'],
 }
 
 export function coachChampBonus(coach: Coach): number {
@@ -1482,15 +1553,19 @@ function calcAstFactor(entries: { pr: PlayerRating; minScale: number }[]): numbe
   const astIndex = entries.reduce((s, { pr, minScale }) =>
     s + (pr.player.AST ?? 0) * pr.eraMod * minScale, 0)
   const raw = 1.0 + (astIndex - LEAGUE_AVG_AST_INDEX) / LEAGUE_AVG_AST_INDEX * 0.10
-  return Math.max(0.90, Math.min(1.15, raw))
+  const fgBoost = entries.reduce((sum, { pr }) => {
+    if (!pr.player.floorGeneral) return sum
+    return sum + (pr.player.floorGeneralTier === 2 ? 0.03 : 0.06)
+  }, 0)
+  return Math.max(0.90, Math.min(1.15, raw + fgBoost))
 }
 
 
 export function simulateSeason(
   rawRating: number,
   playerRatings: PlayerRating[],
-  coachDefGrade: 'A' | 'B' | 'C' | 'D' | 'F',
-  coachOffGrade: 'A' | 'B' | 'C' | 'D' | 'F',
+  coachDefGrade: CoachGrade,
+  coachOffGrade: CoachGrade,
   simEra: Era,
   coachDefBonus?: number,
   coachOffBonus?: number,
@@ -1715,8 +1790,8 @@ export function simulatePlayoffs(
   rawRating: number,
   playerRatings: PlayerRating[],
   regularSeasonWins: number,
-  coachDefGrade: 'A' | 'B' | 'C' | 'D' | 'F',
-  coachOffGrade: 'A' | 'B' | 'C' | 'D' | 'F',
+  coachDefGrade: CoachGrade,
+  coachOffGrade: CoachGrade,
   simEra: Era,
   coachDefBonus?: number,
   coachOffBonus?: number,

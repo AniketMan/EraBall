@@ -283,7 +283,7 @@ export function EraSelection({ onEraSelected, onSandboxSelected, onSalaryCapSele
           >
             What's New!
           </button>
-          <div style={{ fontSize: 10, color: G.greyDark, letterSpacing: '0.15em', marginTop: 2 }}>v1.5.8</div>
+          <div style={{ fontSize: 10, color: G.greyDark, letterSpacing: '0.15em', marginTop: 2 }}>v2.0</div>
           <div style={{ fontSize: 9, color: '#CC8844', letterSpacing: '0.04em', marginTop: 8, maxWidth: 280, lineHeight: 1.6, textAlign: 'center' }}>
             
           </div>

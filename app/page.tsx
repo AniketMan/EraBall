@@ -406,7 +406,7 @@ export default function Home() {
         </div>
       )}
       {phase === 'draft' && <DraftScreen simEra={simEra} players={players} onDraftComplete={(s, ce, wasSandbox, respinUsed) => { setSlots(s); setDraftCustomEras(ce); setDraftWasSandbox(wasSandbox); setDraftRespinUsed(respinUsed); setPhase('coach-draft') }} onRestart={restart} startInSandbox={startSandbox} salaryCapMode={salaryCapMode} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} themeFilter={eraFilter} />}
-      {phase === 'coach-draft' && <CoachDraftScreen coaches={coaches} onCoachSelected={c => { setCoach(c); setPhase('simulation') }} onRestart={restart} sandboxMode={draftWasSandbox} salaryCapMode={salaryCapMode} bonusCoachRespin={!draftRespinUsed && !draftWasSandbox} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} />}
+      {phase === 'coach-draft' && <CoachDraftScreen coaches={coaches} onCoachSelected={c => { setCoach(c); setPhase('simulation') }} onRestart={restart} sandboxMode={draftWasSandbox} salaryCapMode={salaryCapMode} bonusCoachRespin={!draftRespinUsed && !draftWasSandbox} draftedPlayerNames={new Set(slots.filter(s => s.player).map(s => s.player!.full_name))} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} />}
       {phase === 'simulation' && coach && <SimulationScreen slots={slots} coach={coach} simEra={simEra} onRestart={restart} greyscaleBtn={greyscaleBtn} muteBtn={muteBtn} sandboxMode={draftWasSandbox} salaryCapMode={salaryCapMode} customEraRange={draftCustomEras} eraFilter={eraFilter} onAchievementsUnlocked={setUnlockedAchievements} />}
 
       {/* Volume popover */}

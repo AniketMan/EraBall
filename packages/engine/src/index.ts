@@ -36,7 +36,7 @@ export {
 // ---- Roster preparation (tag pipeline) ------------------------------------------------
 // Consumers must apply these to raw players (in this order) before rating/simulating,
 // exactly as the UI does: withEraStats -> applyFlexTag -> applyRings -> applySixthMan
-// -> applyFinalsMVP -> applyAnchors -> applyTimeless -> applyShootingStar -> applyGlassCleaner -> applyDuo.
+// -> applyFinalsMVP -> applyAnchors -> applyFloorGeneral -> applyTimeless -> applyShootingStar -> applyGlassCleaner -> applyDuo.
 export {
   withEraStats,
   applyFlexTag,
@@ -44,6 +44,7 @@ export {
   applySixthMan,
   applyFinalsMVP,
   applyAnchors,
+  applyFloorGeneral,
   applyTimeless,
   applyShootingStar,
   applyGlassCleaner,
@@ -79,7 +80,10 @@ export {
   gradeFromPct,
   gradeToNumber,
   numberToGrade,
+  upgradeGrade,
 } from './gameLogic';
+
+export type { CoachGrade } from './gameLogic';
 
 // ---- Constants / metadata -------------------------------------------------------------
 export {
@@ -89,6 +93,7 @@ export {
   ERA_SEASON_GAMES,
   CAP_QUOTAS,
   DUO_PAIRS,
+  FRANCHISE_PAIRS,
   firstRoundLabel,
   firstRoundWinsNeeded,
 } from './gameLogic';

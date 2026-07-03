@@ -34,6 +34,7 @@ export function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode
     (player.rings ?? 0) > 0,
     !!player.defAnchor,
     !!player.offAnchor,
+    !!player.floorGeneral,
     !!player.shootingStar,
     !!player.glassClean,
     !!player.timeless,
@@ -93,6 +94,13 @@ export function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode
                 </span>
               </TagTooltip>
             )}
+            {!usePillLayout && player.floorGeneral && (
+              <TagTooltip tip={(player.floorGeneralTier ?? 1) === 1 ? "Elite playmaker. Elevates team ball movement and shot quality. Boosts win probability through playmaking." : "Strong playmaker. Elevates team ball movement. Boosts win probability through playmaking."}>
+                <span className="text-xs uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: '#E0D4FF' }}>
+                  Floor General <span style={{ opacity: 0.7 }}>T{player.floorGeneralTier ?? 1}</span>
+                </span>
+              </TagTooltip>
+            )}
             {!usePillLayout && player.shootingStar && (
               <TagTooltip tip={(player.shootingStarTier ?? 1) === 1 ? "Boosts team spacing. Elite all-time shooter. T1 carries a larger boost than T2." : "Boosts team spacing. Special shooter. T1 carries a larger boost than T2."}>
                 <span className="text-xs uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: '#F472B6' }}>
@@ -108,9 +116,9 @@ export function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode
               </TagTooltip>
             )}
             {!usePillLayout && player.timeless && (
-              <TagTooltip tip="Transcendent skill set. Minimal era penalties across all decades. Minor penalty only if 6+ eras from home era.">
+              <TagTooltip tip={(player.timelessTier ?? 1) === 1 ? "Transcendent skill set. Minimal era penalties across all decades. Minor penalty only if 6+ eras from home era." : "Highly adaptable skill set. Takes half the normal era penalty across all decades."}>
                 <span className="text-xs uppercase tracking-wide font-bold inline-block transition-transform duration-150 hover:scale-110 cursor-default" style={{ color: '#C084FC' }}>
-                  Timeless
+                  Timeless {(player.timelessTier ?? 1) === 2 && <span style={{ opacity: 0.7 }}>T2</span>}
                 </span>
               </TagTooltip>
             )}
@@ -170,6 +178,11 @@ export function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode
               <span className="inline-block transition-transform duration-150 hover:scale-110" style={{ fontSize: 11, padding: '3px 8px', border: `1px solid ${G.gold}44`, color: G.gold, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>Off Anchor T{player.anchorTier ?? 1}</span>
             </TagTooltip>
           )}
+          {player.floorGeneral && (
+            <TagTooltip tip={(player.floorGeneralTier ?? 1) === 1 ? "Elite playmaker. Elevates team ball movement and shot quality. Boosts win probability through playmaking." : "Strong playmaker. Elevates team ball movement. Boosts win probability through playmaking."}>
+              <span className="inline-block transition-transform duration-150 hover:scale-110" style={{ fontSize: 11, padding: '3px 8px', border: `1px solid #E0D4FF44`, color: '#E0D4FF', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>Floor General T{player.floorGeneralTier ?? 1}</span>
+            </TagTooltip>
+          )}
           {player.shootingStar && (
             <TagTooltip tip={(player.shootingStarTier ?? 1) === 1 ? "Boosts team spacing. Elite all-time shooter. T1 carries a larger boost than T2." : "Boosts team spacing. Special shooter. T1 carries a larger boost than T2."}>
               <span className="inline-block transition-transform duration-150 hover:scale-110" style={{ fontSize: 11, padding: '3px 8px', border: `1px solid #F472B644`, color: '#F472B6', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>Shooting Star T{player.shootingStarTier ?? 1}</span>
@@ -181,8 +194,8 @@ export function PlayerCard({ player, onDragStart, displayEra, activeEra, devMode
             </TagTooltip>
           )}
           {player.timeless && (
-            <TagTooltip tip="Transcendent skill set. Minimal era penalties across all decades. Minor penalty only if 6+ eras from home era.">
-              <span className="inline-block transition-transform duration-150 hover:scale-110" style={{ fontSize: 11, padding: '3px 8px', border: `1px solid #C084FC44`, color: '#C084FC', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>Timeless</span>
+            <TagTooltip tip={(player.timelessTier ?? 1) === 1 ? "Transcendent skill set. Minimal era penalties across all decades. Minor penalty only if 6+ eras from home era." : "Highly adaptable skill set. Takes half the normal era penalty across all decades."}>
+              <span className="inline-block transition-transform duration-150 hover:scale-110" style={{ fontSize: 11, padding: '3px 8px', border: `1px solid #C084FC44`, color: '#C084FC', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, cursor: 'default' }}>Timeless{(player.timelessTier ?? 1) === 2 ? ' T2' : ''}</span>
             </TagTooltip>
           )}
           {player.duoPartners && (

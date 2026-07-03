@@ -8,6 +8,7 @@
 
 import React, { useState } from 'react'
 import type { Coach } from '@eraball/engine'
+import { FRANCHISE_PAIRS, upgradeGrade } from '@eraball/engine'
 import { G, BEBAS } from '../../../src/components/tokens'
 import { Btn } from '../../../src/components'
 import { TopBar, CoachHeadshot } from '../../_shared'
@@ -15,12 +16,15 @@ import { TopBar, CoachHeadshot } from '../../_shared'
 // Grade -> color. Local to this module to match upstream's coach-draft palette
 // (distinct from ResultCard's gradeColor, which uses a different mapping).
 const gradeColor = (g: string) =>
-  g === 'A' ? '#4ade80' : g === 'B' ? '#86efac' : g === 'C' ? G.gold : g === 'D' ? '#fb923c' : '#f87171'
+  g === 'S' ? '#a78bfa' : g === 'A' ? '#4ade80' : g === 'B' ? '#86efac' : g === 'C' ? G.gold : g === 'D' ? '#fb923c' : '#f87171'
 
-export function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxMode, salaryCapMode, bonusCoachRespin, greyscaleBtn, muteBtn }: {
-  coaches: Coach[]; onCoachSelected: (coach: Coach) => void; onRestart: () => void; sandboxMode?: boolean; salaryCapMode?: boolean; bonusCoachRespin?: boolean; greyscaleBtn?: React.ReactNode; muteBtn?: React.ReactNode
+export function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxMode, salaryCapMode, bonusCoachRespin, draftedPlayerNames, greyscaleBtn, muteBtn }: {
+  coaches: Coach[]; onCoachSelected: (coach: Coach) => void; onRestart: () => void; sandboxMode?: boolean; salaryCapMode?: boolean; bonusCoachRespin?: boolean; draftedPlayerNames?: Set<string>; greyscaleBtn?: React.ReactNode; muteBtn?: React.ReactNode
 }) {
-  const GRADE_RANK: Record<string, number> = { A: 4, B: 3, C: 2, D: 1, F: 0 }
+  const hasFranchisePair = (c: Coach) => !!(draftedPlayerNames && FRANCHISE_PAIRS[c.name]?.some(p => draftedPlayerNames.has(p)))
+  const effOffGrade = (c: Coach) => hasFranchisePair(c) ? upgradeGrade(c.offGrade) : c.offGrade
+  const effDefGrade = (c: Coach) => hasFranchisePair(c) ? upgradeGrade(c.defGrade) : c.defGrade
+  const GRADE_RANK: Record<string, number> = { S: 5, A: 4, B: 3, C: 2, D: 1, F: 0 }
   const eligibleCoaches = salaryCapMode ? coaches.filter(c => GRADE_RANK[c.overallGrade] >= 2) : coaches
   const [spinning, setSpinning] = useState(false)
   const [choices, setChoices] = useState<Coach[]>([])
@@ -132,7 +136,7 @@ export function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxM
           </div>
         )}
 
-        {!spinning && choices.length > 0 && spinsUsed < (bonusCoachRespin ? 3 : 2) && (
+        {!spinning && choices.length > 0 && spinsUsed < (devMode ? Infinity : bonusCoachRespin ? 3 : 2) && (
           <Btn onClick={spin} variant="ghost" className="w-full py-3 mb-3">
             Respin ({bonusCoachRespin ? 3 - spinsUsed : 2 - spinsUsed} left)
           </Btn>
@@ -158,6 +162,7 @@ export function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxM
                     {c.offGuru && c.defGuru && <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: G.black, background: 'linear-gradient(90deg, #C9A84C, #4A9ECC)', padding: '1px 6px', textTransform: 'uppercase' }}>COMPLETE</span>}
                     {c.offGuru && !c.defGuru && <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: G.black, background: G.gold, padding: '1px 6px', textTransform: 'uppercase' }}>OFF GURU</span>}
                     {c.defGuru && !c.offGuru && <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: G.black, background: '#4A9ECC', padding: '1px 6px', textTransform: 'uppercase' }}>DEF GURU</span>}
+                    {hasFranchisePair(c) && <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: G.black, background: '#a78bfa', padding: '1px 6px', textTransform: 'uppercase' }}>FRANCHISE PAIR</span>}
                   </div>
                   <div style={{ fontSize: 11, color: G.grey, marginTop: 2 }}>
                     {c.from}–{c.to} · {c.regW}W–{c.regL}L
@@ -165,8 +170,8 @@ export function CoachDraftScreen({ coaches, onCoachSelected, onRestart, sandboxM
                     {c.conf > 0 && c.champ === 0 && <span style={{ color: G.greyDark, marginLeft: 8 }}>{c.conf} conf</span>}
                   </div>
                   <div style={{ display: 'flex', gap: 10, marginTop: 3 }}>
-                    <span style={{ fontSize: 10, color: G.greyDark }}>OFF: <span style={{ color: gradeColor(c.offGrade), fontWeight: 600 }}>{c.offGrade}</span></span>
-                    <span style={{ fontSize: 10, color: G.greyDark }}>DEF: <span style={{ color: gradeColor(c.defGrade), fontWeight: 600 }}>{c.defGrade}</span></span>
+                    <span style={{ fontSize: 10, color: G.greyDark }}>OFF: <span style={{ color: gradeColor(effOffGrade(c)), fontWeight: 600 }}>{effOffGrade(c)}</span></span>
+                    <span style={{ fontSize: 10, color: G.greyDark }}>DEF: <span style={{ color: gradeColor(effDefGrade(c)), fontWeight: 600 }}>{effDefGrade(c)}</span></span>
                     <span style={{ fontSize: 10, color: G.greyDark }}>{c.playoffG > 0 ? `${(c.playoffWLPct * 100).toFixed(0)}% Playoffs` : 'No Playoffs'}</span>
                   </div>
                 </div>

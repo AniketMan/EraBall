@@ -14,7 +14,7 @@ import {
   SLOT_MPG, ERA_SEASON_GAMES, calcTeamRating, simulateSeason, simulatePlayoffs,
   calcTS, firstRoundLabel, playerBaseRating, genOppTeamStats, calcTeamDefTotals,
   calcRebFactor, playerTier, coachBonus, coachChampBonus, effectiveCoachBonus,
-  SIXTH_MAN_PLAYERS,
+  SIXTH_MAN_PLAYERS, FRANCHISE_PAIRS, upgradeGrade,
 } from '@eraball/engine'
 import { recordRunComplete, getLifetimeStats, recordLeaderboardPlacement } from '../../../lib/lifetimeStats'
 import { checkAchievements, type Achievement } from '../../../lib/achievements'
@@ -793,6 +793,14 @@ export function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn
   const { teamRating: tr, rawRating, playerRatings: pr } = calcTeamRating(slotsWithDuo, coach, simEra)
   // rawRating with champ bonus on the team side — passed to sims so off/def apply separately
   const simRaw = rawRating * (1 + coachChampBonus(coach))
+  // Franchise Pair: upgrade coach grades and apply +3 to matched players
+  const fpPlayers = FRANCHISE_PAIRS[coach.name] ?? []
+  const fpActive = fpPlayers.some(name => pr.some(r => r.player.full_name === name))
+  const fpOffGrade = fpActive ? upgradeGrade(coach.offGrade) : coach.offGrade
+  const fpDefGrade = fpActive ? upgradeGrade(coach.defGrade) : coach.defGrade
+  const fpOffBonus = fpActive ? Math.max(effectiveCoachBonus(coach, 'off'), coachBonus(fpOffGrade)) : effectiveCoachBonus(coach, 'off')
+  const fpDefBonus = fpActive ? Math.max(effectiveCoachBonus(coach, 'def'), coachBonus(fpDefGrade)) : effectiveCoachBonus(coach, 'def')
+  const prWithFP = fpActive ? pr.map(r => fpPlayers.includes(r.player.full_name) ? { ...r, adjusted: r.adjusted + 3, base: r.base + 3 } : r) : pr
 
   type BatchRun = { wins: number; losses: number; roundsWon: number; champion: boolean }
   const [batchResults, setBatchResults] = useState<BatchRun[] | null>(null)
@@ -800,10 +808,10 @@ export function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn
   const runBatch = (n = 10) => {
     const runs: BatchRun[] = []
     for (let i = 0; i < n; i++) {
-      const { games: allGames } = simulateSeason(simRaw, pr, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'), salaryCapMode ? 0.90 : 1.0)
+      const { games: allGames } = simulateSeason(simRaw, prWithFP, fpDefGrade, fpOffGrade, simEra, fpDefBonus, fpOffBonus, salaryCapMode ? 0.90 : 1.0)
       const w = allGames.filter(Boolean).length
       const l = allGames.length - w
-      const playoff = simulatePlayoffs(simRaw, pr, w, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'), salaryCapMode ? 0.90 : 1.0)
+      const playoff = simulatePlayoffs(simRaw, prWithFP, w, fpDefGrade, fpOffGrade, simEra, fpDefBonus, fpOffBonus, salaryCapMode ? 0.90 : 1.0)
       runs.push({ wins: w, losses: l, roundsWon: playoff.rounds.filter(r => r.advanced).length, champion: playoff.champion })
     }
     setBatchResults(runs)
@@ -811,7 +819,7 @@ export function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn
 
   const startSim = () => {
     setSimStarted(true); setGames([]); setDone(false); setSeasonStats([])
-    const { games: allGames, seasonStats: stats, avgTeamScore: ats, avgOppScore: aos, teamAnalysis: ta } = simulateSeason(simRaw, pr, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'), salaryCapMode ? 0.90 : 1.0)
+    const { games: allGames, seasonStats: stats, avgTeamScore: ats, avgOppScore: aos, teamAnalysis: ta } = simulateSeason(simRaw, prWithFP, fpDefGrade, fpOffGrade, simEra, fpDefBonus, fpOffBonus, salaryCapMode ? 0.90 : 1.0)
     setSeasonStats(stats)
     setAvgTeamScore(ats)
     setAvgOppScore(aos)
@@ -831,7 +839,7 @@ export function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn
     setPlayoffRevealIndex(-1)
     setPlayoffDone(false)
     setAutoAdvance(false)
-    const result = simulatePlayoffs(simRaw, pr, wins, coach.defGrade, coach.offGrade, simEra, effectiveCoachBonus(coach, 'def'), effectiveCoachBonus(coach, 'off'), salaryCapMode ? 0.90 : 1.0)
+    const result = simulatePlayoffs(simRaw, prWithFP, wins, fpDefGrade, fpOffGrade, simEra, fpDefBonus, fpOffBonus, salaryCapMode ? 0.90 : 1.0)
     setPlayoffResult(result)
     const poAvgOpp = result.allGames.reduce((s, g) => s + g.oppScore, 0) / result.allGames.length
     const { stl: poTeamSTL, blk: poTeamBLK } = calcTeamDefTotals(pr)
@@ -955,7 +963,7 @@ export function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn
 
   const dispRating = (r: number) => Math.round(r + 15)
 
-  const gradeBonus = (g: 'A' | 'B' | 'C' | 'D' | 'F') =>
+  const gradeBonus = (g: 'S' | 'A' | 'B' | 'C' | 'D' | 'F') =>
     `${coachBonus(g) >= 0 ? '+' : ''}${(coachBonus(g) * 100).toFixed(0)}%`
 
   const ROUND_NAMES = ['First Round', 'Semifinals', 'Conference Finals', 'NBA Finals']
@@ -1105,7 +1113,8 @@ export function SimulationScreen({ slots, coach, simEra, onRestart, greyscaleBtn
             <div className="flex items-center gap-4">
               <span style={{ ...BEBAS, fontSize: 28, color: G.gold }}>{dispRating(tr)}</span>
               <span className="text-xs" style={{ color: G.grey }}>
-                Off {coach.offGuru ? '+6%' : gradeBonus(coach.offGrade)} - Def {coach.defGuru ? '+6%' : gradeBonus(coach.defGrade)}
+                Off {coach.offGuru ? '+6%' : gradeBonus(fpOffGrade)} - Def {coach.defGuru ? '+6%' : gradeBonus(fpDefGrade)}
+                {fpActive && <span style={{ color: '#a78bfa', marginLeft: 6, fontWeight: 600 }}>★ Franchise Pair</span>}
                 {coach.champ > 0 && <span style={{ color: G.goldDim, marginLeft: 6 }}>+{(coachChampBonus(coach) * 100).toFixed(1)}% coach titles</span>}
               </span>
             </div>

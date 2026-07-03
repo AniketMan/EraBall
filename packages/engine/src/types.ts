@@ -42,6 +42,9 @@ export interface Player {
   offAnchor?: boolean
   anchorTier?: 1 | 2
   timeless?: boolean
+  timelessTier?: 1 | 2
+  floorGeneral?: boolean
+  floorGeneralTier?: 1 | 2
   shootingStar?: boolean
   shootingStarTier?: 1 | 2
   glassClean?: boolean
@@ -67,9 +70,9 @@ export interface Coach {
   playoffWLPct: number
   conf: number
   champ: number
-  offGrade: 'A' | 'B' | 'C' | 'D' | 'F'
-  defGrade: 'A' | 'B' | 'C' | 'D' | 'F'
-  overallGrade: 'A' | 'B' | 'C' | 'D' | 'F'
+  offGrade: 'S' | 'A' | 'B' | 'C' | 'D' | 'F'
+  defGrade: 'S' | 'A' | 'B' | 'C' | 'D' | 'F'
+  overallGrade: 'S' | 'A' | 'B' | 'C' | 'D' | 'F'
   offGuru?: boolean
   defGuru?: boolean
 }

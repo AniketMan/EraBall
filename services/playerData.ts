@@ -108,7 +108,7 @@ export function parseCoachesCSV(text: string): Coach[] {
     const rawDefGrade = guru.defGuru ? 'A' : guru.defOverride ?? (playoffG === 0 ? 'C' : playoffWLPct >= 0.550 ? 'A' : playoffWLPct >= 0.500 ? 'B' : playoffWLPct >= 0.450 ? 'C' : playoffWLPct >= 0.400 ? 'D' : 'F');
     const offGrade = (guru.offGuru || guru.offOverride ? rawOffGrade : hofFloor(capF(rawOffGrade))) as Coach['offGrade'];
     const defGrade = (guru.defGuru || guru.defOverride ? rawDefGrade : hofFloor(capF(rawDefGrade))) as Coach['defGrade'];
-    const gradeN = (g: Coach['offGrade']) => ({ A: 4, B: 3, C: 2, D: 1, F: 0 }[g]);
+    const gradeN = (g: Coach['offGrade']) => ({ S: 5, A: 4, B: 3, C: 2, D: 1, F: 0 }[g]);
     const avg = (gradeN(offGrade) + gradeN(defGrade)) / 2;
     const overallGrade = (avg >= 3.5 ? 'A' : avg >= 2.5 ? 'B' : avg >= 1.5 ? 'C' : avg >= 0.5 ? 'D' : 'F') as Coach['overallGrade'];
     if (name && (regG >= 100 || champ > 0)) coaches.push({ name, from, to, years: to - from, regG, regW, regL, regWLPct, playoffG, playoffW, playoffL, playoffWLPct, conf, champ, offGrade, defGrade, overallGrade, offGuru: !!guru.offGuru, defGuru: !!guru.defGuru });
