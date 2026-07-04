@@ -48,6 +48,7 @@ jobs:
       - name: Set build number
         working-directory: ios
         run: |
+          export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
           BUILD=$(date +%Y%m%d%H%M)
           echo "BUILD_NUMBER=$BUILD" >> $GITHUB_ENV
           # Patch CURRENT_PROJECT_VERSION in project.yml then regenerate
