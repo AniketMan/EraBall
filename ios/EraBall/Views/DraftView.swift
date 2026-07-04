@@ -11,6 +11,7 @@ struct DraftView: View {
     @State private var sortBy: PoolSort = .pts
     @State private var posFilter: String? = nil
     @State private var showTagLegend = false
+    @State private var showEraFilter = false
 
     enum PoolSort: String, CaseIterable { case special = "SPECIAL", pts = "PTS", reb = "REB", ast = "AST", fg3 = "3P%", stl = "STL", blk = "BLK", base = "BASE" }
 
@@ -47,6 +48,7 @@ struct DraftView: View {
                 VStack(spacing: 16) {
                     court
                     if session.salaryCapMode { capMeter }
+                    eraFilterPanel
                     spinSection
                     if let sel = session.selectedPoolPlayer { selectedBlock(sel) }
                     if !session.pool.isEmpty { poolList }
@@ -65,6 +67,7 @@ struct DraftView: View {
         }
         .animation(.smooth(duration: 0.3), value: session.draftComplete)
         .animation(.smooth(duration: 0.2), value: session.selectedPoolPlayer)
+        .animation(.smooth(duration: 0.2), value: showEraFilter)
         .sheet(item: $viewSlotPlayer) { p in
             NavigationStack {
                 ScrollView { PlayerCardView(player: p).padding(16) }
@@ -111,6 +114,79 @@ struct DraftView: View {
         }
         .padding(.horizontal, 16).padding(.vertical, 10)
         .overlay(alignment: .bottom) { EraBallDivider() }
+    }
+
+    // MARK: Era Filter Panel
+
+    private let ALL_ERAS_ORDERED = ["50s", "60s", "70s", "80s", "90s", "00s", "10s", "20s"]
+
+    private var eraFilterPanel: some View {
+        let locked = session.eraFilterLocked
+        let isCustomRange = session.eraFilter.count < ALL_ERAS_ORDERED.count
+        return VStack(spacing: 0) {
+            Button {
+                if !locked { showEraFilter.toggle() }
+            } label: {
+                HStack {
+                    Text(locked
+                         ? (isCustomRange ? "Custom Range \u{00B7} \(session.eraFilter.count) eras locked" : "Custom Range \u{00B7} Locked")
+                         : "Custom Range (optional)")
+                        .font(.system(size: 10, weight: .semibold)).tracking(2)
+                        .foregroundStyle(locked ? G.goldDim : G.greyDark)
+                    Spacer()
+                    if !locked {
+                        Text(showEraFilter ? "\u{25B2}" : "\u{25BC}")
+                            .font(.system(size: 8)).foregroundStyle(G.greyDark)
+                    }
+                }
+                .padding(.horizontal, 12).padding(.vertical, 8)
+            }
+            .buttonStyle(.plain)
+            .overlay(alignment: .bottom) {
+                if showEraFilter || (locked && isCustomRange) { EraBallDivider() }
+            }
+            if showEraFilter || (locked && isCustomRange) {
+                VStack(spacing: 0) {
+                    FlexibleWrap(ALL_ERAS_ORDERED, spacing: 0) { era in
+                        let on = session.eraFilter.contains(era)
+                        Button {
+                            if !locked { session.toggleEraFilter(era) }
+                        } label: {
+                            Text(era.uppercased())
+                                .font(.system(size: 10, weight: .semibold)).tracking(2)
+                                .foregroundStyle(on ? G.gold : G.greyDark)
+                                .padding(.horizontal, 10).padding(.vertical, 6)
+                                .background(on ? G.gold.opacity(0.07) : Color.clear)
+                                .overlay(alignment: .bottom) {
+                                    Rectangle().fill(on ? G.gold : Color.clear).frame(height: 2)
+                                }
+                                .opacity(locked && !on ? 0.4 : 1)
+                        }
+                        .buttonStyle(.plain).disabled(locked)
+                    }
+                    .padding(.horizontal, 8).padding(.top, 4).padding(.bottom, 2)
+                    HStack(spacing: 12) {
+                        let excluded = ALL_ERAS_ORDERED.count - session.eraFilter.count
+                        let lockedMsg = "Locked. Excluding \(excluded) era\(excluded != 1 ? "s" : ""). Not eligible for leaderboard."
+                        Text(locked ? lockedMsg : "Select eras, then lock to apply.")
+                            .font(.system(size: 10)).foregroundStyle(locked ? G.goldDim : G.greyDark)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Spacer()
+                        if !locked {
+                            Button("LOCK") { session.lockEraFilter() }
+                                .font(.system(size: 10, weight: .semibold)).tracking(2)
+                                .foregroundStyle(isCustomRange ? G.gold : G.greyDark)
+                                .padding(.horizontal, 12).padding(.vertical, 4)
+                                .background(isCustomRange ? G.gold.opacity(0.13) : Color.clear)
+                                .overlay(Rectangle().stroke(isCustomRange ? G.gold.opacity(0.4) : G.border, lineWidth: 1))
+                                .buttonStyle(.plain).disabled(!isCustomRange)
+                        }
+                    }
+                    .padding(.horizontal, 12).padding(.vertical, 8)
+                }
+            }
+        }
+        .background(G.surface).overlay(Rectangle().stroke(G.border, lineWidth: 1))
     }
 
     // MARK: Court

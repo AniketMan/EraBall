@@ -186,6 +186,22 @@ final class GameSession {
     }
     func remove(slotIndex: Int) { if let s = engine.remove(slotIndex: slotIndex) { gameState = s } }
 
+    /// Toggle a single era in the era filter (must keep at least 1 selected).
+    func toggleEraFilter(_ era: String) {
+        guard !eraFilterLocked else { return }
+        if eraFilter.contains(era) {
+            if eraFilter.count > 1 { eraFilter.remove(era) }
+        } else {
+            eraFilter.insert(era)
+        }
+    }
+
+    /// Lock the current era filter so it cannot be changed during the draft.
+    func lockEraFilter() {
+        guard !eraFilterLocked, eraFilter.count < ALL_ERAS.count else { return }
+        eraFilterLocked = true
+    }
+
     func proceedToCoachDraft() {
         eligibleCoaches = engine.eligibleCoaches()
         // Bonus respin carries over when the player never used their draft re-spin (non-sandbox).
