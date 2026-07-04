@@ -75,14 +75,16 @@ struct SimulationView: View {
             }
             .padding(.horizontal, 14).padding(.vertical, 10).overlay(alignment: .bottom) { EraBallDivider() }
             if let ratings = session.teamRating?.playerRatings {
-                gridHeader(["PLAYER", "SLOT", "BASE", "ERA", "FIT", "RATING"], leadingFirst: true)
+                ratingHeader
                 ForEach(ratings) { r in
                     HStack(spacing: 0) {
-                        Text(r.name).font(.system(size: 11, weight: .medium)).foregroundStyle(G.white).frame(maxWidth: .infinity, alignment: .leading).lineLimit(1)
-                        cell(r.slot, G.grey); cell("\(Int(r.base.rounded()))", G.grey)
-                        cell("\(Int((r.eraMod * 100).rounded()))%", r.eraMod >= 0.85 ? G.green : r.eraMod >= 0.70 ? Color(hex: "#facc15") : G.red)
-                        cell(r.fitPenalty == 0 ? "—" : "-\(Int((r.fitPenalty * 100).rounded()))%", r.fitPenalty == 0 ? G.grey : G.red)
-                        cell("\(Int(r.adjusted.rounded()))", G.gold, bold: true)
+                        Text(r.name).font(.system(size: 11, weight: .medium)).foregroundStyle(G.white)
+                            .frame(maxWidth: .infinity, alignment: .leading).lineLimit(1).minimumScaleFactor(0.8)
+                        cell(r.slot, G.grey, width: ratingCols.slot)
+                        cell("\(Int(r.base.rounded()))", G.grey, width: ratingCols.base)
+                        cell("\(Int((r.eraMod * 100).rounded()))%", r.eraMod >= 0.85 ? G.green : r.eraMod >= 0.70 ? Color(hex: "#facc15") : G.red, width: ratingCols.era)
+                        cell(r.fitPenalty == 0 ? "—" : "-\(Int((r.fitPenalty * 100).rounded()))%", r.fitPenalty == 0 ? G.grey : G.red, width: ratingCols.fit)
+                        cell("\(Int(r.adjusted.rounded()))", G.gold, bold: true, width: ratingCols.rating)
                     }
                     .padding(.horizontal, 14).padding(.vertical, 7).overlay(alignment: .bottom) { EraBallDivider().opacity(0.4) }
                 }
@@ -289,8 +291,29 @@ struct SimulationView: View {
             }
         }.padding(.horizontal, 14).padding(.vertical, 6).overlay(alignment: .bottom) { EraBallDivider() }
     }
-    private func cell(_ s: String, _ color: Color, bold: Bool = false) -> some View {
-        Text(s).font(.system(size: 11, weight: bold ? .bold : .regular)).foregroundStyle(color).frame(maxWidth: .infinity, alignment: .trailing)
+    private func cell(_ s: String, _ color: Color, bold: Bool = false, width: CGFloat? = nil) -> some View {
+        Text(s).font(.system(size: 11, weight: bold ? .bold : .regular)).foregroundStyle(color)
+            .frame(width: width, alignment: .trailing)
+            .frame(maxWidth: width == nil ? .infinity : nil, alignment: .trailing)
+    }
+
+    // Team Rating table: fixed numeric columns so the PLAYER name gets the remaining
+    // width and shows in full (the equal-1/6 split was truncating "LeBron Ja…").
+    private let ratingCols = (slot: CGFloat(38), base: CGFloat(40), era: CGFloat(50), fit: CGFloat(50), rating: CGFloat(54))
+    private var ratingHeader: some View {
+        HStack(spacing: 0) {
+            Text("PLAYER").font(.system(size: 8, weight: .semibold)).tracking(1).foregroundStyle(G.grey)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Group {
+                Text("SLOT").frame(width: ratingCols.slot, alignment: .trailing)
+                Text("BASE").frame(width: ratingCols.base, alignment: .trailing)
+                Text("ERA").frame(width: ratingCols.era, alignment: .trailing)
+                Text("FIT").frame(width: ratingCols.fit, alignment: .trailing)
+                Text("RATING").frame(width: ratingCols.rating, alignment: .trailing)
+            }
+            .font(.system(size: 8, weight: .semibold)).tracking(1).foregroundStyle(G.grey)
+        }
+        .padding(.horizontal, 14).padding(.vertical, 6).overlay(alignment: .bottom) { EraBallDivider() }
     }
     private func verdict(_ w: Int) -> String {
         switch w { case 70...: return "ALL-TIME GREAT"; case 60...: return "DOMINANT"; case 50...: return "PLAYOFF CONTENDER"; case 41...: return "ABOVE .500"; case 30...: return "BELOW .500"; default: return "LOTTERY TEAM" }

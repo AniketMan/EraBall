@@ -36,7 +36,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		0E670E3F6E07AEAC121E1453 /* coaches.csv */ = {isa = PBXFileReference; path = coaches.csv; sourceTree = "<group>"; };
+		0E670E3F6E07AEAC121E1453 /* coaches.csv */ = {isa = PBXFileReference; lastKnownFileType = text; path = coaches.csv; sourceTree = "<group>"; };
 		1C2607734CE4D675C60A8B4A /* CoachDraftView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoachDraftView.swift; sourceTree = "<group>"; };
 		299955513A505E82976BC0F3 /* GameSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSession.swift; sourceTree = "<group>"; };
 		2EB4B55601567BECCE570BD2 /* EngineBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineBridge.swift; sourceTree = "<group>"; };
@@ -47,7 +47,7 @@
 		50D91547CABCB48FB821B7B1 /* LeaderboardSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardSheet.swift; sourceTree = "<group>"; };
 		53A437C43B315BA6D65251BA /* EraSelectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EraSelectView.swift; sourceTree = "<group>"; };
 		641C9F5A4A6622B7502BEB79 /* Modals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Modals.swift; sourceTree = "<group>"; };
-		64D475BD02F2CD03976724BF /* EraBall.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = EraBall.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		64D475BD02F2CD03976724BF /* EraBall.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EraBall.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6935D761D9B450C2A8447ECA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		83CE305A912E8AFD0501F76C /* players_with_stats.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = players_with_stats.json; sourceTree = "<group>"; };
 		85260E5E9506442DCB5935B7 /* BebasNeue-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "BebasNeue-Regular.ttf"; sourceTree = "<group>"; };
@@ -182,7 +182,6 @@
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					66D5E58D339E9C7BB2F6D8D3 = {
-						DevelopmentTeam = QAHSS958N6;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -394,7 +393,7 @@
 				CODE_SIGN_ENTITLEMENTS = EraBall/EraBall.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = QAHSS958N6;
+				DEVELOPMENT_TEAM = 5BF427L96N;
 				INFOPLIST_FILE = EraBall/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -416,7 +415,7 @@
 				CODE_SIGN_ENTITLEMENTS = EraBall/EraBall.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = QAHSS958N6;
+				DEVELOPMENT_TEAM = 5BF427L96N;
 				INFOPLIST_FILE = EraBall/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
