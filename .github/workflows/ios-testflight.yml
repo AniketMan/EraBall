@@ -11,7 +11,7 @@ jobs:
   build-and-upload:
     name: Build & Upload to TestFlight
     runs-on: [self-hosted, macOS, arm64, xcode26]
-    timeout-minutes: 60
+    timeout-minutes: 90
 
     # All credentials are hardcoded for the self-hosted runner.
     # The .p8 key file lives at a fixed path on the DevMac runner.
@@ -68,8 +68,7 @@ jobs:
             -allowProvisioningUpdates \
             -authenticationKeyPath "${{ env.ASC_KEY_PATH }}" \
             -authenticationKeyID "${{ env.ASC_KEY_ID }}" \
-            -authenticationKeyIssuerID "${{ env.ASC_ISSUER_ID }}" \
-            2>&1 | tail -40
+            -authenticationKeyIssuerID "${{ env.ASC_ISSUER_ID }}"
           ls "$RUNNER_TEMP/EraBall.xcarchive"
 
       - name: Write ExportOptions.plist
@@ -104,8 +103,7 @@ jobs:
             -allowProvisioningUpdates \
             -authenticationKeyPath "${{ env.ASC_KEY_PATH }}" \
             -authenticationKeyID "${{ env.ASC_KEY_ID }}" \
-            -authenticationKeyIssuerID "${{ env.ASC_ISSUER_ID }}" \
-            2>&1
+            -authenticationKeyIssuerID "${{ env.ASC_ISSUER_ID }}"
           ls -la "$RUNNER_TEMP/EraBallExport/"
 
       - name: Verify IPA
