@@ -28,6 +28,38 @@ struct Player: Codable, Identifiable, Sendable {
     var duoPartnerName: String?
     var duoActiveCount: Int?
     var id: Int { person_id }
+
+    enum CodingKeys: String, CodingKey {
+        case person_id, full_name, team_abbreviation, era, GP, PTS, REB, AST, STL, BLK, TOV
+        case FG_PCT, FG3_PCT, FT_PCT, TS_PCT, all_teams_by_era, tags, duoPartnerName, duoActiveCount
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        if let idString = try? c.decode(String.self, forKey: .person_id) {
+            person_id = Int(idString) ?? 0
+        } else {
+            person_id = try c.decode(Int.self, forKey: .person_id)
+        }
+        full_name = try c.decode(String.self, forKey: .full_name)
+        team_abbreviation = try c.decode(String.self, forKey: .team_abbreviation)
+        era = try c.decode(String.self, forKey: .era)
+        GP = try c.decodeIfPresent(Int.self, forKey: .GP)
+        PTS = try c.decodeIfPresent(Double.self, forKey: .PTS)
+        REB = try c.decodeIfPresent(Double.self, forKey: .REB)
+        AST = try c.decodeIfPresent(Double.self, forKey: .AST)
+        STL = try c.decodeIfPresent(Double.self, forKey: .STL)
+        BLK = try c.decodeIfPresent(Double.self, forKey: .BLK)
+        TOV = try c.decodeIfPresent(Double.self, forKey: .TOV)
+        FG_PCT = try c.decodeIfPresent(Double.self, forKey: .FG_PCT)
+        FG3_PCT = try c.decodeIfPresent(Double.self, forKey: .FG3_PCT)
+        FT_PCT = try c.decodeIfPresent(Double.self, forKey: .FT_PCT)
+        TS_PCT = try c.decodeIfPresent(Double.self, forKey: .TS_PCT)
+        all_teams_by_era = try c.decodeIfPresent([String: [String]].self, forKey: .all_teams_by_era)
+        tags = try c.decodeIfPresent([String].self, forKey: .tags)
+        duoPartnerName = try c.decodeIfPresent(String.self, forKey: .duoPartnerName)
+        duoActiveCount = try c.decodeIfPresent(Int.self, forKey: .duoActiveCount)
+    }
 }
 
 struct Coach: Codable, Identifiable, Sendable {

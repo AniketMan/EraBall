@@ -27,6 +27,12 @@ struct RootView: View {
         ZStack {
             Color.black.ignoresSafeArea()
             phaseView
+                // §11/§15 — the negotiation starts at the root frame (window
+                // minus safe areas). Each phase view respects that proposal so
+                // content never bleeds under system chrome; the banner overflow
+                // is contained at its source by BleedImage (§12.4), so no
+                // clip-guard is needed here (a root .clipped() would force the
+                // content to bleed past the bottom safe area).
                 .transition(.opacity.combined(with: .scale(scale: 0.98)))
                 .animation(.smooth(duration: 0.4), value: appState.phase)
             if let ach = appState.pendingAchievementToast {

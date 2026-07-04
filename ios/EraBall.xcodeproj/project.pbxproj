@@ -1,0 +1,427 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0323E29E33F4CEA9B5E9074A /* AchievementsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFBFAC9E5065C3FC97D6D07 /* AchievementsView.swift */; };
+		03525567114FBC927CB82843 /* CourtSlotView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C27D0F86B0F749C84624481 /* CourtSlotView.swift */; };
+		1725297CB1B04166DBA8F39F /* TopBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FCA91861571EDA4D8C11436 /* TopBar.swift */; };
+		2D8AD858FAD8FBFB2BE815C1 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB492A53A7A4287827EC48BD /* AppState.swift */; };
+		2DBFF0A4C4CB2DA0B68AECEA /* LifetimeStatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B074BF89C7E543D5DE837A7C /* LifetimeStatsView.swift */; };
+		3E4DFB9E6C5735C251EAA39A /* SimulationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D922BE776B7DD94B0CE9A88 /* SimulationView.swift */; };
+		4749F9682A21559550036026 /* Starfield.swift in Sources */ = {isa = PBXBuildFile; fileRef = B78AF32D23E7F689B3870E61 /* Starfield.swift */; };
+		53CB551EE5D907FE6B3D0680 /* DraftView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD3B49C5C3F802E3ED448B70 /* DraftView.swift */; };
+		57E14B383F83A596EFBA559B /* GameCenterManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0061ECA27D22E0B3B40B92 /* GameCenterManager.swift */; };
+		5E9FA15773ACCAC627F1F735 /* coaches.csv in Resources */ = {isa = PBXBuildFile; fileRef = 0E670E3F6E07AEAC121E1453 /* coaches.csv */; };
+		75D487C66AE275C0BD70B523 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CB643FD9B4EB4CE4EBD4AAC9 /* Assets.xcassets */; };
+		7689A661CB0B10A08C18BE57 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B317F2DC75159CA33A82C017 /* Theme.swift */; };
+		837EAA46333B937B7521171A /* CoachDraftView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C2607734CE4D675C60A8B4A /* CoachDraftView.swift */; };
+		AE94C06C8C7E1285954F0E98 /* AudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36623DE6CEA5A9C9E978EC4A /* AudioManager.swift */; };
+		B90EFA91359E7C83733FD5CE /* EraBallApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAF15A1BB932F1B193742618 /* EraBallApp.swift */; };
+		BC40F8C9BBCEAAAE686698E8 /* PlayerHeadshotView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88C549C6C9117CEBD5D87F15 /* PlayerHeadshotView.swift */; };
+		C2B9DE458C27964639603DDD /* BleedImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E9C1B3EC9D990CD8A817BD /* BleedImage.swift */; };
+		C2BFDDDAA171227BB171B5E5 /* EraSelectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53A437C43B315BA6D65251BA /* EraSelectView.swift */; };
+		CC65C05E4B737A0291AFAA40 /* LeaderboardSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50D91547CABCB48FB821B7B1 /* LeaderboardSheet.swift */; };
+		D5890DA6BB6A845882F6A2BE /* Engine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AE51AE2D502072D0C158923 /* Engine.swift */; };
+		E442DB9A538A34B6E6CCDBCE /* players_with_stats.json in Resources */ = {isa = PBXBuildFile; fileRef = 83CE305A912E8AFD0501F76C /* players_with_stats.json */; };
+		EE7206B2A3302C2A20ADCE0E /* BebasNeue-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 85260E5E9506442DCB5935B7 /* BebasNeue-Regular.ttf */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0E670E3F6E07AEAC121E1453 /* coaches.csv */ = {isa = PBXFileReference; path = coaches.csv; sourceTree = "<group>"; };
+		1C2607734CE4D675C60A8B4A /* CoachDraftView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoachDraftView.swift; sourceTree = "<group>"; };
+		36623DE6CEA5A9C9E978EC4A /* AudioManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioManager.swift; sourceTree = "<group>"; };
+		3B0061ECA27D22E0B3B40B92 /* GameCenterManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameCenterManager.swift; sourceTree = "<group>"; };
+		4C27D0F86B0F749C84624481 /* CourtSlotView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourtSlotView.swift; sourceTree = "<group>"; };
+		4D922BE776B7DD94B0CE9A88 /* SimulationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimulationView.swift; sourceTree = "<group>"; };
+		50D91547CABCB48FB821B7B1 /* LeaderboardSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardSheet.swift; sourceTree = "<group>"; };
+		53A437C43B315BA6D65251BA /* EraSelectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EraSelectView.swift; sourceTree = "<group>"; };
+		64D475BD02F2CD03976724BF /* EraBall.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = EraBall.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		6935D761D9B450C2A8447ECA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		7AE51AE2D502072D0C158923 /* Engine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Engine.swift; sourceTree = "<group>"; };
+		83CE305A912E8AFD0501F76C /* players_with_stats.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = players_with_stats.json; sourceTree = "<group>"; };
+		85260E5E9506442DCB5935B7 /* BebasNeue-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "BebasNeue-Regular.ttf"; sourceTree = "<group>"; };
+		87E9C1B3EC9D990CD8A817BD /* BleedImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleedImage.swift; sourceTree = "<group>"; };
+		88C549C6C9117CEBD5D87F15 /* PlayerHeadshotView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerHeadshotView.swift; sourceTree = "<group>"; };
+		8FCA91861571EDA4D8C11436 /* TopBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopBar.swift; sourceTree = "<group>"; };
+		B074BF89C7E543D5DE837A7C /* LifetimeStatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LifetimeStatsView.swift; sourceTree = "<group>"; };
+		B317F2DC75159CA33A82C017 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		B78AF32D23E7F689B3870E61 /* Starfield.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Starfield.swift; sourceTree = "<group>"; };
+		BB17551BE40C17B18283C310 /* EraBall.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = EraBall.entitlements; sourceTree = "<group>"; };
+		BD3B49C5C3F802E3ED448B70 /* DraftView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DraftView.swift; sourceTree = "<group>"; };
+		CB643FD9B4EB4CE4EBD4AAC9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		FAF15A1BB932F1B193742618 /* EraBallApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EraBallApp.swift; sourceTree = "<group>"; };
+		FB492A53A7A4287827EC48BD /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		FBFBFAC9E5065C3FC97D6D07 /* AchievementsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementsView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		27B08396DBE648FDC2703AB3 /* EraBall */ = {
+			isa = PBXGroup;
+			children = (
+				A7B624CF97FAE1E66FC2555F /* Components */,
+				54BF32D93DB41CE15722F226 /* Core */,
+				43007A5A98BA4CA7BAE374B9 /* Resources */,
+				ABE9164DB90D1CC4755A15C0 /* Views */,
+				BB17551BE40C17B18283C310 /* EraBall.entitlements */,
+				FAF15A1BB932F1B193742618 /* EraBallApp.swift */,
+				6935D761D9B450C2A8447ECA /* Info.plist */,
+			);
+			path = EraBall;
+			sourceTree = "<group>";
+		};
+		43007A5A98BA4CA7BAE374B9 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				CB643FD9B4EB4CE4EBD4AAC9 /* Assets.xcassets */,
+				85260E5E9506442DCB5935B7 /* BebasNeue-Regular.ttf */,
+				0E670E3F6E07AEAC121E1453 /* coaches.csv */,
+				83CE305A912E8AFD0501F76C /* players_with_stats.json */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		54BF32D93DB41CE15722F226 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				FB492A53A7A4287827EC48BD /* AppState.swift */,
+				36623DE6CEA5A9C9E978EC4A /* AudioManager.swift */,
+				7AE51AE2D502072D0C158923 /* Engine.swift */,
+				3B0061ECA27D22E0B3B40B92 /* GameCenterManager.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		628A4D3AF54E19CFDC432105 = {
+			isa = PBXGroup;
+			children = (
+				27B08396DBE648FDC2703AB3 /* EraBall */,
+				DF70F74A6A75C975DE1E5672 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A7B624CF97FAE1E66FC2555F /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				87E9C1B3EC9D990CD8A817BD /* BleedImage.swift */,
+				4C27D0F86B0F749C84624481 /* CourtSlotView.swift */,
+				88C549C6C9117CEBD5D87F15 /* PlayerHeadshotView.swift */,
+				B78AF32D23E7F689B3870E61 /* Starfield.swift */,
+				B317F2DC75159CA33A82C017 /* Theme.swift */,
+				8FCA91861571EDA4D8C11436 /* TopBar.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		ABE9164DB90D1CC4755A15C0 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				FBFBFAC9E5065C3FC97D6D07 /* AchievementsView.swift */,
+				1C2607734CE4D675C60A8B4A /* CoachDraftView.swift */,
+				BD3B49C5C3F802E3ED448B70 /* DraftView.swift */,
+				53A437C43B315BA6D65251BA /* EraSelectView.swift */,
+				50D91547CABCB48FB821B7B1 /* LeaderboardSheet.swift */,
+				B074BF89C7E543D5DE837A7C /* LifetimeStatsView.swift */,
+				4D922BE776B7DD94B0CE9A88 /* SimulationView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		DF70F74A6A75C975DE1E5672 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				64D475BD02F2CD03976724BF /* EraBall.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		66D5E58D339E9C7BB2F6D8D3 /* EraBall */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A0E573F2F95892FA8B1D80EB /* Build configuration list for PBXNativeTarget "EraBall" */;
+			buildPhases = (
+				DE0D3FB739DE872E2B9287DF /* Sources */,
+				96C9F342213EFD3EFB70E60A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = EraBall;
+			packageProductDependencies = (
+			);
+			productName = EraBall;
+			productReference = 64D475BD02F2CD03976724BF /* EraBall.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A4E6FCCF6E602F9D01965A8E /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+				};
+			};
+			buildConfigurationList = 1F0FD7DAEF39D348D68C7722 /* Build configuration list for PBXProject "EraBall" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 628A4D3AF54E19CFDC432105;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = DF70F74A6A75C975DE1E5672 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				66D5E58D339E9C7BB2F6D8D3 /* EraBall */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		96C9F342213EFD3EFB70E60A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				75D487C66AE275C0BD70B523 /* Assets.xcassets in Resources */,
+				EE7206B2A3302C2A20ADCE0E /* BebasNeue-Regular.ttf in Resources */,
+				5E9FA15773ACCAC627F1F735 /* coaches.csv in Resources */,
+				E442DB9A538A34B6E6CCDBCE /* players_with_stats.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		DE0D3FB739DE872E2B9287DF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0323E29E33F4CEA9B5E9074A /* AchievementsView.swift in Sources */,
+				2D8AD858FAD8FBFB2BE815C1 /* AppState.swift in Sources */,
+				AE94C06C8C7E1285954F0E98 /* AudioManager.swift in Sources */,
+				C2B9DE458C27964639603DDD /* BleedImage.swift in Sources */,
+				837EAA46333B937B7521171A /* CoachDraftView.swift in Sources */,
+				03525567114FBC927CB82843 /* CourtSlotView.swift in Sources */,
+				53CB551EE5D907FE6B3D0680 /* DraftView.swift in Sources */,
+				D5890DA6BB6A845882F6A2BE /* Engine.swift in Sources */,
+				B90EFA91359E7C83733FD5CE /* EraBallApp.swift in Sources */,
+				C2BFDDDAA171227BB171B5E5 /* EraSelectView.swift in Sources */,
+				57E14B383F83A596EFBA559B /* GameCenterManager.swift in Sources */,
+				CC65C05E4B737A0291AFAA40 /* LeaderboardSheet.swift in Sources */,
+				2DBFF0A4C4CB2DA0B68AECEA /* LifetimeStatsView.swift in Sources */,
+				BC40F8C9BBCEAAAE686698E8 /* PlayerHeadshotView.swift in Sources */,
+				3E4DFB9E6C5735C251EAA39A /* SimulationView.swift in Sources */,
+				4749F9682A21559550036026 /* Starfield.swift in Sources */,
+				7689A661CB0B10A08C18BE57 /* Theme.swift in Sources */,
+				1725297CB1B04166DBA8F39F /* TopBar.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		1A7979487B1032D3FB64B011 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 2.0.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		BAC70BA33C03983D3C4FF03B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 2.0.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		CE0FCDDB7C91C21E752D4227 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = EraBall/EraBall.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = EraBall/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.eraball.app;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		DD2906A7E2B35D5451FCB86F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = EraBall/EraBall.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = EraBall/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.eraball.app;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1F0FD7DAEF39D348D68C7722 /* Build configuration list for PBXProject "EraBall" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BAC70BA33C03983D3C4FF03B /* Debug */,
+				1A7979487B1032D3FB64B011 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		A0E573F2F95892FA8B1D80EB /* Build configuration list for PBXNativeTarget "EraBall" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DD2906A7E2B35D5451FCB86F /* Debug */,
+				CE0FCDDB7C91C21E752D4227 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A4E6FCCF6E602F9D01965A8E /* Project object */;
+}

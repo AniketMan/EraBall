@@ -24,7 +24,6 @@ targets:
       - path: EraBall
         excludes:
           - "**/*.md"
-          - "Resources/**"
     resources:
       - path: EraBall/Resources/Assets.xcassets
       - path: EraBall/Resources/players_with_stats.json
@@ -33,11 +32,16 @@ targets:
     info:
       path: EraBall/Info.plist
       properties:
+        UILaunchScreen: {}
         CFBundleDisplayName: ERA BALL
         CFBundleVersion: "1"
         CFBundleShortVersionString: "2.0.0"
         UIStatusBarStyle: UIStatusBarStyleLightContent
         UIViewControllerBasedStatusBarAppearance: NO
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: YES
         GKGameCenterEnabled: YES
