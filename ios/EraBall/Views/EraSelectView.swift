@@ -24,7 +24,6 @@ struct EraSelectView: View {
     @State private var showSupporters = false
     @State private var showVolume = false
     @Namespace private var topBarGlass
-    @Namespace private var eraGridGlass
 
     var body: some View {
         ZStack {
@@ -42,6 +41,9 @@ struct EraSelectView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.horizontal, 16).padding(.top, 24).padding(.bottom, 40)
+                    // One shared spring so the grid glides down as the description/actions
+                    // lens in, instead of the layout jumping ahead of the animation.
+                    .animation(.spring(response: 0.42, dampingFraction: 0.82), value: session.selectedEra)
                 }
             }
         }
@@ -62,7 +64,8 @@ struct EraSelectView: View {
                         .frame(width: 34, height: 34).contentShape(.rect)
                 }
                 .buttonStyle(.plain)
-                .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
+                .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 0))
+                .overlay(Rectangle().stroke(G.border, lineWidth: 1))
                 .glassEffectID("help", in: topBarGlass)
 
                 // Era theme toggle
@@ -78,7 +81,8 @@ struct EraSelectView: View {
                     .padding(.horizontal, 8).frame(height: 34).contentShape(.rect)
                 }
                 .buttonStyle(.plain)
-                .glassEffect(.regular.interactive().tint(session.themeOn ? G.gold.opacity(0.14) : .clear), in: .rect(cornerRadius: 8))
+                .glassEffect(.regular.interactive().tint(session.themeOn ? G.gold.opacity(0.14) : .clear), in: .rect(cornerRadius: 0))
+                .overlay(Rectangle().stroke(session.themeOn ? G.gold.opacity(0.6) : G.border, lineWidth: 1))
                 .glassEffectID("theme", in: topBarGlass)
 
                 // Volume — speaker opens a popover with a slider + MUTE
@@ -89,7 +93,8 @@ struct EraSelectView: View {
                         .frame(width: 34, height: 34).contentShape(.rect)
                 }
                 .buttonStyle(.plain)
-                .glassEffect(.regular.interactive().tint(audio.isSilent ? .clear : G.gold.opacity(0.14)), in: .rect(cornerRadius: 8))
+                .glassEffect(.regular.interactive().tint(audio.isSilent ? .clear : G.gold.opacity(0.14)), in: .rect(cornerRadius: 0))
+                .overlay(Rectangle().stroke(audio.isSilent ? G.border : G.gold.opacity(0.6), lineWidth: 1))
                 .glassEffectID("volume", in: topBarGlass)
                 .popover(isPresented: $showVolume, arrowEdge: .top) { volumePopover }
             }
@@ -133,13 +138,16 @@ struct EraSelectView: View {
                         Text((ERA_DESC[era]?.note ?? "").uppercased()).font(.system(size: 10, weight: .semibold)).tracking(2)
                             .foregroundStyle(G.gold).multilineTextAlignment(.center)
                             .padding(.horizontal, 12).padding(.vertical, 6)
-                            .glassEffect(.regular.tint(G.gold.opacity(0.12)), in: .capsule)
+                            .glassEffect(.regular.tint(G.gold.opacity(0.12)), in: .rect(cornerRadius: 0))
+                            .overlay(Rectangle().stroke(G.goldDim, lineWidth: 1))
                         Text("Players perform best in their home era — drafting across decades applies a rating penalty")
                             .font(.system(size: 11)).foregroundStyle(G.grey).multilineTextAlignment(.center).frame(maxWidth: 340)
                     }
                     .padding(16)
-                    .glassEffect(.regular, in: .rect(cornerRadius: 16))
-                    .padding(.top, 14).transition(.opacity)
+                    .glassEffect(.regular, in: .rect(cornerRadius: 0))
+                    .overlay(Rectangle().stroke(G.border, lineWidth: 1))
+                    .padding(.top, 14)
+                    .transition(.blurReplace.combined(with: .opacity))
                 }
             }
         } else {
@@ -160,7 +168,8 @@ struct EraSelectView: View {
                 .buttonStyle(.plain).disabled(session.eraSpinning).opacity(session.eraSpinning ? 0.4 : 1)
                 // Each cell owns its own glass — no cross-cell glassEffectID, so the gold
                 // stays on the one selected cell instead of sweeping across the whole grid.
-                .glassEffect(selected ? .regular.tint(G.gold) : .clear, in: .rect(cornerRadius: 10))
+                .glassEffect(selected ? .regular.tint(G.gold) : .clear, in: .rect(cornerRadius: 0))
+                .overlay(Rectangle().stroke(selected ? G.gold : G.border, lineWidth: 1))
                 .scaleEffect(selected ? 1.04 : 1)
                 .animation(.spring(response: 0.34, dampingFraction: 0.72), value: selected)
             }
@@ -173,23 +182,21 @@ struct EraSelectView: View {
             if session.selectedEra != nil && !session.eraSpinning {
                 // Primary draft modes — side by side to cut vertical scrolling.
                 HStack(spacing: 10) {
-                    Button("NORMAL") { session.beginDraft(salaryCap: false) }
-                        .buttonStyle(GoldButtonStyle(fullWidth: true))
-                    Button("SALARY CAP") { session.beginDraft(salaryCap: true) }
-                        .buttonStyle(PurpleButtonStyle(fullWidth: true))
+                    ClearGlassButton(title: "NORMAL", tint: G.gold) { session.beginDraft(salaryCap: false) }
+                    ClearGlassButton(title: "SALARY CAP", tint: G.purple) { session.beginDraft(salaryCap: true) }
                 }
                 .frame(maxWidth: 320)
                 // Secondary row: re-roll era + sandbox.
                 HStack(spacing: 10) {
-                    Button(session.eraSpinning ? "SPINNING..." : "RANDOM") { session.spinEra() }
-                        .buttonStyle(GhostButtonStyle()).disabled(session.eraSpinning)
-                    Button("SANDBOX") { session.beginDraft(salaryCap: false, sandbox: true) }
-                        .buttonStyle(GhostButtonStyle())
+                    ClearGlassButton(title: session.eraSpinning ? "SPINNING..." : "RANDOM", tint: G.grey) { session.spinEra() }
+                        .disabled(session.eraSpinning)
+                    ClearGlassButton(title: "SANDBOX", tint: G.grey) { session.beginDraft(salaryCap: false, sandbox: true) }
                 }
                 .frame(maxWidth: 320)
+                .transition(.blurReplace.combined(with: .opacity))
             } else {
-                Button(session.eraSpinning ? "SPINNING..." : "RANDOM ERA") { session.spinEra() }
-                    .buttonStyle(GoldButtonStyle(fullWidth: true)).frame(maxWidth: 320).disabled(session.eraSpinning)
+                ClearGlassButton(title: session.eraSpinning ? "SPINNING..." : "RANDOM ERA", tint: G.gold) { session.spinEra() }
+                    .frame(maxWidth: 320).disabled(session.eraSpinning)
             }
 
             HStack(spacing: 20) {
@@ -203,7 +210,6 @@ struct EraSelectView: View {
             footerLinks
             Text("v2.0").font(.system(size: 10)).tracking(2).foregroundStyle(G.greyDark.opacity(0.6)).padding(.top, 4)
         }
-        .animation(.smooth(duration: 0.25), value: session.selectedEra)
     }
 
     // MARK: - Footer links (web: bottom-right footer — support / socials / portfolio)
@@ -213,18 +219,21 @@ struct EraSelectView: View {
             FooterLinkButton(url: "https://ko-fi.com/eshanb", label: "SUPPORT THE GAME", tint: G.gold)
             Button { showSupporters = true } label: {
                 Text("★ SUPPORTER HALL OF FAME").font(.system(size: 11, weight: .semibold)).tracking(1.5).foregroundStyle(G.gold)
-                    .frame(width: 300, height: 40).overlay(Rectangle().stroke(G.gold, lineWidth: 1))
+                    .frame(maxWidth: 320).frame(height: 42)
+                    .glassEffect(.clear.tint(G.gold.opacity(0.14)).interactive(), in: .rect(cornerRadius: 0))
+                    .overlay(Rectangle().stroke(G.gold, lineWidth: 1))
             }.buttonStyle(.plain)
 
             Text("SUGGESTIONS OR BUGS?").font(.system(size: 9, weight: .semibold)).tracking(1.5)
                 .foregroundStyle(G.greyDark).padding(.top, 8)
             HStack(spacing: 12) {
-                FooterLinkButton(url: "https://discord.gg/gFAp5adX", label: "DISCORD", tint: G.greyDark, width: 144)
-                FooterLinkButton(url: "https://x.com/Eshan_Design", label: "TWITTER", tint: G.greyDark, width: 144)
+                FooterLinkButton(url: "https://discord.gg/gFAp5adX", label: "DISCORD", tint: G.grey, width: 154)
+                FooterLinkButton(url: "https://x.com/Eshan_Design", label: "TWITTER", tint: G.grey, width: 154)
             }
-            FooterLinkButton(url: "https://eshanbhattdesign.com", label: "ESHANBHATTDESIGN.COM", tint: G.greyDark)
+            FooterLinkButton(url: "https://eshanbhattdesign.com", label: "ESHANBHATTDESIGN.COM", tint: G.grey)
         }
         .padding(.top, 6)
+        .frame(maxWidth: 320)
     }
 }
 
@@ -234,14 +243,33 @@ struct FooterLinkButton: View {
     let url: String
     let label: String
     var tint: Color
-    var width: CGFloat = 300
+    var width: CGFloat = 320
     var body: some View {
         Link(destination: URL(string: url)!) {
             Text(label).font(.system(size: 11, weight: .semibold)).tracking(1.5).foregroundStyle(tint)
                 .frame(maxWidth: width == .infinity ? .infinity : nil)
-                .frame(width: width == .infinity ? nil : width, height: 40)
+                .frame(width: width == .infinity ? nil : width, height: 42)
+                .glassEffect(.clear.tint(tint == G.gold ? G.gold.opacity(0.14) : .clear).interactive(), in: .rect(cornerRadius: 0))
                 .overlay(Rectangle().stroke(tint == G.gold ? G.goldDim : G.border, lineWidth: 1))
         }.buttonStyle(.plain)
+    }
+}
+
+/// A Liquid Glass action button using the CLEAR material — sharp corners + border to
+/// match EraBall's rectangle design language.
+struct ClearGlassButton: View {
+    let title: String
+    var tint: Color
+    let action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            Text(title).font(.system(size: 13, weight: .bold)).tracking(1.5)
+                .foregroundStyle(tint == G.grey ? G.grey : tint)
+                .frame(maxWidth: .infinity).frame(height: 46).contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .glassEffect(.clear.tint(tint == G.grey ? .clear : tint.opacity(0.16)).interactive(), in: .rect(cornerRadius: 0))
+        .overlay(Rectangle().stroke(tint == G.grey ? G.border : tint.opacity(0.7), lineWidth: 1))
     }
 }
 

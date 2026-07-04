@@ -15,7 +15,7 @@ struct HomeTabView: View {
 
     var body: some View {
         TabView(selection: $tab) {
-            Tab("Home", systemImage: "house.fill", value: .home) {
+            Tab("Eras", systemImage: "basketball.fill", value: .home) {
                 themed(EraSelectView())
             }
             Tab("Ranks", systemImage: "trophy.fill", value: .leaderboard) {

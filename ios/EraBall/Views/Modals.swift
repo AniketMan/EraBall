@@ -9,6 +9,30 @@ let SUPPORTERS: [String] = [
     "Brennan Gorby", "Zane Luna", "BFXT", "Yung Girt",
 ]
 
+/// Cosmetic supporter tiers (green + gold) matching the live site's Hall of Fame.
+enum SupporterTier: Equatable {
+    case standard, green, gold
+    var accent: Color {
+        switch self { case .standard: return G.gold; case .green: return Color(hex: "#34D399"); case .gold: return G.gold }
+    }
+    var border: Color {
+        switch self { case .standard: return G.border; case .green: return Color(hex: "#34D399"); case .gold: return G.gold }
+    }
+    @ViewBuilder var gradient: some View {
+        switch self {
+        case .standard: G.black
+        case .green: LinearGradient(colors: [Color(hex: "#34D399").opacity(0.04), Color(hex: "#34D399").opacity(0.20)], startPoint: .leading, endPoint: .trailing)
+        case .gold: LinearGradient(colors: [G.gold.opacity(0.12), G.gold.opacity(0.34)], startPoint: .leading, endPoint: .trailing)
+        }
+    }
+}
+
+private let SUPPORTER_TIERS: [String: SupporterTier] = [
+    "TheZDSpecial": .green, "RM": .green, "EliDunlay": .green, "WhereIsJarrett": .green,
+    "Brennan Gorby": .gold,
+]
+func supporterTier(_ name: String) -> SupporterTier { SUPPORTER_TIERS[name] ?? .standard }
+
 struct SupportersSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
@@ -21,14 +45,17 @@ struct SupportersSheet: View {
                     GlassEffectContainer(spacing: 8) {
                         VStack(spacing: 8) {
                             ForEach(SUPPORTERS, id: \.self) { name in
+                                let tier = supporterTier(name)
                                 HStack(spacing: 10) {
-                                    Text("★").font(.system(size: 14)).foregroundStyle(G.gold)
+                                    Text("★").font(.system(size: 14)).foregroundStyle(tier.accent)
                                     Text(name).font(.system(size: 13, weight: .medium)).tracking(0.4).foregroundStyle(G.white)
                                     Spacer()
                                 }
                                 .padding(.horizontal, 12).padding(.vertical, 10)
-                                .overlay(SupporterSheen().clipShape(RoundedRectangle(cornerRadius: 10)))
-                                .glassEffect(.regular.tint(G.gold.opacity(0.06)), in: .rect(cornerRadius: 10))
+                                .background(tier.gradient)   // colored wash for special tiers
+                                .overlay(SupporterSheen().clipped())
+                                .glassEffect(.regular.tint(tier.accent.opacity(tier == .standard ? 0.05 : 0.10)), in: .rect(cornerRadius: 0))
+                                .overlay(Rectangle().stroke(tier.border, lineWidth: 1))
                             }
                         }
                     }
@@ -41,7 +68,8 @@ struct SupportersSheet: View {
                         }
                         .font(.system(size: 11)).tracking(0.5)
                         .frame(maxWidth: .infinity).padding(.vertical, 11)
-                        .glassEffect(.regular.interactive(), in: .capsule)
+                        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 0))
+                        .overlay(Rectangle().stroke(G.border, lineWidth: 1))
                     }
                     .buttonStyle(.plain).padding(.top, 8)
                 }.padding(24)

@@ -61,8 +61,11 @@ final class AudioManager {
         // Loop
         NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime,
                                                object: item, queue: .main) { [weak self] _ in
-            self?.player?.seek(to: .zero)
-            self?.player?.play()
+            // Delivered on the main queue, so we're already on the main actor.
+            MainActor.assumeIsolated {
+                self?.player?.seek(to: .zero)
+                self?.player?.play()
+            }
         }
     }
 
