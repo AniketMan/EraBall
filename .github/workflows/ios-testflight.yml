@@ -1,0 +1,114 @@
+name: iOS Build & TestFlight
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ios/**'
+      - '.github/workflows/ios-testflight.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-upload:
+    name: Build & Upload to TestFlight
+    runs-on: [self-hosted, macOS, arm64, xcode26]
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify Xcode
+        run: |
+          xcode-select -p
+          xcodebuild -version
+
+      - name: Install xcodegen
+        run: |
+          export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+          if ! command -v xcodegen &>/dev/null; then
+            /opt/homebrew/bin/brew install xcodegen || /usr/local/bin/brew install xcodegen
+          fi
+          echo "xcodegen: $(which xcodegen || echo /opt/homebrew/bin/xcodegen)"
+
+      - name: Generate Xcode project
+        working-directory: ios
+        run: |
+          export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+          xcodegen generate
+
+      - name: Increment build number
+        working-directory: ios
+        run: |
+          export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+          BUILD=$(date +%Y%m%d%H%M)
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD" EraBall/Resources/Info.plist 2>/dev/null || \
+          agvtool new-version -all $BUILD || \
+          echo "Build number: $BUILD"
+          echo "BUILD_NUMBER=$BUILD" >> $GITHUB_ENV
+
+      - name: Archive
+        working-directory: ios
+        run: |
+          export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+          xcodebuild archive \
+            -scheme EraBall \
+            -destination "generic/platform=iOS" \
+            -archivePath "$RUNNER_TEMP/EraBall.xcarchive" \
+            CODE_SIGN_STYLE=Automatic \
+            DEVELOPMENT_TEAM=${{ secrets.APPLE_TEAM_ID }} \
+            SDKROOT=iphoneos \
+            -allowProvisioningUpdates 2>&1 | tail -30
+          # Verify archive was created
+          ls "$RUNNER_TEMP/EraBall.xcarchive"
+
+      - name: Write ExportOptions.plist
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store-connect</string>
+            <key>destination</key>
+            <string>upload</string>
+            <key>teamID</key>
+            <string>${{ secrets.APPLE_TEAM_ID }}</string>
+            <key>uploadBitcode</key>
+            <false/>
+            <key>uploadSymbols</key>
+            <true/>
+            <key>signingStyle</key>
+            <string>automatic</string>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Export & Upload to TestFlight
+        working-directory: ios
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          # Write the API key to a temp file
+          echo "$APP_STORE_CONNECT_API_KEY_CONTENT" > "$RUNNER_TEMP/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8"
+
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/EraBall.xcarchive" \
+            -exportPath "$RUNNER_TEMP/EraBallExport" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8" \
+            -authenticationKeyID "$APP_STORE_CONNECT_API_KEY_ID" \
+            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID" \
+            | xcpretty || true
+
+          # Clean up key
+          rm -f "$RUNNER_TEMP/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8"
+
+      - name: Verify IPA
+        run: |
+          ls -la "$RUNNER_TEMP/EraBallExport/"
+          echo "Build ${{ env.BUILD_NUMBER }} ready for TestFlight"
