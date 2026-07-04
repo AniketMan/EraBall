@@ -182,11 +182,48 @@ struct EraSelectView: View {
             Button("ACHIEVEMENTS") { showAchievements = true }.buttonStyle(GhostButtonStyle()).frame(width: 200)
             Button("WHAT'S NEW!") { showPatchNotes = true }.buttonStyle(.plain)
                 .font(.system(size: 11, weight: .semibold)).tracking(1).foregroundStyle(G.gold).padding(.top, 2)
-            Button("★ SUPPORTER HALL OF FAME") { showSupporters = true }.buttonStyle(.plain)
-                .font(.system(size: 10, weight: .semibold)).tracking(1).foregroundStyle(G.goldDim)
-            Text("v2.0").font(.system(size: 10)).tracking(2).foregroundStyle(G.greyDark.opacity(0.6))
+
+            footerLinks
+            Text("v2.0").font(.system(size: 10)).tracking(2).foregroundStyle(G.greyDark.opacity(0.6)).padding(.top, 4)
         }
         .animation(.smooth(duration: 0.25), value: session.selectedEra)
+    }
+
+    // MARK: - Footer links (web: bottom-right footer — support / socials / portfolio)
+
+    private var footerLinks: some View {
+        VStack(spacing: 10) {
+            FooterLinkButton(url: "https://ko-fi.com/eshanb", label: "SUPPORT THE GAME", tint: G.gold)
+            Button { showSupporters = true } label: {
+                Text("★ SUPPORTER HALL OF FAME").font(.system(size: 11, weight: .semibold)).tracking(1.5).foregroundStyle(G.gold)
+                    .frame(width: 300, height: 40).overlay(Rectangle().stroke(G.gold, lineWidth: 1))
+            }.buttonStyle(.plain)
+
+            Text("SUGGESTIONS OR BUGS?").font(.system(size: 9, weight: .semibold)).tracking(1.5)
+                .foregroundStyle(G.greyDark).padding(.top, 8)
+            HStack(spacing: 12) {
+                FooterLinkButton(url: "https://discord.gg/gFAp5adX", label: "DISCORD", tint: G.greyDark, width: 144)
+                FooterLinkButton(url: "https://x.com/Eshan_Design", label: "TWITTER", tint: G.greyDark, width: 144)
+            }
+            FooterLinkButton(url: "https://eshanbhattdesign.com", label: "ESHANBHATTDESIGN.COM", tint: G.greyDark)
+        }
+        .padding(.top, 6)
+    }
+}
+
+// MARK: - Footer link (opens an external URL in Safari)
+
+private struct FooterLinkButton: View {
+    let url: String
+    let label: String
+    var tint: Color
+    var width: CGFloat = 300
+    var body: some View {
+        Link(destination: URL(string: url)!) {
+            Text(label).font(.system(size: 11, weight: .semibold)).tracking(1.5).foregroundStyle(tint)
+                .frame(width: width, height: 40)
+                .overlay(Rectangle().stroke(tint == G.gold ? G.goldDim : G.border, lineWidth: 1))
+        }.buttonStyle(.plain)
     }
 }
 

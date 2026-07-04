@@ -81,6 +81,7 @@ struct DraftView: View {
             }
             .presentationDetents([.medium, .large]).preferredColorScheme(.dark)
         }
+        .sheet(isPresented: $showTagLegend) { TagEffectsSheet() }
         .onAppear { if let e = session.selectedEra { audio.play(era: e) } }
     }
 
@@ -95,7 +96,13 @@ struct DraftView: View {
                     .font(.system(size: 9, weight: .semibold)).tracking(1.5).foregroundStyle(G.grey)
             }
             Spacer()
-            Text("\(state?.filledCount ?? 0)/9").font(.system(size: 13, weight: .bold, design: .monospaced)).foregroundStyle(G.grey).frame(width: 34)
+            HStack(spacing: 8) {
+                Button { showTagLegend = true } label: {
+                    Image(systemName: "info.circle").font(.system(size: 15, weight: .semibold)).foregroundStyle(G.gold)
+                        .frame(width: 34, height: 34).overlay(Rectangle().stroke(G.gold.opacity(0.5), lineWidth: 1)).contentShape(.rect)
+                }.buttonStyle(.plain)
+                Text("\(state?.filledCount ?? 0)/9").font(.system(size: 13, weight: .bold, design: .monospaced)).foregroundStyle(G.grey).frame(width: 34)
+            }
         }
         .padding(.horizontal, 16).padding(.vertical, 10)
         .overlay(alignment: .bottom) { EraBallDivider() }
@@ -226,11 +233,7 @@ struct DraftView: View {
                     }.buttonStyle(.plain)
                 }
                 Spacer()
-                Button { showTagLegend.toggle() } label: {
-                    Text("TAG EFFECTS").font(.system(size: 9, weight: .semibold)).tracking(1).foregroundStyle(G.greyDark)
-                }.buttonStyle(.plain)
             }
-            if showTagLegend { tagLegend }
             LazyVStack(spacing: 6) {
                 ForEach(displayPool) { p in
                     Button { session.selectPoolPlayer(session.selectedPoolPlayer?.personId == p.personId ? nil : p) } label: {
@@ -241,29 +244,71 @@ struct DraftView: View {
         }
     }
 
-    private var tagLegend: some View {
-        let effects: [(String, Color, String)] = [
-            ("Champion", G.gold, "Boosts playoff performance per ring."),
-            ("75 Greatest", G.gold, "Small all-around game boost."),
-            ("Off/Def Anchor", G.blue, "Elevates team offense/defense (T1 > T2)."),
-            ("Floor General", Color(hex: "#E0D4FF"), "Playmaking lifts win probability."),
-            ("Shooting Star", G.pink, "Boosts team spacing."),
-            ("Glass Cleaner", G.green, "Dominant rebounding, more 2nd-chance pts."),
-            ("Timeless", Color(hex: "#C084FC"), "Minimal cross-era penalties."),
-            ("Dynamic Duo", G.teal, "+5 rating per drafted partner."),
-            ("Flex", G.blue, "Multiple positions, no fit penalty."),
-            ("6th Man", Color(hex: "#FF8C42"), "+6 rating off the bench."),
-        ]
-        return VStack(alignment: .leading, spacing: 6) {
-            Text("PLAYER TAG EFFECTS").font(.system(size: 10, weight: .bold)).tracking(2).foregroundStyle(G.gold)
-            ForEach(effects, id: \.0) { e in
-                HStack(alignment: .top, spacing: 8) {
-                    Text(e.0.uppercased()).font(.system(size: 9, weight: .bold)).foregroundStyle(e.1).frame(width: 100, alignment: .leading)
-                    Text(e.2).font(.system(size: 10)).foregroundStyle(G.grey)
+}
+
+// MARK: - Player Tag Effects reference sheet (port of DraftScreen.tsx "Player Tag Effects")
+
+struct TagEffectsSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    private struct Tag: Identifiable { let name: String; let color: Color; let desc: String; var id: String { name } }
+    private let tags: [Tag] = [
+        .init(name: "Champion",      color: G.gold,               desc: "Elevates their game in the playoffs. The more championships, the bigger the boost."),
+        .init(name: "Def Anchor",    color: Color(hex: "#4A9ECC"), desc: "Defensive impact beyond the stat sheet. T1 carries a larger boost than T2."),
+        .init(name: "Off Anchor",    color: G.gold,               desc: "Elevates the team's offense. T1 carries a larger boost than T2."),
+        .init(name: "Floor General", color: Color(hex: "#E0D4FF"), desc: "Elite playmaker. Boosts team ball movement. Stacks with a second Floor General (capped at 2)."),
+        .init(name: "Flex",          color: Color(hex: "#4A9ECC"), desc: "Fits multiple positions without penalty."),
+        .init(name: "Shooting Star", color: Color(hex: "#F472B6"), desc: "Boosts team spacing. All-time shooters. T1 carries a larger boost than T2."),
+        .init(name: "Glass Cleaner", color: Color(hex: "#34D399"), desc: "Elite rebounder. Boosts team second-chance points and limits opponent possessions."),
+        .init(name: "Timeless",      color: Color(hex: "#C084FC"), desc: "Minimal era penalties across all decades. Minor penalty only if 6+ eras from home."),
+        .init(name: "Dynamic Duo",   color: Color(hex: "#4ECDC4"), desc: "Draft both players to activate a +5 rating boost for each. Check the tooltip to see who the partner is."),
+        .init(name: "Sixth Man",     color: Color(hex: "#FF8C42"), desc: "Elite bench performer. Gets a +5 rating boost when playing off the bench. No effect when starting."),
+        .init(name: "Finals MVP",    color: Color(hex: "#FFD700"), desc: "Proven performer on the biggest stage. Gets a boost in Finals games. 3+ have a larger boost than 1-2."),
+    ]
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 8) {
+                    RoundedRectangle(cornerRadius: 2).fill(G.gold).frame(width: 3, height: 14)
+                    Text("PLAYER TAG EFFECTS").font(.system(size: 12, weight: .bold)).tracking(3).foregroundStyle(G.gold)
+                    Spacer()
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark").font(.system(size: 12, weight: .bold)).foregroundStyle(G.grey)
+                            .frame(width: 30, height: 30)
+                    }
+                    .buttonStyle(.plain)
+                    .glassEffect(.regular.interactive(), in: .circle)
                 }
+                .padding(.bottom, 2)
+
+                GlassEffectContainer(spacing: 8) {
+                    VStack(spacing: 8) {
+                        ForEach(tags) { t in
+                            HStack(alignment: .top, spacing: 10) {
+                                Text(t.name.uppercased()).font(.system(size: 11, weight: .bold)).tracking(0.5)
+                                    .foregroundStyle(t.color).frame(width: 92, alignment: .leading)
+                                Text(t.desc).font(.system(size: 12)).lineSpacing(2).foregroundStyle(Color(hex: "#c8c8c8"))
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .padding(.horizontal, 12).padding(.vertical, 10)
+                            .overlay(alignment: .leading) { Rectangle().fill(t.color).frame(width: 2) }
+                            .glassEffect(.regular.tint(t.color.opacity(0.10)), in: .rect(cornerRadius: 10))
+                        }
+                    }
+                }
+
+                Text("Scoring isn't everything. Defense, playmaking, and rebounding all shape your season.")
+                    .font(.system(size: 12)).italic().foregroundStyle(G.grey.opacity(0.8))
+                    .multilineTextAlignment(.center).frame(maxWidth: .infinity).padding(.top, 6)
             }
+            .padding(16)
         }
-        .padding(12).background(G.surface).overlay(Rectangle().stroke(G.border, lineWidth: 1))
+        .scrollContentBackground(.hidden)
+        .presentationDetents([.medium, .large])
+        .presentationBackground(.clear)
+        .presentationDragIndicator(.visible)
+        .preferredColorScheme(.dark)
     }
 }
 
