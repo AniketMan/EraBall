@@ -4,6 +4,7 @@ import SwiftUI
 
 struct CoachDraftView: View {
     @Environment(GameSession.self) private var session
+    @State private var sandboxSearch = ""
 
     var body: some View {
         VStack(spacing: 0) {
@@ -29,6 +30,33 @@ struct CoachDraftView: View {
                     if session.coachChoices.isEmpty && !session.coachSpinning {
                         Button("SPIN COACH") { session.spinCoach() }
                             .buttonStyle(GoldButtonStyle(fullWidth: true)).padding(.horizontal, 16).padding(.bottom, 16)
+                    }
+
+                    // Sandbox: direct coach search
+                    if session.sandboxMode && !session.coachSpinning {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("OR SEARCH A COACH")
+                                .font(.system(size: 10, weight: .semibold)).tracking(2)
+                                .foregroundStyle(G.greyDark)
+                            TextField("Coach name...", text: $sandboxSearch)
+                                .font(.system(size: 13))
+                                .foregroundStyle(G.white)
+                                .padding(.horizontal, 12).padding(.vertical, 8)
+                                .background(G.surface)
+                                .overlay(Rectangle().stroke(G.border, lineWidth: 1))
+                                .autocorrectionDisabled()
+                            if !sandboxSearch.isEmpty {
+                                let matches = session.eligibleCoaches.filter {
+                                    $0.name.localizedCaseInsensitiveContains(sandboxSearch)
+                                }.prefix(6)
+                                ForEach(Array(matches)) { c in
+                                    Button { session.pickCoach(c); sandboxSearch = "" } label: {
+                                        CoachChoiceCard(coach: c)
+                                    }.buttonStyle(.plain)
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 16).padding(.bottom, 16)
                     }
 
                     if session.coachSpinning {
