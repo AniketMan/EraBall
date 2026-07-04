@@ -20,6 +20,14 @@ final class GameSession {
     var displayEra: String?
     var eraSpinning = false
 
+    // Era theme (web: greyscale toggle -> per-era color filter). Persisted.
+    var themeOn: Bool = UserDefaults.standard.object(forKey: "eb-theme") == nil
+        ? true : UserDefaults.standard.bool(forKey: "eb-theme") {
+        didSet { UserDefaults.standard.set(themeOn, forKey: "eb-theme") }
+    }
+    /// The era whose filter is currently in effect (selected era, else the last shown).
+    var themeEra: String? { selectedEra ?? displayEra }
+
     // Mode
     var salaryCapMode = false
     var sandboxMode = false
@@ -38,6 +46,7 @@ final class GameSession {
     var capViolation: String?
     var selectedPoolPlayer: PlayerVM?
     var selectedFits: [String: EngineBridge.FitInfo] = [:]
+    var pendingSlotIndex: Int?
     var eraFilter: Set<String> = Set(ALL_ERAS)
     var eraFilterLocked = false
 
@@ -64,6 +73,11 @@ final class GameSession {
     private let engine = EngineBridge.shared
 
     var draftComplete: Bool { (gameState?.filledCount ?? 0) == 9 }
+
+    /// DEBUG only: fill the roster (parallels the web's localhost fill presets).
+    func devFillRoster() {
+        if let s = engine.devFill() { gameState = s; pool = []; selectedPoolPlayer = nil; awaitingSpin = true }
+    }
     var coachRespinBudget: Int { bonusCoachRespin ? 3 : 2 }
 
     // MARK: Boot
@@ -113,7 +127,7 @@ final class GameSession {
     func spinDraft() {
         guard canSpin else { return }
         if !pool.isEmpty { respinUsed = true }
-        eraFilterLocked = true; draftSpinning = true; awaitingSpin = false; noPlayersMessage = false; pool = []; selectedPoolPlayer = nil; selectedFits = [:]
+        eraFilterLocked = true; draftSpinning = true; awaitingSpin = false; noPlayersMessage = false; pool = []; selectedPoolPlayer = nil; selectedFits = [:]; pendingSlotIndex = nil
         let eras = ALL_ERAS.filter { eraFilter.contains($0) }
         let teams = engine.teams.isEmpty ? ["———"] : engine.teams
         Task {
@@ -135,15 +149,23 @@ final class GameSession {
 
     /// Select a pool player (web: setSelectedPlayer). Empty slots then glow with fit.
     func selectPoolPlayer(_ p: PlayerVM?) {
-        selectedPoolPlayer = p
+        selectedPoolPlayer = p; pendingSlotIndex = nil
         selectedFits = p != nil ? engine.fitPreview(personId: p!.personId) : [:]
+    }
+
+    /// Tap an empty slot (web: previewSlot -> confirmPick). First tap = pending,
+    /// second tap on the same slot = lock.
+    func previewSlot(_ idx: Int) {
+        guard selectedPoolPlayer != nil else { return }
+        if pendingSlotIndex == idx { placeSelected(atSlotIndex: idx) }
+        else { pendingSlotIndex = idx }
     }
 
     /// Place the selected pool player into a slot (web: confirmPick).
     func placeSelected(atSlotIndex idx: Int) {
         guard let p = selectedPoolPlayer else { return }
         assign(slotIndex: idx, player: p)
-        if capViolation == nil { selectedPoolPlayer = nil; selectedFits = [:] }
+        if capViolation == nil { selectedPoolPlayer = nil; selectedFits = [:]; pendingSlotIndex = nil }
     }
 
     func assign(slotIndex: Int, player: PlayerVM) {
@@ -206,6 +228,19 @@ final class GameSession {
 
     var winsSoFar: Int { (season?.games.prefix(revealedGames).filter { $0 }.count) ?? 0 }
     var lossesSoFar: Int { revealedGames - winsSoFar }
+
+    // Playoff reveal helpers (web: currentGame / revealedGames / series record)
+    var revealedPlayoffGames: [PlayoffGameVM] {
+        guard let g = playoffs?.allGames else { return [] }
+        return Array(g.prefix(min(playoffRevealIndex, g.count)))
+    }
+    var currentPlayoffGame: PlayoffGameVM? { revealedPlayoffGames.last }
+    /// Series W-L for the current game's round, up to and including the current game.
+    var currentSeriesRecord: (w: Int, l: Int) {
+        guard let cur = currentPlayoffGame else { return (0, 0) }
+        let inRound = revealedPlayoffGames.filter { $0.roundIndex == cur.roundIndex }
+        return (inRound.filter { $0.win }.count, inRound.filter { !$0.win }.count)
+    }
 
     func startPlayoffs() {
         guard playoffs == nil else { return }

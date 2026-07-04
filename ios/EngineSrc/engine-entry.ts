@@ -530,6 +530,32 @@ const api = {
     const flags: ScoreFlags = { no_timeless, no_s_tier, elite_spacing, elite_rim, elite_playmaking, reb_edge, duo_pair, duo_trio, bad_coach, sixth_man_bench }
     return JSON.stringify({ ok: true, score: Math.round(calcLeaderboardScore(entry, flags)), entry, flags, playoffResultKey, newAchievements })
   },
+  // DEBUG/testing only (parallels the web's isLocalhost fill presets): fills every
+  // empty slot with a valid available player, respecting salary-cap quotas.
+  devFill(): string {
+    const ids = draftedIds
+    for (let i = 0; i < slots.length; i++) {
+      if (slots[i].player) continue
+      const shuffled = [...validCombosCache].sort(() => Math.random() - 0.5)
+      for (const combo of shuffled) {
+        const pool = players.filter(p => {
+          const et = (p as any).all_teams_by_era?.[combo.era] as string[] | undefined
+          const onTeam = et ? et.map(normalizeTeam).includes(combo.team) : normalizeTeam(playerTeamForEra(p, combo.era)) === combo.team
+          return onTeam && playerMatchesEra(p, combo.era) && !ids.has(String(p.person_id))
+        })
+        if (pool.length === 0) continue
+        const tagged = tagPlayer(pool.sort((a, b) => (b.PTS ?? 0) - (a.PTS ?? 0))[0], combo.era, combo.team)
+        if (salaryCapMode) { const tier = capTier(tagged); if (tierCounts()[tier] >= CAP_QUOTAS[tier]) continue }
+        const { penalty, label } = calcFitPenalty(tagged, slots[i].position)
+        slots = slots.map((s, idx) => idx === i ? { ...s, player: tagged, fitPenalty: penalty, fitLabel: label } : s)
+        ids.add(String(tagged.person_id))
+        break
+      }
+    }
+    poolCache = []
+    return JSON.stringify(stateView())
+  },
+
   lifetimeStats(mode: string): string { return JSON.stringify(getLifetimeStats(mode === 'salary_cap' ? 'salary_cap' : 'normal')) },
   clearAllLifetimeStats(): void { clearLifetimeStats('normal'); clearLifetimeStats('salary_cap') },
   allAchievements(): string { return JSON.stringify(getAllAchievements()) },

@@ -24,11 +24,35 @@ struct LifetimeStatsView: View {
                             if let h = s.highestTeamRating { statBox("HIGHEST RATING", "\(Int(h.rating))", sub: eraDisplayLabel(h.era)) }
                         }.padding(.horizontal, 16)
 
+                        if !recordRows(s).isEmpty {
+                            VStack(alignment: .leading, spacing: 6) {
+                                SectionHeader(title: "Record by Era")
+                                ForEach(recordRows(s), id: \.0) { era, rec in
+                                    HStack {
+                                        Text(eraDisplayLabel(era)).font(.system(size: 13, weight: .semibold)).foregroundStyle(G.white).frame(width: 60, alignment: .leading)
+                                        Text("\(rec.wins)–\(rec.losses)").font(.system(size: 13)).foregroundStyle(G.grey)
+                                        Spacer()
+                                        if (s.championshipsByEra[era] ?? 0) > 0 { Text("\(s.championshipsByEra[era]!)× 🏆").font(.system(size: 12)).foregroundStyle(G.gold) }
+                                    }.padding(.horizontal, 14).padding(.vertical, 7).background(G.surface).overlay(Rectangle().stroke(G.border, lineWidth: 1))
+                                }
+                            }.padding(.horizontal, 16)
+                        }
+
                         if !topPlayers(s).isEmpty {
                             VStack(alignment: .leading, spacing: 8) {
                                 SectionHeader(title: "Most Drafted")
                                 ForEach(topPlayers(s), id: \.name) { p in
                                     HStack { Text(p.name).font(.system(size: 13)).foregroundStyle(G.white); Spacer(); Text("\(p.count)×").font(.system(size: 13, weight: .bold)).foregroundStyle(G.gold) }
+                                        .padding(.horizontal, 14).padding(.vertical, 8).background(G.surface).overlay(Rectangle().stroke(G.border, lineWidth: 1))
+                                }
+                            }.padding(.horizontal, 16)
+                        }
+
+                        if !topCoaches(s).isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                SectionHeader(title: "Most Drafted Coaches")
+                                ForEach(topCoaches(s), id: \.name) { c in
+                                    HStack { Text(c.name.replacingOccurrences(of: "*", with: "")).font(.system(size: 13)).foregroundStyle(G.white); Spacer(); Text("\(c.count)×").font(.system(size: 13, weight: .bold)).foregroundStyle(G.gold) }
                                         .padding(.horizontal, 14).padding(.vertical, 8).background(G.surface).overlay(Rectangle().stroke(G.border, lineWidth: 1))
                                 }
                             }.padding(.horizontal, 16)
@@ -47,6 +71,12 @@ struct LifetimeStatsView: View {
 
     private func topPlayers(_ s: LifetimeStatsVM) -> [CountEntryVM] {
         s.playerDraftCounts.values.sorted { $0.count > $1.count }.prefix(5).map { $0 }
+    }
+    private func topCoaches(_ s: LifetimeStatsVM) -> [CountEntryVM] {
+        s.coachDraftCounts.values.sorted { $0.count > $1.count }.prefix(5).map { $0 }
+    }
+    private func recordRows(_ s: LifetimeStatsVM) -> [(String, EraRecordVM)] {
+        ALL_ERAS.compactMap { era in s.recordByEra[era].map { (era, $0) } }
     }
     private func statBox(_ label: String, _ value: String, sub: String? = nil, gold: Bool = false) -> some View {
         VStack(spacing: 4) {

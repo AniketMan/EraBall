@@ -24,6 +24,8 @@ targets:
       - path: EraBall
         excludes:
           - "**/*.md"
+          - "**/graphify-out/**"
+          - "**/.understand-anything/**"
     resources:
       - path: EraBall/Resources/Assets.xcassets
       - path: EraBall/Resources/players_with_stats.json

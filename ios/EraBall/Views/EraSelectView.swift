@@ -25,6 +25,7 @@ struct EraSelectView: View {
     @State private var showAchievements = false
     @State private var showPatchNotes = false
     @State private var showSupporters = false
+    @State private var showVolume = false
 
     var body: some View {
         ZStack {
@@ -32,12 +33,7 @@ struct EraSelectView: View {
             Starfield()
             VStack(spacing: 0) {
                 TopBar(onTitleTap: nil) {
-                    Button { audio.toggleMute() } label: {
-                        Image(systemName: audio.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
-                            .font(.system(size: 13, weight: .semibold)).foregroundStyle(G.gold)
-                            .frame(width: 34, height: 34).overlay(Rectangle().stroke(G.gold.opacity(0.6), lineWidth: 1))
-                            .contentShape(.rect)
-                    }.buttonStyle(.plain)
+                    topBarControls
                 }
                 ScrollView {
                     VStack(spacing: 40) {
@@ -56,6 +52,70 @@ struct EraSelectView: View {
         .sheet(isPresented: $showAchievements) { AchievementsView() }
         .sheet(isPresented: $showPatchNotes) { PatchNotesSheet() }
         .sheet(isPresented: $showSupporters) { SupportersSheet() }
+    }
+
+    // MARK: - Top bar controls (web parity: ?, era-theme toggle, volume popover)
+
+    private var topBarControls: some View {
+        HStack(spacing: 8) {
+        // "?" — how to play
+        Button { showHelp = true } label: {
+            Image(systemName: "questionmark")
+                .font(.system(size: 13, weight: .bold)).foregroundStyle(G.grey)
+                .frame(width: 34, height: 34).overlay(Rectangle().stroke(G.border, lineWidth: 1))
+                .contentShape(.rect)
+        }.buttonStyle(.plain)
+
+        // Era theme toggle
+        Button { session.themeOn.toggle() } label: {
+            HStack(spacing: 6) {
+                Text("ERA THEME").font(.system(size: 9, weight: .semibold)).tracking(1.5)
+                Text(session.themeOn ? "ON" : "OFF").font(.system(size: 9, weight: .bold)).tracking(1)
+                    .foregroundStyle(session.themeOn ? G.black : G.grey)
+                    .padding(.horizontal, 5).padding(.vertical, 2)
+                    .background(session.themeOn ? G.gold : G.surface)
+            }
+            .foregroundStyle(G.grey)
+            .padding(.horizontal, 8).frame(height: 34)
+            .overlay(Rectangle().stroke(session.themeOn ? G.gold.opacity(0.6) : G.border, lineWidth: 1))
+            .contentShape(.rect)
+        }.buttonStyle(.plain)
+
+        // Volume — speaker opens a popover with a slider + MUTE
+        Button { showVolume = true } label: {
+            Image(systemName: audio.isSilent ? "speaker.slash.fill" : "speaker.wave.2.fill")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(audio.isSilent ? G.grey : G.gold)
+                .frame(width: 34, height: 34)
+                .overlay(Rectangle().stroke(audio.isSilent ? G.border : G.gold.opacity(0.6), lineWidth: 1))
+                .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .popover(isPresented: $showVolume, arrowEdge: .top) { volumePopover }
+        }
+    }
+
+    private var volumePopover: some View {
+        VStack(spacing: 14) {
+            Text("VOLUME").font(.system(size: 10, weight: .semibold)).tracking(3).foregroundStyle(G.grey)
+            HStack(spacing: 10) {
+                Image(systemName: "speaker.fill").font(.system(size: 11)).foregroundStyle(G.greyDark)
+                Slider(value: Binding(get: { audio.volume }, set: { audio.volume = $0 }), in: 0...1)
+                    .tint(G.gold).frame(width: 160)
+                Image(systemName: "speaker.wave.3.fill").font(.system(size: 11)).foregroundStyle(G.greyDark)
+            }
+            Button { audio.toggleMute() } label: {
+                Text(audio.isMuted ? "UNMUTE" : "MUTE")
+                    .font(.system(size: 11, weight: .semibold)).tracking(2)
+                    .foregroundStyle(audio.isMuted ? G.black : G.grey)
+                    .frame(maxWidth: .infinity).frame(height: 34)
+                    .background(audio.isMuted ? G.gold : G.surface)
+                    .overlay(Rectangle().stroke(audio.isMuted ? G.gold : G.border, lineWidth: 1))
+            }.buttonStyle(.plain)
+        }
+        .padding(18).frame(width: 240)
+        .background(G.black)
+        .presentationCompactAdaptation(.popover)
     }
 
     @ViewBuilder private var bannerBlock: some View {

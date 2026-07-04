@@ -7,6 +7,34 @@ struct DraftView: View {
     @Environment(GameSession.self) private var session
     @Environment(AudioManager.self) private var audio
     @State private var viewSlotPlayer: PlayerVM?
+    @State private var courtWidth: CGFloat = 340
+    @State private var sortBy: PoolSort = .pts
+    @State private var posFilter: String? = nil
+    @State private var showTagLegend = false
+
+    enum PoolSort: String, CaseIterable { case special = "SPECIAL", pts = "PTS", reb = "REB", ast = "AST", fg3 = "3P%", stl = "STL", blk = "BLK", base = "BASE" }
+
+    private func primaryPos(_ p: PlayerVM) -> String {
+        let u = p.position.uppercased()
+        if u.contains("GUARD") { return "G" }
+        if u.contains("CENTER") { return "C" }
+        return "F"
+    }
+    private var displayPool: [PlayerVM] {
+        var list = session.pool
+        if let pf = posFilter { list = list.filter { primaryPos($0) == pf } }
+        switch sortBy {
+        case .special: list = list.filter { !$0.tags.isEmpty }.sorted { $0.base > $1.base }
+        case .pts:  list.sort { $0.PTS > $1.PTS }
+        case .reb:  list.sort { $0.REB > $1.REB }
+        case .ast:  list.sort { $0.AST > $1.AST }
+        case .stl:  list.sort { ($0.STL ?? 0) > ($1.STL ?? 0) }
+        case .blk:  list.sort { ($0.BLK ?? 0) > ($1.BLK ?? 0) }
+        case .fg3:  list.sort { ($0.FG3_PCT ?? 0) > ($1.FG3_PCT ?? 0) }
+        case .base: list.sort { $0.base > $1.base }
+        }
+        return list
+    }
 
     private var state: GameStateVM? { session.gameState }
     private var starters: [SlotVM] { state?.slots.filter { !$0.isBench } ?? [] }
@@ -75,14 +103,39 @@ struct DraftView: View {
 
     // MARK: Court
 
+    private let benchMinutes: [String: Int] = ["B1": 25, "B2": 15, "B3": 13, "B4": 12]
+
     private var court: some View {
-        VStack(spacing: 10) {
-            SectionHeader(title: "Starters")
-            HStack(spacing: 8) { ForEach(starters) { slot in CourtSlotCell(slot: slot, fit: fitFor(slot), onTap: { tapSlot(slot) }) } }
-            SectionHeader(title: "Bench")
-            HStack(spacing: 8) { ForEach(bench) { slot in CourtSlotCell(slot: slot, fit: fitFor(slot), onTap: { tapSlot(slot) }) }; Spacer().frame(maxWidth: .infinity) }
+        VStack(spacing: 14) {
+            // Starting Five — 3-2 formation
+            VStack(spacing: 2) {
+                Text("STARTING FIVE").font(.system(size: 11, weight: .semibold)).tracking(3).foregroundStyle(G.greyDark)
+                Text("STARTERS · 35 MIN EACH").font(.system(size: 9)).tracking(1).foregroundStyle(G.greyDark.opacity(0.6))
+            }
+            VStack(spacing: 6) {
+                HStack(spacing: 6) { ForEach(starters.prefix(3)) { slot in courtCell(slot) } }
+                HStack(spacing: 6) { ForEach(starters.dropFirst(3)) { slot in courtCell(slot) } }
+                    .frame(width: max(160, (courtWidth - 28) * 0.66))  // 66.7% centered (VStack centers)
+            }
+
+            EraBallDivider()
+
+            Text("BENCH").font(.system(size: 11, weight: .semibold)).tracking(3).foregroundStyle(G.greyDark)
+            HStack(spacing: 6) { ForEach(bench) { slot in Text("\(benchMinutes[slot.position] ?? 0) MIN").font(.system(size: 9)).tracking(0.8).foregroundStyle(.white.opacity(0.35)).frame(maxWidth: .infinity) } }
+            HStack(spacing: 6) { ForEach(bench) { slot in courtCell(slot) } }
         }
-        .padding(16).background(G.surface).overlay(Rectangle().stroke(G.border, lineWidth: 1))
+        .padding(14).background(G.surface).overlay(Rectangle().stroke(G.border, lineWidth: 1))
+        .background(GeometryReader { g in Color.clear.onAppear { courtWidth = g.size.width }.onChange(of: g.size.width) { _, w in courtWidth = w } })
+    }
+
+    private func courtCell(_ slot: SlotVM) -> some View {
+        CourtSlotCell(
+            slot: slot,
+            fit: fitFor(slot),
+            pending: session.pendingSlotIndex == slot.index ? session.selectedPoolPlayer : nil,
+            simEra: session.selectedEra ?? "20s",
+            onTap: { tapSlot(slot) }
+        )
     }
 
     private func fitFor(_ slot: SlotVM) -> EngineBridge.FitInfo? {
@@ -91,7 +144,7 @@ struct DraftView: View {
     }
     private func tapSlot(_ slot: SlotVM) {
         if slot.player != nil { viewSlotPlayer = slot.player }
-        else if session.selectedPoolPlayer != nil { session.placeSelected(atSlotIndex: slot.index) }
+        else if session.selectedPoolPlayer != nil { session.previewSlot(slot.index) }
     }
 
     private var capMeter: some View {
@@ -127,6 +180,11 @@ struct DraftView: View {
                     Text(session.respinUsed ? "NO RE-SPINS LEFT · PICK FROM THIS ROSTER" : "1 RE-SPIN REMAINING THIS DRAFT")
                         .font(.system(size: 9, weight: .semibold)).tracking(1.8).foregroundStyle(session.respinUsed ? G.grey : G.goldDim)
                 }
+                #if DEBUG
+                Button("DEV · FILL ROSTER") { session.devFillRoster() }.buttonStyle(.plain)
+                    .font(.system(size: 9, weight: .semibold)).tracking(1.5).foregroundStyle(G.greyDark)
+                    .padding(.horizontal, 10).padding(.vertical, 4).overlay(Rectangle().stroke(G.border, lineWidth: 1))
+                #endif
             }
         }
     }
@@ -146,15 +204,66 @@ struct DraftView: View {
 
     private var poolList: some View {
         VStack(spacing: 8) {
-            SectionHeader(title: "\(session.spinTeamDisplay) · \(eraDisplayLabel(session.spinEraDisplay).uppercased()) roster (\(session.pool.count))")
+            HStack {
+                SectionHeader(title: "\(session.spinTeamDisplay) · \(eraDisplayLabel(session.spinEraDisplay).uppercased()) (\(displayPool.count))")
+                Spacer()
+                Menu {
+                    ForEach(PoolSort.allCases, id: \.self) { s in Button(s.rawValue) { sortBy = s } }
+                } label: {
+                    HStack(spacing: 4) { Image(systemName: "arrow.up.arrow.down"); Text(sortBy.rawValue) }
+                        .font(.system(size: 10, weight: .semibold)).foregroundStyle(G.gold)
+                }
+            }
+            // Position filter chips
+            HStack(spacing: 6) {
+                ForEach(["G", "F", "C"], id: \.self) { pos in
+                    Button { posFilter = posFilter == pos ? nil : pos } label: {
+                        Text(pos).font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(posFilter == pos ? G.gold : G.greyDark)
+                            .frame(width: 34, height: 24)
+                            .background(posFilter == pos ? G.gold.opacity(0.13) : Color.clear)
+                            .overlay(Rectangle().stroke(posFilter == pos ? G.gold : G.border, lineWidth: 1))
+                    }.buttonStyle(.plain)
+                }
+                Spacer()
+                Button { showTagLegend.toggle() } label: {
+                    Text("TAG EFFECTS").font(.system(size: 9, weight: .semibold)).tracking(1).foregroundStyle(G.greyDark)
+                }.buttonStyle(.plain)
+            }
+            if showTagLegend { tagLegend }
             LazyVStack(spacing: 6) {
-                ForEach(session.pool) { p in
+                ForEach(displayPool) { p in
                     Button { session.selectPoolPlayer(session.selectedPoolPlayer?.personId == p.personId ? nil : p) } label: {
                         PoolRow(player: p, selected: session.selectedPoolPlayer?.personId == p.personId)
                     }.buttonStyle(.plain)
                 }
             }
         }
+    }
+
+    private var tagLegend: some View {
+        let effects: [(String, Color, String)] = [
+            ("Champion", G.gold, "Boosts playoff performance per ring."),
+            ("75 Greatest", G.gold, "Small all-around game boost."),
+            ("Off/Def Anchor", G.blue, "Elevates team offense/defense (T1 > T2)."),
+            ("Floor General", Color(hex: "#E0D4FF"), "Playmaking lifts win probability."),
+            ("Shooting Star", G.pink, "Boosts team spacing."),
+            ("Glass Cleaner", G.green, "Dominant rebounding, more 2nd-chance pts."),
+            ("Timeless", Color(hex: "#C084FC"), "Minimal cross-era penalties."),
+            ("Dynamic Duo", G.teal, "+5 rating per drafted partner."),
+            ("Flex", G.blue, "Multiple positions, no fit penalty."),
+            ("6th Man", Color(hex: "#FF8C42"), "+6 rating off the bench."),
+        ]
+        return VStack(alignment: .leading, spacing: 6) {
+            Text("PLAYER TAG EFFECTS").font(.system(size: 10, weight: .bold)).tracking(2).foregroundStyle(G.gold)
+            ForEach(effects, id: \.0) { e in
+                HStack(alignment: .top, spacing: 8) {
+                    Text(e.0.uppercased()).font(.system(size: 9, weight: .bold)).foregroundStyle(e.1).frame(width: 100, alignment: .leading)
+                    Text(e.2).font(.system(size: 10)).foregroundStyle(G.grey)
+                }
+            }
+        }
+        .padding(12).background(G.surface).overlay(Rectangle().stroke(G.border, lineWidth: 1))
     }
 }
 
@@ -163,52 +272,71 @@ struct DraftView: View {
 struct CourtSlotCell: View {
     let slot: SlotVM
     let fit: EngineBridge.FitInfo?   // fit of the selected pool player for this empty slot
+    var pending: PlayerVM? = nil     // player tentatively placed here (tap again to lock)
+    var simEra: String = "20s"
     let onTap: () -> Void
 
-    private var placedFitColor: Color {
-        if slot.fitPenalty >= 0.25 { return G.red }
-        if slot.fitPenalty >= 0.10 { return G.grey }
-        return G.gold
-    }
+    private func fitLabelColor(_ pen: Double) -> Color { pen == 0 ? G.gold : pen >= 0.25 ? G.red : G.grey }
     private var glowColor: Color? {
         guard let fit else { return nil }
-        if fit.penalty >= 0.25 { return G.red }
+        if fit.penalty >= 0.25 { return Color(hex: "#7A2020") }
         if fit.penalty >= 0.10 { return Color(hex: "#8B6914") }
         return G.gold
     }
 
     var body: some View {
         Button(action: onTap) {
-            VStack(spacing: 4) {
-                if let p = slot.player {
-                    PlayerHeadshotView(personId: p.personId, initial: p.fullName, size: 42)
-                    Text(p.fullName.split(separator: " ").last.map(String.init) ?? p.fullName)
-                        .font(.system(size: 9, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.7).foregroundStyle(G.white)
-                    Text("\(Int(p.PTS.rounded()))/\(Int(p.REB.rounded()))/\(Int(p.AST.rounded()))")
-                        .font(.system(size: 9, weight: .bold)).foregroundStyle(G.gold)
-                    if let label = slot.fitLabel, label != "Position Fit" {
-                        Text(slot.fitPenalty >= 0.25 ? "−25%" : "−10%").font(.system(size: 8)).foregroundStyle(placedFitColor)
-                    }
-                } else {
-                    Text(fit != nil ? (fit!.penalty == 0 ? "✓" : fit!.penalty >= 0.25 ? "−25%" : "−10%") : " ")
-                        .font(.system(size: 9, weight: .bold)).foregroundStyle(glowColor ?? .clear)
-                        .frame(height: 12)
-                    Image(systemName: "plus").font(.system(size: 14, weight: .semibold)).foregroundStyle(fit != nil ? (glowColor ?? G.goldDim) : G.border).frame(height: 30)
-                    Text(fit != nil ? "PLACE" : " ").font(.system(size: 8, weight: .semibold)).foregroundStyle(glowColor ?? .clear)
+            ZStack(alignment: .topLeading) {
+                content
+                Text(slot.position).font(Fonts.bebas(15)).foregroundStyle(G.goldDim).padding(6)
+                if let fit, slot.player == nil, pending == nil {
+                    Text(fit.penalty == 0 ? "✓" : fit.penalty >= 0.25 ? "−25%" : "−10%")
+                        .font(.system(size: 9, weight: .bold)).foregroundStyle(fitLabelColor(fit.penalty))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing).padding(6)
+                }
+                if slot.player != nil, let label = slot.fitLabel, label != "Position Fit" {
+                    Text(slot.fitPenalty >= 0.25 ? "−25%" : "−10%").font(.system(size: 8, weight: .bold)).foregroundStyle(slot.fitPenalty >= 0.25 ? G.red : G.grey)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing).padding(6)
                 }
             }
-            .frame(maxWidth: .infinity).frame(minHeight: 96).padding(.vertical, 6)
-            .overlay(alignment: .topLeading) { Text(slot.position).font(Fonts.bebas(13)).foregroundStyle(G.goldDim).padding(4) }
-            .background(slot.player != nil ? AnyShapeStyle(tierBackground(base: slot.player!.base)) : AnyShapeStyle(G.black))
-            .overlay { if let p = slot.player { TierShine(base: p.base) } }
-            .overlay(Rectangle().stroke(slotBorder, lineWidth: 1))
+            .frame(maxWidth: .infinity).frame(minHeight: 130)
+            .background(bg).overlay { if let p = slot.player { TierShine(base: p.base) } }
+            .overlay(Rectangle().stroke(border, lineWidth: 1))
+            .shadow(color: (glowColor ?? .clear).opacity(fit?.penalty == 0 ? 0.7 : 0.3), radius: fit != nil ? 10 : 0)
             .clipped()
-            .shadow(color: (glowColor ?? .clear).opacity(fit != nil && fit!.penalty == 0 ? 0.7 : 0.25), radius: fit != nil ? 8 : 0)
         }.buttonStyle(.plain)
     }
 
-    private var slotBorder: Color {
+    @ViewBuilder private var content: some View {
+        if let p = slot.player ?? pending {
+            VStack(spacing: 3) {
+                PlayerHeadshotView(personId: p.personId, initial: p.fullName, size: 50)
+                Text(p.fullName).font(.system(size: 11, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.7).foregroundStyle(G.white)
+                Text("\(p.position.uppercased()) · \(eraDisplayLabel(p.era))").font(.system(size: 9)).foregroundStyle(G.grey).lineLimit(1)
+                Text("\(Int(p.PTS.rounded()))/\(Int(p.REB.rounded()))/\(Int(p.AST.rounded()))").font(.system(size: 10, weight: .bold)).foregroundStyle(G.gold)
+                Text("ERA FIT \(Int((p.eraModifier * 100).rounded()))%").font(.system(size: 8)).tracking(0.4)
+                    .foregroundStyle(p.eraModifier >= 1.0 ? G.gold : p.eraModifier < 0.75 ? G.red : G.grey)
+                if pending != nil {
+                    Text("PENDING · TAP TO LOCK \(slot.position)").font(.system(size: 8, weight: .semibold)).tracking(0.4)
+                        .foregroundStyle(G.goldDim).multilineTextAlignment(.center)
+                }
+            }
+            .padding(.horizontal, 4).padding(.top, 22).padding(.bottom, 8)
+        } else {
+            Text(fit != nil ? "+ place here" : "—")
+                .font(.system(size: 11)).foregroundStyle(fit != nil ? (glowColor ?? G.goldDim) : G.greyDark)
+                .frame(maxWidth: .infinity, minHeight: 130)
+        }
+    }
+
+    private var bg: AnyShapeStyle {
+        if let p = slot.player { return AnyShapeStyle(tierBackground(base: p.base)) }
+        if pending != nil { return AnyShapeStyle(G.gold.opacity(0.04)) }
+        return AnyShapeStyle(G.black)
+    }
+    private var border: Color {
         if let p = slot.player { return tierBorderColor(base: p.base) }
+        if pending != nil { return G.goldDim }
         return glowColor ?? G.border
     }
 }

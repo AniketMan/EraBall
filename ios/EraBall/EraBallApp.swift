@@ -39,6 +39,7 @@ struct RootView: View {
             case .simulation:  SimulationView()
             }
         }
+        .eraThemed(era: session.themeEra, on: session.themeOn)
         .animation(.smooth(duration: 0.35), value: session.phase)
         // Present the Game Center sign-in sheet when the system provides it.
         .sheet(isPresented: Binding(get: { gameCenter.showAuthVC && gameCenter.authVC != nil },
