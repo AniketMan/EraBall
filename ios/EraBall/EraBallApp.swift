@@ -33,10 +33,10 @@ struct RootView: View {
             G.black.ignoresSafeArea()
             switch session.phase {
             case .loading:     LoadingView()
-            case .eraSelect:   EraSelectView()
-            case .draft:       DraftView()
-            case .coachDraft:  CoachDraftView()
-            case .simulation:  SimulationView()
+            case .eraSelect:   HomeTabView()   // themes its own tab CONTENT, never the glass tab bar
+            case .draft:       DraftView().eraThemed(era: session.themeEra, on: session.themeOn)
+            case .coachDraft:  CoachDraftView().eraThemed(era: session.themeEra, on: session.themeOn)
+            case .simulation:  SimulationView().eraThemed(era: session.themeEra, on: session.themeOn)
             }
         }
         .animation(.smooth(duration: 0.35), value: session.phase)

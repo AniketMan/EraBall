@@ -44,3 +44,10 @@ next-env.d.ts
 
 # Storybook
 storybook-static
+
+# Understand Anything: keep the curated graph, ignore plugin scratch
+.understand-anything/*
+!.understand-anything/knowledge-graph.json
+ios/build/
+ios/graphify-web/
+ios/tools/

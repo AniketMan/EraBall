@@ -230,6 +230,23 @@ struct GameLeaderVM: Codable, Sendable { var name: String; var val: Double }
 struct GameLeadersVM: Codable, Sendable { var pts: GameLeaderVM; var reb: GameLeaderVM; var ast: GameLeaderVM }
 struct SpecialPerfVM: Codable, Sendable { var playerName: String; var pts: Double; var reb: Double; var ast: Double; var label: String }
 
+struct PlayerLineVM: Codable, Identifiable, Sendable {
+    var personId: String
+    var name: String
+    var slot: String
+    var mpg: Double
+    var pts: Double
+    var reb: Double
+    var ast: Double
+    var stl: Double
+    var blk: Double
+    var tov: Double
+    var fg: Double
+    var fg3: Double?
+    var ft: Double
+    var id: String { personId }
+}
+
 struct PlayoffGameVM: Codable, Identifiable, Sendable {
     var win: Bool
     var roundIndex: Int
@@ -238,6 +255,7 @@ struct PlayoffGameVM: Codable, Identifiable, Sendable {
     var gameInSeries: Int
     var leaders: GameLeadersVM?
     var special: SpecialPerfVM?
+    var playerLines: [PlayerLineVM]?
     var id: String { "\(roundIndex)-\(gameInSeries)-\(teamScore)-\(oppScore)" }
 }
 
@@ -398,6 +416,7 @@ final class EngineBridge {
         (try? decode(AssignResultVM.self, api.invokeMethod("swap", withArguments: [from, to])))?.state
     }
     func state() -> GameStateVM? { try? decode(GameStateVM.self, api.invokeMethod("state", withArguments: [])) }
+    func devFill() -> GameStateVM? { try? decode(GameStateVM.self, api.invokeMethod("devFill", withArguments: [])) }
 
     func eligibleCoaches() -> [CoachVM] {
         (try? decodeArray([CoachVM].self, api.invokeMethod("eligibleCoaches", withArguments: []))) ?? []

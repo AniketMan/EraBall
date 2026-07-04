@@ -6,6 +6,11 @@ struct CoachDraftView: View {
     @Environment(GameSession.self) private var session
     @State private var sandboxSearch = ""
 
+    private var searchResults: [CoachVM] {
+        guard !sandboxSearch.isEmpty else { return [] }
+        return session.eligibleCoaches.filter { $0.name.localizedCaseInsensitiveContains(sandboxSearch) }.prefix(12).map { $0 }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             HStack {
@@ -32,31 +37,24 @@ struct CoachDraftView: View {
                             .buttonStyle(GoldButtonStyle(fullWidth: true)).padding(.horizontal, 16).padding(.bottom, 16)
                     }
 
-                    // Sandbox: direct coach search
                     if session.sandboxMode && !session.coachSpinning {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("OR SEARCH A COACH")
-                                .font(.system(size: 10, weight: .semibold)).tracking(2)
-                                .foregroundStyle(G.greyDark)
-                            TextField("Coach name...", text: $sandboxSearch)
-                                .font(.system(size: 13))
-                                .foregroundStyle(G.white)
-                                .padding(.horizontal, 12).padding(.vertical, 8)
-                                .background(G.surface)
-                                .overlay(Rectangle().stroke(G.border, lineWidth: 1))
-                                .autocorrectionDisabled()
-                            if !sandboxSearch.isEmpty {
-                                let matches = session.eligibleCoaches.filter {
-                                    $0.name.localizedCaseInsensitiveContains(sandboxSearch)
-                                }.prefix(6)
-                                ForEach(Array(matches)) { c in
-                                    Button { session.pickCoach(c); sandboxSearch = "" } label: {
-                                        CoachChoiceCard(coach: c)
-                                    }.buttonStyle(.plain)
-                                }
+                        VStack(spacing: 6) {
+                            Text("OR SEARCH A COACH").font(.system(size: 10, weight: .semibold)).tracking(2).foregroundStyle(G.greyDark).frame(maxWidth: .infinity, alignment: .leading)
+                            TextField("Coach name…", text: $sandboxSearch)
+                                .font(.system(size: 14)).foregroundStyle(G.white).tint(G.gold)
+                                .padding(.horizontal, 12).padding(.vertical, 8).background(G.surface).overlay(Rectangle().stroke(G.border, lineWidth: 1))
+                            ForEach(searchResults) { c in
+                                Button { session.pickCoach(c) } label: {
+                                    HStack {
+                                        Text(c.name).font(.system(size: 13)).foregroundStyle(G.white)
+                                        if c.hof { Text("★").foregroundStyle(G.gold) }
+                                        Spacer()
+                                        Text("Off:\(c.offGrade) Def:\(c.defGrade) Ovr:\(c.overallGrade)").font(.system(size: 11)).foregroundStyle(G.greyDark)
+                                    }
+                                    .padding(.horizontal, 12).padding(.vertical, 8).background(G.surface).overlay(Rectangle().stroke(G.border, lineWidth: 1))
+                                }.buttonStyle(.plain)
                             }
-                        }
-                        .padding(.horizontal, 16).padding(.bottom, 16)
+                        }.padding(.horizontal, 16).padding(.bottom, 12)
                     }
 
                     if session.coachSpinning {

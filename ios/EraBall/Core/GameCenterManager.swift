@@ -142,34 +142,17 @@ final class GameCenterManager {
         }
     }
 
-    // MARK: - Show Game Center Dashboard
+    // MARK: - Show Game Center (iOS 26 Game Overlay via GKAccessPoint)
+
+    /// iOS 26 deprecated the modal GKGameCenterViewController in favor of the system
+    /// Game Overlay, presented through GKAccessPoint. `trigger(state:)` deep-links into
+    /// the requested section (HIG: "Game Center → Accessing Game Center").
 
     func showLeaderboard(era: String, salaryCapMode: Bool) {
-        let id = salaryCapMode ? LeaderboardID.salaryCap(era: era) : LeaderboardID.normal(era: era)
-        let vc = GKGameCenterViewController(leaderboardID: id, playerScope: .global, timeScope: .allTime)
-        vc.gameCenterDelegate = GameCenterDelegate.shared
-        presentGameCenter(vc)
+        GKAccessPoint.shared.trigger(state: .leaderboards) {}
     }
 
     func showAchievements() {
-        let vc = GKGameCenterViewController(state: .achievements)
-        vc.gameCenterDelegate = GameCenterDelegate.shared
-        presentGameCenter(vc)
-    }
-
-    private func presentGameCenter(_ vc: UIViewController) {
-        guard let root = UIApplication.shared.connectedScenes
-            .compactMap({ $0 as? UIWindowScene })
-            .first?.windows.first?.rootViewController else { return }
-        root.present(vc, animated: true)
-    }
-}
-
-// MARK: - Delegate
-
-final class GameCenterDelegate: NSObject, GKGameCenterControllerDelegate, @unchecked Sendable {
-    static let shared = GameCenterDelegate()
-    func gameCenterViewControllerDidFinish(_ vc: GKGameCenterViewController) {
-        vc.dismiss(animated: true)
+        GKAccessPoint.shared.trigger(state: .achievements) {}
     }
 }

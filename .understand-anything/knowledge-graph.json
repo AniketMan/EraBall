@@ -1,0 +1,1127 @@
+{
+  "version": "1.0.0",
+  "kind": "codebase",
+  "project": {
+    "name": "EraBall",
+    "languages": [
+      "TypeScript",
+      "Swift",
+      "JavaScript"
+    ],
+    "frameworks": [
+      "Next.js",
+      "SwiftUI",
+      "JavaScriptCore",
+      "GameKit",
+      "@eraball/engine"
+    ],
+    "description": "NBA cross-era draft simulator. A Next.js web app and a native SwiftUI iOS port that both run one shared, seedable simulation engine — the iOS app executes the identical engine in JavaScriptCore, verified byte-for-byte.",
+    "analyzedAt": "2026-07-04T08:24:09.256Z",
+    "gitCommitHash": "9c745f6f120dfc42b9d57c6ec7c2c0d3628a012f"
+  },
+  "nodes": [
+    {
+      "id": "module:packages/engine",
+      "type": "module",
+      "name": "@eraball/engine",
+      "filePath": "packages/engine/src/index.ts",
+      "summary": "The single source of truth for all game math. A framework-free, seedable simulation engine behind a small public facade. Everything the web app and the iOS app compute goes through here — nothing is reimplemented.",
+      "tags": [
+        "engine",
+        "facade",
+        "core"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:packages/engine/src/gameLogic.ts",
+      "type": "file",
+      "name": "gameLogic.ts",
+      "filePath": "packages/engine/src/gameLogic.ts",
+      "summary": "2,100 lines of the actual basketball math: era modifiers, positional fit penalties, player base ratings, anchors/duos/tags, proportional stat distribution, season and playoff simulation, and season awards.",
+      "tags": [
+        "engine",
+        "simulation"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:packages/engine/src/orchestrator.ts",
+      "type": "file",
+      "name": "orchestrator.ts",
+      "filePath": "packages/engine/src/orchestrator.ts",
+      "summary": "High-level entry points runGame() and rateTeam(). Composes calcTeamRating → champ-bonus simRaw → simulateSeason → simulatePlayoffs in the exact order the UI used, so any consumer can run a full game in one call.",
+      "tags": [
+        "engine",
+        "orchestration"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/engine/src/rng.ts",
+      "type": "file",
+      "name": "rng.ts",
+      "filePath": "packages/engine/src/rng.ts",
+      "summary": "A seedable random source (mulberry32). Unseeded it delegates to Math.random() (identical to production); seeded it makes a full simulation reproducible — which is what makes byte-for-byte parity testing possible.",
+      "tags": [
+        "engine",
+        "determinism",
+        "testing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/engine/src/gameLogic.ts:calcTeamRating",
+      "type": "function",
+      "name": "calcTeamRating()",
+      "filePath": "packages/engine/src/gameLogic.ts",
+      "summary": "Turns a 9-player roster + coach + era into a team rating. Averages starter/bench adjusted ratings (70/30), then applies coach off/def bonuses and championship bonus.",
+      "tags": [
+        "engine",
+        "rating"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/engine/src/gameLogic.ts:simulateSeason",
+      "type": "function",
+      "name": "simulateSeason()",
+      "filePath": "packages/engine/src/gameLogic.ts",
+      "summary": "Simulates a full regular season game-by-game (72–82 games by era), then distributes each player's stats proportionally from the actual simulated team scores so the box score always adds up.",
+      "tags": [
+        "engine",
+        "simulation"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:packages/engine/src/gameLogic.ts:simulatePlayoffs",
+      "type": "function",
+      "name": "simulatePlayoffs()",
+      "filePath": "packages/engine/src/gameLogic.ts",
+      "summary": "Runs the best-of-7 bracket with round/seed-scaled opponents, ring-boosted win odds, special performances, and a Finals MVP. Requires 41+ regular-season wins to qualify.",
+      "tags": [
+        "engine",
+        "playoffs"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:packages/engine/src/gameLogic.ts:playerBaseRating",
+      "type": "function",
+      "name": "playerBaseRating()",
+      "filePath": "packages/engine/src/gameLogic.ts",
+      "summary": "The single-number player value from era-adjusted stats: PTS/REB/AST/TS%/3P plus anchor, top-75, sixth-man and duo bonuses. Feeds the salary-cap tier (S/A/B/C/D).",
+      "tags": [
+        "engine",
+        "rating"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/engine/src/gameLogic.ts:calcEraModifier",
+      "type": "function",
+      "name": "calcEraModifier()",
+      "filePath": "packages/engine/src/gameLogic.ts",
+      "summary": "The cross-era penalty: a player drafted outside their native decade loses effectiveness by era distance and direction (forward vs backward), with carve-outs for Timeless players and tall centers.",
+      "tags": [
+        "engine",
+        "era"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/engine/src/gameLogic.ts:calcFitPenalty",
+      "type": "function",
+      "name": "calcFitPenalty()",
+      "filePath": "packages/engine/src/gameLogic.ts",
+      "summary": "The positional-fit penalty: 0% at a natural slot, −10% one position off, −25% way out of position. FLEX players and position locks override the default adjacency rules.",
+      "tags": [
+        "engine",
+        "position"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "concept:tag-pipeline",
+      "type": "concept",
+      "name": "Tag Pipeline",
+      "filePath": "packages/engine/src/gameLogic.ts",
+      "summary": "The ordered transform every raw player passes through before rating: withEraStats → applyFlexTag → applyRings → applySixthMan → applyFinalsMVP → applyAnchors → applyFloorGeneral → applyTimeless → applyShootingStar → applyGlassCleaner → applyDuo. Order matters and is identical on web and iOS.",
+      "tags": [
+        "engine",
+        "tags",
+        "pipeline"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "config:engine-snapshot/baseline.json",
+      "type": "schema",
+      "name": "baseline.json (behavior lock)",
+      "filePath": "engine-snapshot/baseline.json",
+      "summary": "A byte-stable snapshot of engine output for a fixed roster/coach across all 8 eras × 2 cap modes at seed 1234567. Any divergence means the engine math changed — the regression tripwire.",
+      "tags": [
+        "engine",
+        "testing",
+        "snapshot"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ios/EngineSrc/engine-entry.ts",
+      "type": "file",
+      "name": "engine-entry.ts (UI bridge)",
+      "filePath": "ios/EngineSrc/engine-entry.ts",
+      "summary": "The JavaScript the iOS app runs. Wraps the real @eraball/engine plus the exact web UI orchestration (spin combos, tag pipeline, coach CSV parsing, awards, leaderboard scoring) and exposes a command API to Swift.",
+      "tags": [
+        "ios",
+        "bridge",
+        "javascript"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "resource:ios/EraBall/Resources/engine.js",
+      "type": "resource",
+      "name": "engine.js (bundle)",
+      "filePath": "ios/EraBall/Resources/engine.js",
+      "summary": "esbuild bundle of engine-entry.ts shipped in the app. Verified byte-for-byte against baseline.json, so the iOS app provably runs the identical simulation to eraball.com.",
+      "tags": [
+        "ios",
+        "bundle"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ios/EraBall/Core/Engine.swift",
+      "type": "file",
+      "name": "Engine.swift (JSC bridge)",
+      "filePath": "ios/EraBall/Core/Engine.swift",
+      "summary": "The Swift side: hosts engine.js in a JavaScriptCore context and exposes typed Codable methods (combos, pool, rateTeam, runSeason, runPlayoffs, awards). No game math lives in Swift.",
+      "tags": [
+        "ios",
+        "swift",
+        "bridge"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "concept:jsc-parity",
+      "type": "concept",
+      "name": "Byte-for-byte parity",
+      "filePath": null,
+      "summary": "The core guarantee: the iOS app does not reimplement the engine — it executes the same TypeScript engine inside JavaScriptCore, proven identical to the web via the seeded snapshot.",
+      "tags": [
+        "ios",
+        "correctness",
+        "parity"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ios/EraBall/EraBallApp.swift",
+      "type": "file",
+      "name": "EraBallApp.swift",
+      "filePath": "ios/EraBall/EraBallApp.swift",
+      "summary": "App entry + RootView phase router (loading → eraSelect → draft → coachDraft → simulation), driven by GameSession. Wires the Game Center sign-in sheet.",
+      "tags": [
+        "ios",
+        "swift",
+        "app"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "concept:GameSession",
+      "type": "concept",
+      "name": "GameSession (state machine)",
+      "filePath": "ios/EraBall/Core/GameSession.swift",
+      "summary": "The observable object that drives the whole flow: holds era/roster/coach, runs spin choreography, and calls Engine.swift for every rule and simulation.",
+      "tags": [
+        "ios",
+        "state"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:ios/EraBall/Views/EraSelectView.swift",
+      "type": "file",
+      "name": "EraSelectView",
+      "filePath": "ios/EraBall/Views/EraSelectView.swift",
+      "summary": "Era-select menu — port of the web EraSelection: banner art, era grid, Normal/Salary-Cap/Sandbox, and the menu (How to Play, Leaderboard, Lifetime Stats, Achievements, What's New, Supporters).",
+      "tags": [
+        "ios",
+        "screen"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ios/EraBall/Views/DraftView.swift",
+      "type": "file",
+      "name": "DraftView",
+      "filePath": "ios/EraBall/Views/DraftView.swift",
+      "summary": "Player draft — spin a team+era, pick from the pool into 5 starters + 4 bench, with fit penalties and salary-cap tier quotas.",
+      "tags": [
+        "ios",
+        "screen"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:ios/EraBall/Views/CoachDraftView.swift",
+      "type": "file",
+      "name": "CoachDraftView",
+      "filePath": "ios/EraBall/Views/CoachDraftView.swift",
+      "summary": "Coach draft — one spin reveals three coaches; pick one. Shows gurus, franchise-pair upgrades, and S–F grades.",
+      "tags": [
+        "ios",
+        "screen"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ios/EraBall/Views/SimulationView.swift",
+      "type": "file",
+      "name": "SimulationView",
+      "filePath": "ios/EraBall/Views/SimulationView.swift",
+      "summary": "Season ticker, box scores, awards, playoff bracket, and the result/leaderboard submission.",
+      "tags": [
+        "ios",
+        "screen"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:ios/EraBall/Views/Modals.swift",
+      "type": "file",
+      "name": "Modals.swift",
+      "filePath": "ios/EraBall/Views/Modals.swift",
+      "summary": "HowToPlay, PatchNotes (What's New), and the Supporters \"Hall of Fame\" sheet — kept in sync with the web modal content.",
+      "tags": [
+        "ios",
+        "modal"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ios/EraBall/Core/GameCenterManager.swift",
+      "type": "file",
+      "name": "GameCenterManager",
+      "filePath": "ios/EraBall/Core/GameCenterManager.swift",
+      "summary": "Game Center: authentication, per-era + friends leaderboards, and achievement reporting via GameKit. Degrades gracefully when signed out.",
+      "tags": [
+        "ios",
+        "gamecenter"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ios/EraBall/Components/Theme.swift",
+      "type": "file",
+      "name": "Theme.swift (tokens)",
+      "filePath": "ios/EraBall/Components/Theme.swift",
+      "summary": "Design tokens matching the web tokens.ts: the G color palette, Bebas type, spacing/radius scale, button styles, and tag/tier/grade palettes.",
+      "tags": [
+        "ios",
+        "design",
+        "tokens"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:app/page.tsx",
+      "type": "file",
+      "name": "page.tsx (router)",
+      "filePath": "app/page.tsx",
+      "summary": "Thin 497-line Next.js router: composes the four feature screens and owns era-audio only.",
+      "tags": [
+        "web",
+        "router"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:app/features/era-selection/EraSelection.tsx",
+      "type": "file",
+      "name": "EraSelection.tsx",
+      "filePath": "app/features/era-selection/EraSelection.tsx",
+      "summary": "Web era-select screen — the layout/copy the iOS EraSelectView is ported from.",
+      "tags": [
+        "web",
+        "screen"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:app/features/draft/DraftScreen.tsx",
+      "type": "file",
+      "name": "DraftScreen.tsx",
+      "filePath": "app/features/draft/DraftScreen.tsx",
+      "summary": "Web draft screen — owns the tag taxonomy (TAG_OPTIONS), team alias, and spin/pool logic ported into the iOS bridge.",
+      "tags": [
+        "web",
+        "screen"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:app/features/coach-draft/CoachDraftScreen.tsx",
+      "type": "file",
+      "name": "CoachDraftScreen.tsx",
+      "filePath": "app/features/coach-draft/CoachDraftScreen.tsx",
+      "summary": "Web coach draft — the spin-reveals-3 flow with guru/franchise/S-grade badges.",
+      "tags": [
+        "web",
+        "screen"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:app/features/simulation/SimulationScreen.tsx",
+      "type": "file",
+      "name": "SimulationScreen.tsx",
+      "filePath": "app/features/simulation/SimulationScreen.tsx",
+      "summary": "Web simulation — owns awards math, playoff reactions, thresholds, and leaderboard flags ported into the iOS bridge.",
+      "tags": [
+        "web",
+        "screen"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "service:services/playerData.ts",
+      "type": "service",
+      "name": "playerData.ts",
+      "filePath": "services/playerData.ts",
+      "summary": "Anti-corruption boundary for the datasets: loads the 5MB player JSON (local→R2→worker fallback) and parses coaches.csv into Coach objects (with the gurus overrides).",
+      "tags": [
+        "data",
+        "service"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "service:services/leaderboard.ts",
+      "type": "service",
+      "name": "leaderboard.ts",
+      "filePath": "services/leaderboard.ts",
+      "summary": "Leaderboard submit/read: live /api/submit when a backend is reachable, else a local score+rank with the identical formula.",
+      "tags": [
+        "data",
+        "service"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "resource:public/players_with_stats.json",
+      "type": "resource",
+      "name": "players_with_stats.json",
+      "filePath": "public/players_with_stats.json",
+      "summary": "The ~4,560-player dataset with per-era, per-team stat splits. Gates the draft; hosted on R2 for the web, bundled for iOS.",
+      "tags": [
+        "data"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "resource:public/coaches.csv",
+      "type": "resource",
+      "name": "coaches.csv",
+      "filePath": "public/coaches.csv",
+      "summary": "Real NBA coaching records; parsed into grades (with HOF floor, gurus, and franchise-pair upgrades).",
+      "tags": [
+        "data"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:lib/achievements.ts",
+      "type": "file",
+      "name": "achievements.ts",
+      "filePath": "lib/achievements.ts",
+      "summary": "Achievement definitions + checks, evaluated after each run against lifetime stats. Shared verbatim by web and the iOS bridge.",
+      "tags": [
+        "data",
+        "achievements"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:lib/lifetimeStats.ts",
+      "type": "file",
+      "name": "lifetimeStats.ts",
+      "filePath": "lib/lifetimeStats.ts",
+      "summary": "Persistent per-mode lifetime stats (localStorage on web; UserDefaults-backed shim in JavaScriptCore on iOS).",
+      "tags": [
+        "data",
+        "stats"
+      ],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "module:packages/engine",
+      "target": "file:packages/engine/src/gameLogic.ts",
+      "type": "contains",
+      "direction": "forward",
+      "description": "facade re-exports",
+      "weight": 0.8
+    },
+    {
+      "source": "module:packages/engine",
+      "target": "file:packages/engine/src/orchestrator.ts",
+      "type": "contains",
+      "direction": "forward",
+      "description": "facade re-exports",
+      "weight": 0.8
+    },
+    {
+      "source": "module:packages/engine",
+      "target": "file:packages/engine/src/rng.ts",
+      "type": "contains",
+      "direction": "forward",
+      "description": "facade re-exports",
+      "weight": 0.8
+    },
+    {
+      "source": "module:packages/engine",
+      "target": "function:packages/engine/src/gameLogic.ts:calcTeamRating",
+      "type": "contains",
+      "direction": "forward",
+      "description": "facade re-exports",
+      "weight": 0.8
+    },
+    {
+      "source": "module:packages/engine",
+      "target": "function:packages/engine/src/gameLogic.ts:simulateSeason",
+      "type": "contains",
+      "direction": "forward",
+      "description": "facade re-exports",
+      "weight": 0.8
+    },
+    {
+      "source": "module:packages/engine",
+      "target": "function:packages/engine/src/gameLogic.ts:simulatePlayoffs",
+      "type": "contains",
+      "direction": "forward",
+      "description": "facade re-exports",
+      "weight": 0.8
+    },
+    {
+      "source": "module:packages/engine",
+      "target": "function:packages/engine/src/gameLogic.ts:playerBaseRating",
+      "type": "contains",
+      "direction": "forward",
+      "description": "facade re-exports",
+      "weight": 0.8
+    },
+    {
+      "source": "module:packages/engine",
+      "target": "function:packages/engine/src/gameLogic.ts:calcEraModifier",
+      "type": "contains",
+      "direction": "forward",
+      "description": "facade re-exports",
+      "weight": 0.8
+    },
+    {
+      "source": "module:packages/engine",
+      "target": "function:packages/engine/src/gameLogic.ts:calcFitPenalty",
+      "type": "contains",
+      "direction": "forward",
+      "description": "facade re-exports",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/engine/src/orchestrator.ts",
+      "target": "function:packages/engine/src/gameLogic.ts:calcTeamRating",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/engine/src/orchestrator.ts",
+      "target": "function:packages/engine/src/gameLogic.ts:simulateSeason",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/engine/src/orchestrator.ts",
+      "target": "function:packages/engine/src/gameLogic.ts:simulatePlayoffs",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/engine/src/gameLogic.ts:simulateSeason",
+      "target": "file:packages/engine/src/rng.ts",
+      "type": "calls",
+      "direction": "forward",
+      "description": "randomness",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/engine/src/gameLogic.ts:simulatePlayoffs",
+      "target": "file:packages/engine/src/rng.ts",
+      "type": "calls",
+      "direction": "forward",
+      "description": "randomness",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/engine/src/gameLogic.ts:calcTeamRating",
+      "target": "function:packages/engine/src/gameLogic.ts:playerBaseRating",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/engine/src/gameLogic.ts:calcTeamRating",
+      "target": "function:packages/engine/src/gameLogic.ts:calcEraModifier",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/engine/src/gameLogic.ts:calcTeamRating",
+      "target": "function:packages/engine/src/gameLogic.ts:calcFitPenalty",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/engine/src/gameLogic.ts:playerBaseRating",
+      "target": "concept:tag-pipeline",
+      "type": "depends_on",
+      "direction": "forward",
+      "description": "reads tag flags",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/engine/src/gameLogic.ts",
+      "target": "concept:tag-pipeline",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "config:engine-snapshot/baseline.json",
+      "target": "module:packages/engine",
+      "type": "tested_by",
+      "direction": "backward",
+      "description": "byte-for-byte lock",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ios/EngineSrc/engine-entry.ts",
+      "target": "module:packages/engine",
+      "type": "imports",
+      "direction": "forward",
+      "description": "runs the real engine",
+      "weight": 0.8
+    },
+    {
+      "source": "resource:ios/EraBall/Resources/engine.js",
+      "target": "file:ios/EngineSrc/engine-entry.ts",
+      "type": "transforms",
+      "direction": "backward",
+      "description": "esbuild bundle",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ios/EraBall/Core/Engine.swift",
+      "target": "resource:ios/EraBall/Resources/engine.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "description": "loads into JSContext",
+      "weight": 0.8
+    },
+    {
+      "source": "resource:ios/EraBall/Resources/engine.js",
+      "target": "config:engine-snapshot/baseline.json",
+      "type": "tested_by",
+      "direction": "backward",
+      "description": "parity proof",
+      "weight": 0.8
+    },
+    {
+      "source": "concept:jsc-parity",
+      "target": "file:ios/EraBall/Core/Engine.swift",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "concept:jsc-parity",
+      "target": "resource:ios/EraBall/Resources/engine.js",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ios/EraBall/EraBallApp.swift",
+      "target": "concept:GameSession",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "concept:GameSession",
+      "target": "file:ios/EraBall/Core/Engine.swift",
+      "type": "calls",
+      "direction": "forward",
+      "description": "every rule + sim",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ios/EraBall/EraBallApp.swift",
+      "target": "file:ios/EraBall/Views/EraSelectView.swift",
+      "type": "contains",
+      "direction": "forward",
+      "description": "phase router",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ios/EraBall/Views/EraSelectView.swift",
+      "target": "concept:GameSession",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ios/EraBall/EraBallApp.swift",
+      "target": "file:ios/EraBall/Views/DraftView.swift",
+      "type": "contains",
+      "direction": "forward",
+      "description": "phase router",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ios/EraBall/Views/DraftView.swift",
+      "target": "concept:GameSession",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ios/EraBall/EraBallApp.swift",
+      "target": "file:ios/EraBall/Views/CoachDraftView.swift",
+      "type": "contains",
+      "direction": "forward",
+      "description": "phase router",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ios/EraBall/Views/CoachDraftView.swift",
+      "target": "concept:GameSession",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ios/EraBall/EraBallApp.swift",
+      "target": "file:ios/EraBall/Views/SimulationView.swift",
+      "type": "contains",
+      "direction": "forward",
+      "description": "phase router",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ios/EraBall/Views/SimulationView.swift",
+      "target": "concept:GameSession",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ios/EraBall/Views/EraSelectView.swift",
+      "target": "file:ios/EraBall/Views/Modals.swift",
+      "type": "contains",
+      "direction": "forward",
+      "description": "sheets",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ios/EraBall/Views/SimulationView.swift",
+      "target": "file:ios/EraBall/Core/GameCenterManager.swift",
+      "type": "calls",
+      "direction": "forward",
+      "description": "submit score",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ios/EraBall/Views/EraSelectView.swift",
+      "target": "file:ios/EraBall/Components/Theme.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "description": "tokens",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ios/EraBall/Views/DraftView.swift",
+      "target": "file:ios/EraBall/Components/Theme.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "description": "tokens",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ios/EraBall/Views/CoachDraftView.swift",
+      "target": "file:ios/EraBall/Components/Theme.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "description": "tokens",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ios/EraBall/Views/SimulationView.swift",
+      "target": "file:ios/EraBall/Components/Theme.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "description": "tokens",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ios/EraBall/Views/Modals.swift",
+      "target": "file:ios/EraBall/Components/Theme.swift",
+      "type": "depends_on",
+      "direction": "forward",
+      "description": "tokens",
+      "weight": 0.8
+    },
+    {
+      "source": "file:app/page.tsx",
+      "target": "file:app/features/era-selection/EraSelection.tsx",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:app/page.tsx",
+      "target": "file:app/features/draft/DraftScreen.tsx",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:app/page.tsx",
+      "target": "file:app/features/coach-draft/CoachDraftScreen.tsx",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:app/page.tsx",
+      "target": "file:app/features/simulation/SimulationScreen.tsx",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:app/features/era-selection/EraSelection.tsx",
+      "target": "module:packages/engine",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:app/features/draft/DraftScreen.tsx",
+      "target": "module:packages/engine",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:app/features/coach-draft/CoachDraftScreen.tsx",
+      "target": "module:packages/engine",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:app/features/simulation/SimulationScreen.tsx",
+      "target": "module:packages/engine",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ios/EraBall/Views/EraSelectView.swift",
+      "target": "file:app/features/era-selection/EraSelection.tsx",
+      "type": "similar_to",
+      "direction": "bidirectional",
+      "description": "iOS port of",
+      "weight": 0.9
+    },
+    {
+      "source": "file:ios/EraBall/Views/DraftView.swift",
+      "target": "file:app/features/draft/DraftScreen.tsx",
+      "type": "similar_to",
+      "direction": "bidirectional",
+      "description": "iOS port of",
+      "weight": 0.9
+    },
+    {
+      "source": "file:ios/EraBall/Views/CoachDraftView.swift",
+      "target": "file:app/features/coach-draft/CoachDraftScreen.tsx",
+      "type": "similar_to",
+      "direction": "bidirectional",
+      "description": "iOS port of",
+      "weight": 0.9
+    },
+    {
+      "source": "file:ios/EraBall/Views/SimulationView.swift",
+      "target": "file:app/features/simulation/SimulationScreen.tsx",
+      "type": "similar_to",
+      "direction": "bidirectional",
+      "description": "iOS port of",
+      "weight": 0.9
+    },
+    {
+      "source": "file:ios/EngineSrc/engine-entry.ts",
+      "target": "file:app/features/draft/DraftScreen.tsx",
+      "type": "depends_on",
+      "direction": "forward",
+      "description": "ports spin/pool + tags",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ios/EngineSrc/engine-entry.ts",
+      "target": "file:app/features/simulation/SimulationScreen.tsx",
+      "type": "depends_on",
+      "direction": "forward",
+      "description": "ports awards + flags",
+      "weight": 0.8
+    },
+    {
+      "source": "service:services/playerData.ts",
+      "target": "resource:public/players_with_stats.json",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "service:services/playerData.ts",
+      "target": "resource:public/coaches.csv",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:app/features/draft/DraftScreen.tsx",
+      "target": "service:services/playerData.ts",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ios/EngineSrc/engine-entry.ts",
+      "target": "service:services/playerData.ts",
+      "type": "depends_on",
+      "direction": "forward",
+      "description": "same parser inlined",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ios/EngineSrc/engine-entry.ts",
+      "target": "file:lib/achievements.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ios/EngineSrc/engine-entry.ts",
+      "target": "file:lib/lifetimeStats.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:app/features/simulation/SimulationScreen.tsx",
+      "target": "service:services/leaderboard.ts",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:ios/EraBall/Core/GameCenterManager.swift",
+      "target": "service:services/leaderboard.ts",
+      "type": "related",
+      "direction": "forward",
+      "description": "GC leaderboards mirror score",
+      "weight": 0.8
+    }
+  ],
+  "layers": [
+    {
+      "id": "l:engine",
+      "name": "Simulation Engine",
+      "description": "The framework-free game math — the single source of truth every platform runs.",
+      "nodeIds": [
+        "module:packages/engine",
+        "file:packages/engine/src/gameLogic.ts",
+        "file:packages/engine/src/orchestrator.ts",
+        "file:packages/engine/src/rng.ts",
+        "function:packages/engine/src/gameLogic.ts:calcTeamRating",
+        "function:packages/engine/src/gameLogic.ts:simulateSeason",
+        "function:packages/engine/src/gameLogic.ts:simulatePlayoffs",
+        "function:packages/engine/src/gameLogic.ts:playerBaseRating",
+        "function:packages/engine/src/gameLogic.ts:calcEraModifier",
+        "function:packages/engine/src/gameLogic.ts:calcFitPenalty",
+        "concept:tag-pipeline",
+        "config:engine-snapshot/baseline.json"
+      ]
+    },
+    {
+      "id": "l:bridge",
+      "name": "iOS Engine Bridge",
+      "description": "How iOS runs the exact same engine via JavaScriptCore — proven byte-for-byte.",
+      "nodeIds": [
+        "file:ios/EngineSrc/engine-entry.ts",
+        "resource:ios/EraBall/Resources/engine.js",
+        "file:ios/EraBall/Core/Engine.swift",
+        "concept:jsc-parity"
+      ]
+    },
+    {
+      "id": "l:ios",
+      "name": "iOS App (SwiftUI)",
+      "description": "The native screens, state machine, tokens, and Game Center.",
+      "nodeIds": [
+        "file:ios/EraBall/EraBallApp.swift",
+        "concept:GameSession",
+        "file:ios/EraBall/Views/EraSelectView.swift",
+        "file:ios/EraBall/Views/DraftView.swift",
+        "file:ios/EraBall/Views/CoachDraftView.swift",
+        "file:ios/EraBall/Views/SimulationView.swift",
+        "file:ios/EraBall/Views/Modals.swift",
+        "file:ios/EraBall/Core/GameCenterManager.swift",
+        "file:ios/EraBall/Components/Theme.swift"
+      ]
+    },
+    {
+      "id": "l:web",
+      "name": "Web App (parity source)",
+      "description": "The Next.js feature screens the iOS screens are ported from.",
+      "nodeIds": [
+        "file:app/page.tsx",
+        "file:app/features/era-selection/EraSelection.tsx",
+        "file:app/features/draft/DraftScreen.tsx",
+        "file:app/features/coach-draft/CoachDraftScreen.tsx",
+        "file:app/features/simulation/SimulationScreen.tsx"
+      ]
+    },
+    {
+      "id": "l:data",
+      "name": "Shared Data & Services",
+      "description": "Datasets, dataset loaders, leaderboard, achievements, lifetime stats.",
+      "nodeIds": [
+        "service:services/playerData.ts",
+        "service:services/leaderboard.ts",
+        "resource:public/players_with_stats.json",
+        "resource:public/coaches.csv",
+        "file:lib/achievements.ts",
+        "file:lib/lifetimeStats.ts"
+      ]
+    },
+    {
+      "id": "l:parity",
+      "name": "Correctness & Parity",
+      "description": "The seeded RNG + snapshot baseline that lock web and iOS to identical behavior.",
+      "nodeIds": [
+        "file:packages/engine/src/rng.ts",
+        "config:engine-snapshot/baseline.json",
+        "concept:jsc-parity",
+        "resource:ios/EraBall/Resources/engine.js"
+      ]
+    }
+  ],
+  "tour": [
+    {
+      "order": 1,
+      "title": "Start with the engine",
+      "description": "EraBall is an NBA draft simulator. Everything — web and iOS — runs one framework-free engine. Read this first; the UI is just a shell around it.",
+      "nodeIds": [
+        "module:packages/engine",
+        "file:packages/engine/src/gameLogic.ts"
+      ]
+    },
+    {
+      "order": 2,
+      "title": "How a full game runs",
+      "description": "runGame() composes rating → season → playoffs in a fixed order. This is the one call a consumer needs.",
+      "nodeIds": [
+        "file:packages/engine/src/orchestrator.ts",
+        "function:packages/engine/src/gameLogic.ts:calcTeamRating",
+        "function:packages/engine/src/gameLogic.ts:simulateSeason",
+        "function:packages/engine/src/gameLogic.ts:simulatePlayoffs"
+      ]
+    },
+    {
+      "order": 3,
+      "title": "The tag pipeline",
+      "description": "Before any rating, a raw player is transformed through an ordered set of tag functions. The order is load-bearing and identical everywhere.",
+      "nodeIds": [
+        "concept:tag-pipeline",
+        "function:packages/engine/src/gameLogic.ts:playerBaseRating",
+        "function:packages/engine/src/gameLogic.ts:calcEraModifier",
+        "function:packages/engine/src/gameLogic.ts:calcFitPenalty"
+      ]
+    },
+    {
+      "order": 4,
+      "title": "iOS runs the SAME engine",
+      "description": "The iOS app does not reimplement the math — it bundles the real engine and executes it in JavaScriptCore, proven byte-for-byte via a seeded snapshot.",
+      "nodeIds": [
+        "file:ios/EngineSrc/engine-entry.ts",
+        "resource:ios/EraBall/Resources/engine.js",
+        "concept:jsc-parity",
+        "config:engine-snapshot/baseline.json"
+      ]
+    },
+    {
+      "order": 5,
+      "title": "The Swift bridge",
+      "description": "Engine.swift hosts engine.js and exposes typed methods. GameSession calls it for every rule and simulation.",
+      "nodeIds": [
+        "file:ios/EraBall/Core/Engine.swift",
+        "concept:GameSession"
+      ]
+    },
+    {
+      "order": 6,
+      "title": "The iOS screens",
+      "description": "Four phases — era select → draft → coach → simulate — each a native SwiftUI port of the matching web feature screen.",
+      "nodeIds": [
+        "file:ios/EraBall/Views/EraSelectView.swift",
+        "file:ios/EraBall/Views/DraftView.swift",
+        "file:ios/EraBall/Views/CoachDraftView.swift",
+        "file:ios/EraBall/Views/SimulationView.swift"
+      ]
+    },
+    {
+      "order": 7,
+      "title": "Web parity source",
+      "description": "The web feature screens are the design/behavior source of truth the iOS screens are matched against.",
+      "nodeIds": [
+        "file:app/features/era-selection/EraSelection.tsx",
+        "file:app/features/draft/DraftScreen.tsx",
+        "file:app/features/coach-draft/CoachDraftScreen.tsx",
+        "file:app/features/simulation/SimulationScreen.tsx"
+      ]
+    },
+    {
+      "order": 8,
+      "title": "Data, services & Game Center",
+      "description": "Where the players/coaches come from, how leaderboards and achievements work, and the Game Center integration.",
+      "nodeIds": [
+        "service:services/playerData.ts",
+        "resource:public/players_with_stats.json",
+        "resource:public/coaches.csv",
+        "file:ios/EraBall/Core/GameCenterManager.swift"
+      ]
+    }
+  ]
+}

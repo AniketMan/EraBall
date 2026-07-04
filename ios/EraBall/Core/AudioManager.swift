@@ -12,14 +12,24 @@ final class AudioManager {
 
     var isMuted: Bool = false {
         didSet {
-            player?.volume = isMuted ? 0 : Float(volume)
+            applyVolume()
             UserDefaults.standard.set(isMuted, forKey: "eraball_muted")
         }
     }
 
+    /// Linear 0…1 slider value. Player gets volume² for a perceptual loudness curve (web parity).
+    var volume: Double = 0.21 {
+        didSet {
+            applyVolume()
+            UserDefaults.standard.set(volume, forKey: "eraball_volume")
+        }
+    }
+    var isSilent: Bool { isMuted || volume == 0 }
+
     private var player: AVPlayer?
     private var currentEra: String?
-    private var volume: Double = 0.21
+
+    private func applyVolume() { player?.volume = isMuted ? 0 : Float(volume * volume) }
 
     private let CDN = "https://pub-c85456ef7b454894a21cc859fee77b58.r2.dev"
 
@@ -33,6 +43,8 @@ final class AudioManager {
 
     private init() {
         isMuted = UserDefaults.standard.bool(forKey: "eraball_muted")
+        let v = UserDefaults.standard.object(forKey: "eraball_volume") as? Double
+        volume = v ?? 0.21
         try? AVAudioSession.sharedInstance().setCategory(.ambient, mode: .default)
         try? AVAudioSession.sharedInstance().setActive(true)
     }
@@ -49,8 +61,11 @@ final class AudioManager {
         // Loop
         NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime,
                                                object: item, queue: .main) { [weak self] _ in
-            self?.player?.seek(to: .zero)
-            self?.player?.play()
+            // Delivered on the main queue, so we're already on the main actor.
+            MainActor.assumeIsolated {
+                self?.player?.seek(to: .zero)
+                self?.player?.play()
+            }
         }
     }
 

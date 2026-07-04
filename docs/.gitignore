@@ -1,0 +1,6 @@
+# Generated structural graphs (regenerate: bash docs/refresh.sh)
+code-graph/*/graph.html
+code-graph/*/graph.json
+code-graph/*/manifest.json
+code-graph/*/cache/
+code-graph/*/.graphify_*

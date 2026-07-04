@@ -15,8 +15,10 @@ struct PlayerHeadshotView: View {
         AsyncImage(url: url) { phase in
             switch phase {
             case .success(let image):
+                // Anchor the fill to the top so every head sits consistently regardless of
+                // each headshot's framing (center-crop left players like Kemba sitting low).
                 image.resizable().scaledToFill()
-                    .frame(width: size, height: size * 0.8).clipped()
+                    .frame(width: size, height: size * 0.8, alignment: .top).clipped()
             default:
                 ZStack {
                     Rectangle().fill(G.surface2)

@@ -9,38 +9,105 @@ let SUPPORTERS: [String] = [
     "Brennan Gorby", "Zane Luna", "BFXT", "Yung Girt",
 ]
 
+/// Cosmetic supporter tiers (green + gold) matching the live site's Hall of Fame.
+enum SupporterTier: Equatable {
+    case standard, green, gold
+    var accent: Color {
+        switch self { case .standard: return G.gold; case .green: return Color(hex: "#34D399"); case .gold: return G.gold }
+    }
+    var border: Color {
+        switch self { case .standard: return G.border; case .green: return Color(hex: "#34D399"); case .gold: return G.gold }
+    }
+    @ViewBuilder var gradient: some View {
+        switch self {
+        case .standard: G.black
+        case .green: LinearGradient(colors: [Color(hex: "#34D399").opacity(0.04), Color(hex: "#34D399").opacity(0.20)], startPoint: .leading, endPoint: .trailing)
+        case .gold: LinearGradient(colors: [G.gold.opacity(0.12), G.gold.opacity(0.34)], startPoint: .leading, endPoint: .trailing)
+        }
+    }
+}
+
+private let SUPPORTER_TIERS: [String: SupporterTier] = [
+    "TheZDSpecial": .green, "RM": .green, "EliDunlay": .green, "WhereIsJarrett": .green,
+    "Brennan Gorby": .gold,
+]
+func supporterTier(_ name: String) -> SupporterTier { SUPPORTER_TIERS[name] ?? .standard }
+
 struct SupportersSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 8) {
                     Text("These supporters are keeping EraBall alive!")
                         .font(.system(size: 11)).foregroundStyle(G.grey).padding(.bottom, 4)
-                    ForEach(SUPPORTERS, id: \.self) { name in
-                        HStack(spacing: 10) {
-                            Text("★").font(.system(size: 12)).foregroundStyle(G.gold)
-                            Text(name).font(.system(size: 14, weight: .medium)).foregroundStyle(G.white)
-                            Spacer()
+                    GlassEffectContainer(spacing: 8) {
+                        VStack(spacing: 8) {
+                            ForEach(SUPPORTERS, id: \.self) { name in
+                                let tier = supporterTier(name)
+                                HStack(spacing: 10) {
+                                    Text("★").font(.system(size: 14)).foregroundStyle(tier.accent)
+                                    Text(name).font(.system(size: 13, weight: .medium)).tracking(0.4).foregroundStyle(G.white)
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 12).padding(.vertical, 10)
+                                .background(tier.gradient)   // colored wash for special tiers
+                                .overlay(SupporterSheen().clipped())
+                                .glassEffect(.regular.tint(tier.accent.opacity(tier == .standard ? 0.05 : 0.10)), in: .rect(cornerRadius: 0))
+                                .overlay(Rectangle().stroke(tier.border, lineWidth: 1))
+                            }
                         }
-                        .padding(.horizontal, 12).padding(.vertical, 10)
-                        .background(G.surface).overlay(Rectangle().stroke(G.border, lineWidth: 1))
                     }
                     Button {
                         openURL(URL(string: "https://ko-fi.com/eshanb")!)
                     } label: {
-                        Text("Support on Ko-fi · donate to be here")
-                            .font(.system(size: 11)).tracking(0.5).foregroundStyle(G.goldDim)
-                            .frame(maxWidth: .infinity).padding(.vertical, 10)
-                            .overlay(Rectangle().stroke(G.border, lineWidth: 1))
+                        HStack(spacing: 4) {
+                            Text("Support on Ko-fi").foregroundStyle(G.goldDim)
+                            Text("· donate to be here").foregroundStyle(G.greyDark)
+                        }
+                        .font(.system(size: 11)).tracking(0.5)
+                        .frame(maxWidth: .infinity).padding(.vertical, 11)
+                        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 0))
+                        .overlay(Rectangle().stroke(G.border, lineWidth: 1))
                     }
-                    .buttonStyle(.plain).padding(.top, 6)
+                    .buttonStyle(.plain).padding(.top, 8)
                 }.padding(24)
             }
             .background(G.black).navigationTitle("THANK YOU!").navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("CLOSE") { dismiss() }.foregroundStyle(G.gold) } }
         }.preferredColorScheme(.dark)
+    }
+}
+
+/// Gold sheen beam sweeping across a supporter card (port of globals.css .card-sheen-beam).
+struct SupporterSheen: View {
+    var body: some View {
+        GeometryReader { geo in
+            TimelineView(.animation) { tl in
+                let t = tl.date.timeIntervalSinceReferenceDate
+                let period = 4.5
+                let p = t.truncatingRemainder(dividingBy: period) / period
+                let W = geo.size.width, H = geo.size.height
+                let beamW = W * 0.35
+                let txFrac: CGFloat = p < 0.4 ? -1.5 + 5.0 * CGFloat(p / 0.4) : 3.5
+                let opacity: CGFloat = p < 0.08 ? CGFloat(p / 0.08)
+                    : p < 0.4 ? 1 - CGFloat((p - 0.08) / 0.32) : 0
+                Rectangle()
+                    .fill(LinearGradient(stops: [
+                        .init(color: .white.opacity(0), location: 0),
+                        .init(color: G.gold.opacity(0.28), location: 0.5),
+                        .init(color: .white.opacity(0), location: 1),
+                    ], startPoint: .leading, endPoint: .trailing))
+                    .frame(width: beamW, height: H * 1.5)
+                    .transformEffect(CGAffineTransform(a: 1, b: 0, c: tan(-15 * .pi / 180), d: 1, tx: 0, ty: 0))
+                    .offset(x: txFrac * beamW)
+                    .frame(width: W, height: H, alignment: .leading)
+                    .opacity(Double(opacity))
+                    .clipped()
+            }
+        }
+        .allowsHitTesting(false)
     }
 }
 

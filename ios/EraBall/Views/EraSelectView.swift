@@ -20,11 +20,10 @@ struct EraSelectView: View {
     @Environment(GameSession.self) private var session
     @Environment(AudioManager.self) private var audio
     @State private var showHelp = false
-    @State private var showLeaderboard = false
-    @State private var showLifetime = false
-    @State private var showAchievements = false
     @State private var showPatchNotes = false
     @State private var showSupporters = false
+    @State private var showVolume = false
+    @Namespace private var topBarGlass
 
     var body: some View {
         ZStack {
@@ -32,12 +31,7 @@ struct EraSelectView: View {
             Starfield()
             VStack(spacing: 0) {
                 TopBar(onTitleTap: nil) {
-                    Button { audio.toggleMute() } label: {
-                        Image(systemName: audio.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
-                            .font(.system(size: 13, weight: .semibold)).foregroundStyle(G.gold)
-                            .frame(width: 34, height: 34).overlay(Rectangle().stroke(G.gold.opacity(0.6), lineWidth: 1))
-                            .contentShape(.rect)
-                    }.buttonStyle(.plain)
+                    topBarControls
                 }
                 ScrollView {
                     VStack(spacing: 40) {
@@ -47,15 +41,87 @@ struct EraSelectView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.horizontal, 16).padding(.top, 24).padding(.bottom, 40)
+                    // One shared spring so the grid glides down as the description/actions
+                    // lens in, instead of the layout jumping ahead of the animation.
+                    .animation(.spring(response: 0.42, dampingFraction: 0.82), value: session.selectedEra)
                 }
             }
         }
         .sheet(isPresented: $showHelp) { HowToPlaySheet() }
-        .sheet(isPresented: $showLeaderboard) { LeaderboardSheet() }
-        .sheet(isPresented: $showLifetime) { LifetimeStatsView() }
-        .sheet(isPresented: $showAchievements) { AchievementsView() }
         .sheet(isPresented: $showPatchNotes) { PatchNotesSheet() }
         .sheet(isPresented: $showSupporters) { SupportersSheet() }
+    }
+
+    // MARK: - Top bar controls (web parity: ?, era-theme toggle, volume popover)
+
+    private var topBarControls: some View {
+        GlassEffectContainer(spacing: 8) {
+            HStack(spacing: 8) {
+                // "?" — how to play
+                Button { showHelp = true } label: {
+                    Image(systemName: "questionmark")
+                        .font(.system(size: 13, weight: .bold)).foregroundStyle(G.grey)
+                        .frame(width: 34, height: 34).contentShape(.rect)
+                }
+                .buttonStyle(.plain)
+                .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 0))
+                .overlay(Rectangle().stroke(G.border, lineWidth: 1))
+                .glassEffectID("help", in: topBarGlass)
+
+                // Era theme toggle
+                Button { session.themeOn.toggle() } label: {
+                    HStack(spacing: 6) {
+                        Text("ERA THEME").font(.system(size: 9, weight: .semibold)).tracking(1.5)
+                        Text(session.themeOn ? "ON" : "OFF").font(.system(size: 9, weight: .bold)).tracking(1)
+                            .foregroundStyle(session.themeOn ? G.black : G.grey)
+                            .padding(.horizontal, 5).padding(.vertical, 2)
+                            .background(session.themeOn ? G.gold : G.surface)
+                    }
+                    .foregroundStyle(G.grey)
+                    .padding(.horizontal, 8).frame(height: 34).contentShape(.rect)
+                }
+                .buttonStyle(.plain)
+                .glassEffect(.regular.interactive().tint(session.themeOn ? G.gold.opacity(0.14) : .clear), in: .rect(cornerRadius: 0))
+                .overlay(Rectangle().stroke(session.themeOn ? G.gold.opacity(0.6) : G.border, lineWidth: 1))
+                .glassEffectID("theme", in: topBarGlass)
+
+                // Volume — speaker opens a popover with a slider + MUTE
+                Button { showVolume = true } label: {
+                    Image(systemName: audio.isSilent ? "speaker.slash.fill" : "speaker.wave.2.fill")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(audio.isSilent ? G.grey : G.gold)
+                        .frame(width: 34, height: 34).contentShape(.rect)
+                }
+                .buttonStyle(.plain)
+                .glassEffect(.regular.interactive().tint(audio.isSilent ? .clear : G.gold.opacity(0.14)), in: .rect(cornerRadius: 0))
+                .overlay(Rectangle().stroke(audio.isSilent ? G.border : G.gold.opacity(0.6), lineWidth: 1))
+                .glassEffectID("volume", in: topBarGlass)
+                .popover(isPresented: $showVolume, arrowEdge: .top) { volumePopover }
+            }
+        }
+    }
+
+    private var volumePopover: some View {
+        VStack(spacing: 14) {
+            Text("VOLUME").font(.system(size: 10, weight: .semibold)).tracking(3).foregroundStyle(G.grey)
+            HStack(spacing: 10) {
+                Image(systemName: "speaker.fill").font(.system(size: 11)).foregroundStyle(G.greyDark)
+                Slider(value: Binding(get: { audio.volume }, set: { audio.volume = $0 }), in: 0...1)
+                    .tint(G.gold).frame(width: 160)
+                Image(systemName: "speaker.wave.3.fill").font(.system(size: 11)).foregroundStyle(G.greyDark)
+            }
+            Button { audio.toggleMute() } label: {
+                Text(audio.isMuted ? "UNMUTE" : "MUTE")
+                    .font(.system(size: 11, weight: .semibold)).tracking(2)
+                    .foregroundStyle(audio.isMuted ? G.black : G.grey)
+                    .frame(maxWidth: .infinity).frame(height: 34)
+                    .background(audio.isMuted ? G.gold : G.surface)
+                    .overlay(Rectangle().stroke(audio.isMuted ? G.gold : G.border, lineWidth: 1))
+            }.buttonStyle(.plain)
+        }
+        .padding(18).frame(width: 240)
+        .background(G.black)
+        .presentationCompactAdaptation(.popover)
     }
 
     @ViewBuilder private var bannerBlock: some View {
@@ -65,16 +131,23 @@ struct EraSelectView: View {
                     .foregroundStyle(G.grey).padding(.bottom, 8)
                 EraBannerView(era: shown, dimmed: session.eraSpinning)
                 if !session.eraSpinning, let era = session.selectedEra {
-                    VStack(spacing: 14) {
+                    VStack(spacing: 12) {
                         Text(ERA_YEARS[era] ?? "").font(.system(size: 11, weight: .semibold)).tracking(4).foregroundStyle(G.goldDim)
-                        Text(ERA_DESC[era]?.style ?? "").font(.system(size: 13)).foregroundStyle(G.grey)
+                        Text(ERA_DESC[era]?.style ?? "").font(.system(size: 13, weight: .medium)).foregroundStyle(G.white)
                             .multilineTextAlignment(.center).lineSpacing(4).frame(maxWidth: 320)
                         Text((ERA_DESC[era]?.note ?? "").uppercased()).font(.system(size: 10, weight: .semibold)).tracking(2)
-                            .foregroundStyle(G.goldDim).multilineTextAlignment(.center)
-                            .padding(.horizontal, 12).padding(.vertical, 6).overlay(Rectangle().stroke(G.goldDim, lineWidth: 1))
-                        Text("Players perform best in their home era - drafting across decades applies a rating penalty")
-                            .font(.system(size: 11)).foregroundStyle(G.greyDark.opacity(0.7)).multilineTextAlignment(.center).frame(maxWidth: 340)
-                    }.padding(.top, 14).transition(.opacity)
+                            .foregroundStyle(G.gold).multilineTextAlignment(.center)
+                            .padding(.horizontal, 12).padding(.vertical, 6)
+                            .glassEffect(.regular.tint(G.gold.opacity(0.12)), in: .rect(cornerRadius: 0))
+                            .overlay(Rectangle().stroke(G.goldDim, lineWidth: 1))
+                        Text("Players perform best in their home era — drafting across decades applies a rating penalty")
+                            .font(.system(size: 11)).foregroundStyle(G.grey).multilineTextAlignment(.center).frame(maxWidth: 340)
+                    }
+                    .padding(16)
+                    .glassEffect(.regular, in: .rect(cornerRadius: 0))
+                    .overlay(Rectangle().stroke(G.border, lineWidth: 1))
+                    .padding(.top, 14)
+                    .transition(.blurReplace.combined(with: .opacity))
                 }
             }
         } else {
@@ -85,48 +158,118 @@ struct EraSelectView: View {
     private var eraGrid: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
             ForEach(ALL_ERAS, id: \.self) { e in
+                let selected = session.selectedEra == e
                 Button { session.selectEra(e) } label: {
                     Text(eraDisplayLabel(e).uppercased()).font(Fonts.bebas(22)).tracking(1.5)
-                        .foregroundStyle(session.selectedEra == e ? G.black : G.grey)
+                        .foregroundStyle(selected ? G.black : G.grey)
                         .minimumScaleFactor(0.6).lineLimit(1)
-                        .frame(maxWidth: .infinity).frame(height: 58)
-                        .background(session.selectedEra == e ? G.gold : G.surface)
-                        .overlay(Rectangle().stroke(session.selectedEra == e ? G.gold : G.border, lineWidth: 1))
+                        .frame(maxWidth: .infinity).frame(height: 58).contentShape(.rect)
                 }
                 .buttonStyle(.plain).disabled(session.eraSpinning).opacity(session.eraSpinning ? 0.4 : 1)
+                // Each cell owns its own glass — no cross-cell glassEffectID, so the gold
+                // stays on the one selected cell instead of sweeping across the whole grid.
+                .glassEffect(selected ? .regular.tint(G.gold) : .clear, in: .rect(cornerRadius: 0))
+                .overlay(Rectangle().stroke(selected ? G.gold : G.border, lineWidth: 1))
+                .scaleEffect(selected ? 1.04 : 1)
+                .animation(.spring(response: 0.34, dampingFraction: 0.72), value: selected)
             }
         }
         .frame(maxWidth: 400)
-        .animation(.easeOut(duration: 0.15), value: session.selectedEra)
     }
 
     private var actions: some View {
         VStack(spacing: 12) {
-            Button(session.eraSpinning ? "SPINNING..." : "RANDOM") { session.spinEra() }
-                .buttonStyle(GhostButtonStyle()).frame(width: 200).disabled(session.eraSpinning)
             if session.selectedEra != nil && !session.eraSpinning {
-                Button("NORMAL DRAFT") { session.beginDraft(salaryCap: false) }
-                    .buttonStyle(GoldButtonStyle(fullWidth: true)).frame(width: 200)
-                Button("SALARY CAP DRAFT") { session.beginDraft(salaryCap: true) }
-                    .buttonStyle(PurpleButtonStyle(fullWidth: true)).frame(width: 200)
+                // Primary draft modes — side by side to cut vertical scrolling.
+                HStack(spacing: 10) {
+                    ClearGlassButton(title: "NORMAL", tint: G.gold) { session.beginDraft(salaryCap: false) }
+                    ClearGlassButton(title: "SALARY CAP", tint: G.purple) { session.beginDraft(salaryCap: true) }
+                }
+                .frame(maxWidth: 320)
+                // Secondary row: re-roll era + sandbox.
+                HStack(spacing: 10) {
+                    ClearGlassButton(title: session.eraSpinning ? "SPINNING..." : "RANDOM", tint: G.grey) { session.spinEra() }
+                        .disabled(session.eraSpinning)
+                    ClearGlassButton(title: "SANDBOX", tint: G.grey) { session.beginDraft(salaryCap: false, sandbox: true) }
+                }
+                .frame(maxWidth: 320)
+                .transition(.blurReplace.combined(with: .opacity))
+            } else {
+                ClearGlassButton(title: session.eraSpinning ? "SPINNING..." : "RANDOM ERA", tint: G.gold) { session.spinEra() }
+                    .frame(maxWidth: 320).disabled(session.eraSpinning)
             }
-            Button("HOW TO PLAY") { showHelp = true }.buttonStyle(.plain)
-                .font(.system(size: 11, weight: .semibold)).tracking(3).foregroundStyle(G.greyDark).padding(.top, 2)
-            if session.selectedEra != nil && !session.eraSpinning {
-                Text("OR PLAY").font(.system(size: 10, weight: .semibold)).tracking(3).foregroundStyle(G.greyDark)
-                Button("SANDBOX") { session.beginDraft(salaryCap: false, sandbox: true) }
-                    .buttonStyle(GhostButtonStyle()).frame(width: 200)
+
+            HStack(spacing: 20) {
+                Button("HOW TO PLAY") { showHelp = true }.buttonStyle(.plain)
+                    .font(.system(size: 11, weight: .semibold)).tracking(2).foregroundStyle(G.greyDark)
+                Button("WHAT'S NEW!") { showPatchNotes = true }.buttonStyle(.plain)
+                    .font(.system(size: 11, weight: .semibold)).tracking(1).foregroundStyle(G.gold)
             }
-            Button("LEADERBOARD") { showLeaderboard = true }.buttonStyle(GhostButtonStyle()).frame(width: 200)
-            Button("LIFETIME STATS") { showLifetime = true }.buttonStyle(GhostButtonStyle()).frame(width: 200)
-            Button("ACHIEVEMENTS") { showAchievements = true }.buttonStyle(GhostButtonStyle()).frame(width: 200)
-            Button("WHAT'S NEW!") { showPatchNotes = true }.buttonStyle(.plain)
-                .font(.system(size: 11, weight: .semibold)).tracking(1).foregroundStyle(G.gold).padding(.top, 2)
-            Button("★ SUPPORTER HALL OF FAME") { showSupporters = true }.buttonStyle(.plain)
-                .font(.system(size: 10, weight: .semibold)).tracking(1).foregroundStyle(G.goldDim)
-            Text("v2.0").font(.system(size: 10)).tracking(2).foregroundStyle(G.greyDark.opacity(0.6))
+            .padding(.top, 2)
+
+            footerLinks
+            Text("v2.0").font(.system(size: 10)).tracking(2).foregroundStyle(G.greyDark.opacity(0.6)).padding(.top, 4)
         }
-        .animation(.smooth(duration: 0.25), value: session.selectedEra)
+    }
+
+    // MARK: - Footer links (web: bottom-right footer — support / socials / portfolio)
+
+    private var footerLinks: some View {
+        VStack(spacing: 10) {
+            FooterLinkButton(url: "https://ko-fi.com/eshanb", label: "SUPPORT THE GAME", tint: G.gold)
+            Button { showSupporters = true } label: {
+                Text("★ SUPPORTER HALL OF FAME").font(.system(size: 11, weight: .semibold)).tracking(1.5).foregroundStyle(G.gold)
+                    .frame(maxWidth: 320).frame(height: 42)
+                    .glassEffect(.clear.tint(G.gold.opacity(0.14)).interactive(), in: .rect(cornerRadius: 0))
+                    .overlay(Rectangle().stroke(G.gold, lineWidth: 1))
+            }.buttonStyle(.plain)
+
+            Text("SUGGESTIONS OR BUGS?").font(.system(size: 9, weight: .semibold)).tracking(1.5)
+                .foregroundStyle(G.greyDark).padding(.top, 8)
+            HStack(spacing: 12) {
+                FooterLinkButton(url: "https://discord.gg/gFAp5adX", label: "DISCORD", tint: G.grey, width: 154)
+                FooterLinkButton(url: "https://x.com/Eshan_Design", label: "TWITTER", tint: G.grey, width: 154)
+            }
+            FooterLinkButton(url: "https://eshanbhattdesign.com", label: "ESHANBHATTDESIGN.COM", tint: G.grey)
+        }
+        .padding(.top, 6)
+        .frame(maxWidth: 320)
+    }
+}
+
+// MARK: - Footer link (opens an external URL in Safari)
+
+struct FooterLinkButton: View {
+    let url: String
+    let label: String
+    var tint: Color
+    var width: CGFloat = 320
+    var body: some View {
+        Link(destination: URL(string: url)!) {
+            Text(label).font(.system(size: 11, weight: .semibold)).tracking(1.5).foregroundStyle(tint)
+                .frame(maxWidth: width == .infinity ? .infinity : nil)
+                .frame(width: width == .infinity ? nil : width, height: 42)
+                .glassEffect(.clear.tint(tint == G.gold ? G.gold.opacity(0.14) : .clear).interactive(), in: .rect(cornerRadius: 0))
+                .overlay(Rectangle().stroke(tint == G.gold ? G.goldDim : G.border, lineWidth: 1))
+        }.buttonStyle(.plain)
+    }
+}
+
+/// A Liquid Glass action button using the CLEAR material — sharp corners + border to
+/// match EraBall's rectangle design language.
+struct ClearGlassButton: View {
+    let title: String
+    var tint: Color
+    let action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            Text(title).font(.system(size: 13, weight: .bold)).tracking(1.5)
+                .foregroundStyle(tint == G.grey ? G.grey : tint)
+                .frame(maxWidth: .infinity).frame(height: 46).contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .glassEffect(.clear.tint(tint == G.grey ? .clear : tint.opacity(0.16)).interactive(), in: .rect(cornerRadius: 0))
+        .overlay(Rectangle().stroke(tint == G.grey ? G.border : tint.opacity(0.7), lineWidth: 1))
     }
 }
 
