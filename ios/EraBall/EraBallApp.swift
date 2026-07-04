@@ -4,112 +4,89 @@ import GameKit
 
 @main
 struct EraBallApp: App {
-    @State private var appState = AppState()
-    @State private var gcManager = GameCenterManager.shared
+    @State private var session = GameSession()
+    @State private var gameCenter = GameCenterManager.shared
     @State private var audio = AudioManager.shared
 
     var body: some Scene {
         WindowGroup {
             RootView()
-                .environment(appState)
-                .environment(gcManager)
+                .environment(session)
+                .environment(gameCenter)
                 .environment(audio)
                 .preferredColorScheme(.dark)
-                .onAppear { gcManager.authenticate() }
+                .tint(G.gold)
+                .task {
+                    gameCenter.authenticate()
+                    await session.boot()
+                }
         }
     }
 }
 
 struct RootView: View {
-    @Environment(AppState.self) private var appState
+    @Environment(GameSession.self) private var session
+    @Environment(GameCenterManager.self) private var gameCenter
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
-            phaseView
-                // §11/§15 — the negotiation starts at the root frame (window
-                // minus safe areas). Each phase view respects that proposal so
-                // content never bleeds under system chrome; the banner overflow
-                // is contained at its source by BleedImage (§12.4), so no
-                // clip-guard is needed here (a root .clipped() would force the
-                // content to bleed past the bottom safe area).
-                .transition(.opacity.combined(with: .scale(scale: 0.98)))
-                .animation(.smooth(duration: 0.4), value: appState.phase)
-            if let ach = appState.pendingAchievementToast {
-                AchievementToast(achievement: ach)
-                    .frame(maxHeight: .infinity, alignment: .top)
-                    .transition(.move(edge: .top).combined(with: .opacity))
-                    .onAppear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
-                            withAnimation { appState.pendingAchievementToast = nil }
-                        }
-                    }
+            G.black.ignoresSafeArea()
+            switch session.phase {
+            case .loading:     LoadingView()
+            case .eraSelect:   EraSelectView()
+            case .draft:       DraftView()
+            case .coachDraft:  CoachDraftView()
+            case .simulation:  SimulationView()
             }
         }
-        .task { await appState.boot() }
-    }
-
-    @ViewBuilder
-    private var phaseView: some View {
-        switch appState.phase {
-        case .loading:
-            LoadingView()
-        case .eraSelect:
-            EraSelectView()
-        case .draft(let era, let salaryCapMode):
-            DraftView(era: era, salaryCapMode: salaryCapMode)
-        case .coachDraft(let slots, let era, let salaryCapMode):
-            CoachDraftView(slots: slots, era: era, salaryCapMode: salaryCapMode)
-        case .simulation(let slots, let coach, let era, let salaryCapMode):
-            SimulationView(slots: slots, coach: coach, era: era, salaryCapMode: salaryCapMode)
+        .animation(.smooth(duration: 0.35), value: session.phase)
+        // Present the Game Center sign-in sheet when the system provides it.
+        .sheet(isPresented: Binding(get: { gameCenter.showAuthVC && gameCenter.authVC != nil },
+                                    set: { if !$0 { gameCenter.showAuthVC = false } })) {
+            if let vc = gameCenter.authVC { GameCenterAuthView(viewController: vc) }
         }
     }
 }
 
 struct LoadingView: View {
-    @Environment(AppState.self) private var appState
+    @Environment(GameSession.self) private var session
+
     var body: some View {
-        VStack(spacing: 24) {
-            Text("ERA BALL")
-                .font(Fonts.bebas(56))
-                .tracking(12)
-                .foregroundStyle(G.gold)
-            ProgressView().tint(G.gold).scaleEffect(1.2)
-            if let err = appState.loadError {
-                Text(err)
-                    .font(.system(size: 12))
-                    .foregroundStyle(G.red)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
+        ZStack {
+            CourtBackground(showStars: true)
+            VStack(spacing: 20) {
+                Text("ERA BALL")
+                    .font(Fonts.bebas(56)).tracking(8).foregroundStyle(G.gold)
+                if let err = session.loadError {
+                    Text(err).font(.footnote).foregroundStyle(G.grey)
+                        .multilineTextAlignment(.center).frame(maxWidth: 300)
+                    Button("RETRY") { Task { await session.boot() } }
+                        .buttonStyle(GoldButtonStyle())
+                } else {
+                    ProgressView().controlSize(.large).tint(G.gold)
+                    Text("LOADING SEVEN DECADES OF BASKETBALL")
+                        .font(.system(size: 10, weight: .semibold)).tracking(2.5).foregroundStyle(G.grey)
+                }
             }
+            .padding(32)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(G.black)
     }
 }
 
-struct AchievementToast: View {
-    let achievement: Achievement
+/// Court backdrop with optional warp starfield (era-select + loading).
+struct CourtBackground: View {
+    var showStars = false
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text("Achievement Unlocked")
-                .font(.system(size: 10, weight: .semibold))
-                .tracking(2)
-                .textCase(.uppercase)
-                .foregroundStyle(Color(hex: achievement.rarityColor))
-            Text(achievement.title)
-                .font(.system(size: 14, weight: .bold))
-                .foregroundStyle(G.white)
-            Text(achievement.description)
-                .font(.system(size: 12))
-                .foregroundStyle(G.grey)
+        ZStack {
+            G.black.ignoresSafeArea()
+            if showStars { Starfield() }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(G.surface2)
-        .overlay(Rectangle().stroke(Color(hex: achievement.rarityColor).opacity(0.4), lineWidth: 1))
-        .padding(.horizontal, 16)
-        .padding(.top, 60)
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
+}
+
+/// Hosts the system Game Center sign-in view controller.
+struct GameCenterAuthView: UIViewControllerRepresentable {
+    let viewController: UIViewController
+    func makeUIViewController(context: Context) -> UIViewController { viewController }
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
 }

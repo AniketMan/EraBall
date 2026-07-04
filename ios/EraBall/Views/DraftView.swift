@@ -1,519 +1,254 @@
-// DraftView.swift
-// Matches DraftScreen.tsx exactly.
-// Layout: TopBar | spin section | player pool | court
-
+// DraftView.swift — port of app/features/draft/DraftScreen.tsx
+// Flow: spin -> pool. Tap a pool player to SELECT (shows the full card); empty court
+// slots glow with a fit badge — tap an empty slot to PLACE the selected player.
 import SwiftUI
 
-private let POSITIONS = ["PG","SG","SF","PF","C","B1","B2","B3","B4"]
-private let POSITION_LABELS: [String: String] = [
-    "PG":"Point Guard","SG":"Shooting Guard","SF":"Small Forward",
-    "PF":"Power Forward","C":"Center",
-    "B1":"Bench 1","B2":"Bench 2","B3":"Bench 3","B4":"Bench 4"
-]
-
 struct DraftView: View {
-    let era: String
-    let salaryCapMode: Bool
-
-    @Environment(AppState.self) private var appState
+    @Environment(GameSession.self) private var session
     @Environment(AudioManager.self) private var audio
+    @State private var viewSlotPlayer: PlayerVM?
 
-    @State private var slots: [CourtSlot] = POSITIONS.map { CourtSlot(position: $0) }
-    @State private var currentSlotIndex = 0
-    @State private var pool: [Player] = []
-    @State private var currentTeam: String = ""
-    @State private var currentEraForSpin: String = ""
-    @State private var isSpinning = false
-    @State private var spinPhase: SpinPhase = .idle
-    @State private var showPlayerCard: Player? = nil
-    @State private var draftComplete = false
-
-    enum SpinPhase { case idle, spinning, revealed }
-
-    private var currentSlot: CourtSlot? {
-        guard currentSlotIndex < slots.count else { return nil }
-        return slots[currentSlotIndex]
-    }
-
-    private var draftedIds: Set<Int> {
-        Set(slots.compactMap { $0.player?.person_id })
-    }
+    private var state: GameStateVM? { session.gameState }
+    private var starters: [SlotVM] { state?.slots.filter { !$0.isBench } ?? [] }
+    private var bench: [SlotVM] { state?.slots.filter(\.isBench) ?? [] }
 
     var body: some View {
         VStack(spacing: 0) {
-            // Top Bar
-            TopBar(onTitleTap: { appState.restart() }) {
-                HStack(spacing: 12) {
-                    Button {
-                        audio.toggleMute()
-                    } label: {
-                        Image(systemName: audio.isMuted ? "speaker.slash" : "speaker.wave.2")
-                            .foregroundStyle(G.grey)
-                            .font(.system(size: 16))
-                    }
-                    .buttonStyle(.plain)
-
-                    Text(eraDisplayLabel(era))
-                        .font(.system(size: 11, weight: .semibold))
-                        .tracking(2)
-                        .foregroundStyle(G.grey)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(G.surface2)
-                        .overlay(Rectangle().stroke(G.border, lineWidth: 1))
-                }
-            }
-
+            topBar
             ScrollView {
-                VStack(spacing: 0) {
-                    EraBallDivider()
-
-                    // Draft progress
-                    draftProgress
-
-                    EraBallDivider()
-
-                    // Spin section
-                    if !draftComplete {
-                        spinSection
-                        EraBallDivider()
-                        if !pool.isEmpty {
-                            playerPoolSection
-                            EraBallDivider()
-                        }
-                    }
-
-                    // Court
-                    courtSection
-
-                    if draftComplete {
-                        EraBallDivider()
-                        continueButton
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 24)
-                    }
+                VStack(spacing: 16) {
+                    court
+                    if session.salaryCapMode { capMeter }
+                    spinSection
+                    if let sel = session.selectedPoolPlayer { selectedBlock(sel) }
+                    if !session.pool.isEmpty { poolList }
                 }
+                .padding(.horizontal, 16).padding(.bottom, 110)
             }
         }
         .background(G.black)
-        .ignoresSafeArea(edges: .bottom)
-        .sheet(item: $showPlayerCard) { player in
-            PlayerCardSheet(player: player, era: era, onDraft: { draftPlayer(player) })
-        }
-        .onAppear {
-            audio.play(era: era)
-            spinNext()
-        }
-    }
-
-    // MARK: - Draft Progress
-
-    private var draftProgress: some View {
-        HStack(spacing: 0) {
-            ForEach(Array(slots.enumerated()), id: \.offset) { idx, slot in
-                Rectangle()
-                    .fill(slot.player != nil ? G.gold : (idx == currentSlotIndex ? G.surface2 : G.black))
-                    .frame(height: 4)
-                    .overlay(
-                        Rectangle()
-                            .stroke(idx == currentSlotIndex ? G.gold.opacity(0.5) : Color.clear, lineWidth: 1)
-                    )
+        .safeAreaInset(edge: .bottom) {
+            if session.draftComplete {
+                Button("DRAFT A COACH") { session.proceedToCoachDraft() }
+                    .buttonStyle(GoldButtonStyle(fullWidth: true))
+                    .padding(.horizontal, 24).padding(.bottom, 8)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 16)
+        .animation(.smooth(duration: 0.3), value: session.draftComplete)
+        .animation(.smooth(duration: 0.2), value: session.selectedPoolPlayer)
+        .sheet(item: $viewSlotPlayer) { p in
+            NavigationStack {
+                ScrollView { PlayerCardView(player: p).padding(16) }
+                    .background(G.black)
+                    .toolbar {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button("REMOVE", role: .destructive) {
+                                if let idx = state?.slots.first(where: { $0.player?.personId == p.personId })?.index { session.remove(slotIndex: idx) }
+                                viewSlotPlayer = nil
+                            }
+                        }
+                        ToolbarItem(placement: .topBarTrailing) { Button("CLOSE") { viewSlotPlayer = nil }.foregroundStyle(G.gold) }
+                    }
+            }
+            .presentationDetents([.medium, .large]).preferredColorScheme(.dark)
+        }
+        .onAppear { if let e = session.selectedEra { audio.play(era: e) } }
     }
 
-    // MARK: - Spin Section
+    private var topBar: some View {
+        HStack {
+            Button { session.restart() } label: { Image(systemName: "chevron.left").font(.system(size: 15, weight: .semibold)).foregroundStyle(G.grey).frame(width: 34, height: 34).overlay(Rectangle().stroke(G.border, lineWidth: 1)) }.buttonStyle(.plain)
+            Spacer()
+            VStack(spacing: 2) {
+                Text(session.salaryCapMode ? "SALARY CAP DRAFT" : "PLAYER DRAFT")
+                    .font(.system(size: 13, weight: .bold)).tracking(2.5).foregroundStyle(session.salaryCapMode ? G.purple : G.gold)
+                Text("SIM ERA · \(eraDisplayLabel(session.selectedEra ?? "").uppercased())")
+                    .font(.system(size: 9, weight: .semibold)).tracking(1.5).foregroundStyle(G.grey)
+            }
+            Spacer()
+            Text("\(state?.filledCount ?? 0)/9").font(.system(size: 13, weight: .bold, design: .monospaced)).foregroundStyle(G.grey).frame(width: 34)
+        }
+        .padding(.horizontal, 16).padding(.vertical, 10)
+        .overlay(alignment: .bottom) { EraBallDivider() }
+    }
+
+    // MARK: Court
+
+    private var court: some View {
+        VStack(spacing: 10) {
+            SectionHeader(title: "Starters")
+            HStack(spacing: 8) { ForEach(starters) { slot in CourtSlotCell(slot: slot, fit: fitFor(slot), onTap: { tapSlot(slot) }) } }
+            SectionHeader(title: "Bench")
+            HStack(spacing: 8) { ForEach(bench) { slot in CourtSlotCell(slot: slot, fit: fitFor(slot), onTap: { tapSlot(slot) }) }; Spacer().frame(maxWidth: .infinity) }
+        }
+        .padding(16).background(G.surface).overlay(Rectangle().stroke(G.border, lineWidth: 1))
+    }
+
+    private func fitFor(_ slot: SlotVM) -> EngineBridge.FitInfo? {
+        guard slot.player == nil, session.selectedPoolPlayer != nil else { return nil }
+        return session.selectedFits[slot.position]
+    }
+    private func tapSlot(_ slot: SlotVM) {
+        if slot.player != nil { viewSlotPlayer = slot.player }
+        else if session.selectedPoolPlayer != nil { session.placeSelected(atSlotIndex: slot.index) }
+    }
+
+    private var capMeter: some View {
+        HStack(spacing: 12) {
+            ForEach(["s", "a", "b", "c", "d"], id: \.self) { tier in
+                let used = state?.tierCounts[tier] ?? 0
+                let quota = state?.capQuotas[tier] ?? 0
+                VStack(spacing: 2) {
+                    Text(tier.uppercased()).font(.system(size: 12, weight: .black)).foregroundStyle(tierColor(tier))
+                    Text("\(used)/\(quota)").font(.system(size: 11, weight: .semibold, design: .monospaced)).foregroundStyle(used >= quota ? G.green : G.grey)
+                }.frame(maxWidth: .infinity)
+            }
+        }
+        .padding(.vertical, 10).padding(.horizontal, 16).background(G.surface).overlay(Rectangle().stroke(G.border, lineWidth: 1))
+    }
 
     private var spinSection: some View {
-        VStack(spacing: 16) {
-            if let slot = currentSlot {
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("DRAFTING")
-                            .font(.system(size: 10, weight: .semibold))
-                            .tracking(3)
-                            .foregroundStyle(G.grey)
-                        Text(POSITION_LABELS[slot.position] ?? slot.position)
-                            .font(Fonts.bebas(28))
-                            .tracking(4)
-                            .foregroundStyle(G.white)
-                    }
-                    Spacer()
-                    Text("SLOT \(currentSlotIndex + 1)/9")
-                        .font(.system(size: 11, weight: .semibold))
-                        .tracking(2)
-                        .foregroundStyle(G.grey)
+        VStack(spacing: 12) {
+            if session.draftSpinning || !session.spinTeamDisplay.isEmpty {
+                HStack(spacing: 14) {
+                    SpinReel(text: session.spinTeamDisplay, spinning: session.draftSpinning, color: G.gold)
+                    SpinReel(text: eraDisplayLabel(session.spinEraDisplay).uppercased(), spinning: session.draftSpinning, color: G.white)
+                }.frame(height: 56)
+            }
+            if session.noPlayersMessage { Text("No available players on that roster — spin again").font(.footnote).foregroundStyle(Color(hex: "#fb923c")) }
+            if let v = session.capViolation { Text(v).font(.footnote).foregroundStyle(G.red) }
+            if !session.draftComplete {
+                Button { session.spinDraft() } label: {
+                    HStack(spacing: 8) { Image(systemName: "dice.fill"); Text(session.draftSpinning ? "SPINNING…" : (session.pool.isEmpty ? "SPIN TEAM + ERA" : "RE-SPIN")) }
                 }
-                .padding(.horizontal, 16)
-            }
-
-            // Spin reel
-            HStack(spacing: 16) {
-                spinReel(value: currentTeam, label: "TEAM")
-                Text("·")
-                    .font(Fonts.bebas(32))
-                    .foregroundStyle(G.border)
-                spinReel(value: eraDisplayLabel(currentEraForSpin), label: "ERA")
-            }
-            .padding(.horizontal, 16)
-
-            // Spin button
-            Button {
-                spinNext()
-            } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "arrow.clockwise")
-                    Text(spinPhase == .idle ? "SPIN" : "SPIN AGAIN")
+                .buttonStyle(GoldButtonStyle(fullWidth: true)).disabled(!session.canSpin)
+                if !session.pool.isEmpty && !session.draftSpinning {
+                    Text(session.respinUsed ? "NO RE-SPINS LEFT · PICK FROM THIS ROSTER" : "1 RE-SPIN REMAINING THIS DRAFT")
+                        .font(.system(size: 9, weight: .semibold)).tracking(1.8).foregroundStyle(session.respinUsed ? G.grey : G.goldDim)
                 }
             }
-            .buttonStyle(GoldButtonStyle())
-            .disabled(isSpinning)
-        }
-        .padding(.vertical, 20)
-    }
-
-    private func spinReel(value: String, label: String) -> some View {
-        VStack(spacing: 4) {
-            Text(label)
-                .font(.system(size: 9, weight: .semibold))
-                .tracking(3)
-                .foregroundStyle(G.grey)
-            Text(value.isEmpty ? "---" : value)
-                .font(Fonts.bebas(36))
-                .tracking(4)
-                .foregroundStyle(G.gold)
-                .minimumScaleFactor(0.5)
-                .lineLimit(1)
-                .frame(minWidth: 80)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(G.surface)
-                .overlay(Rectangle().stroke(G.border, lineWidth: 1))
         }
     }
 
-    // MARK: - Player Pool
-
-    private var playerPoolSection: some View {
-        VStack(spacing: 0) {
+    // Inline selected-player card + placement hint (web: selectedPlayer block).
+    private func selectedBlock(_ p: PlayerVM) -> some View {
+        VStack(spacing: 8) {
             HStack {
-                Text("AVAILABLE PLAYERS")
-                    .font(.system(size: 10, weight: .semibold))
-                    .tracking(3)
-                    .foregroundStyle(G.grey)
+                Text("↑ TAP AN EMPTY SLOT TO PLACE").font(.system(size: 10, weight: .bold)).tracking(1.5).foregroundStyle(G.gold)
                 Spacer()
-                Text(currentTeam)
-                    .font(.system(size: 11, weight: .semibold))
-                    .tracking(2)
-                    .foregroundStyle(G.gold)
+                Button("CLEAR") { session.selectPoolPlayer(nil) }.buttonStyle(.plain).font(.system(size: 10, weight: .semibold)).foregroundStyle(G.grey)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-
-            EraBallDivider()
-
-            ForEach(pool.prefix(8)) { player in
-                PlayerPoolRow(player: player, era: era, onTap: {
-                    showPlayerCard = player
-                }, onDraft: {
-                    draftPlayer(player)
-                })
-                EraBallDivider()
-            }
+            PlayerCardView(player: p)
         }
+        .padding(10).background(G.gold.opacity(0.05)).overlay(Rectangle().stroke(G.gold.opacity(0.4), lineWidth: 1))
     }
 
-    // MARK: - Court
-
-    private var courtSection: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Text("YOUR ROSTER")
-                    .font(.system(size: 10, weight: .semibold))
-                    .tracking(3)
-                    .foregroundStyle(G.grey)
-                Spacer()
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-
-            EraBallDivider()
-
-            // Starters
-            VStack(spacing: 0) {
-                Text("STARTERS")
-                    .font(.system(size: 9, weight: .semibold))
-                    .tracking(3)
-                    .foregroundStyle(G.grey)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                ForEach(slots.filter { ["PG","SG","SF","PF","C"].contains($0.position) }) { slot in
-                    CourtSlotRow(slot: slot, isActive: slot.position == currentSlot?.position)
-                    EraBallDivider()
+    private var poolList: some View {
+        VStack(spacing: 8) {
+            SectionHeader(title: "\(session.spinTeamDisplay) · \(eraDisplayLabel(session.spinEraDisplay).uppercased()) roster (\(session.pool.count))")
+            LazyVStack(spacing: 6) {
+                ForEach(session.pool) { p in
+                    Button { session.selectPoolPlayer(session.selectedPoolPlayer?.personId == p.personId ? nil : p) } label: {
+                        PoolRow(player: p, selected: session.selectedPoolPlayer?.personId == p.personId)
+                    }.buttonStyle(.plain)
                 }
             }
-
-            // Bench
-            VStack(spacing: 0) {
-                Text("BENCH")
-                    .font(.system(size: 9, weight: .semibold))
-                    .tracking(3)
-                    .foregroundStyle(G.grey)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                ForEach(slots.filter { ["B1","B2","B3","B4"].contains($0.position) }) { slot in
-                    CourtSlotRow(slot: slot, isActive: slot.position == currentSlot?.position)
-                    EraBallDivider()
-                }
-            }
-        }
-    }
-
-    // MARK: - Continue Button
-
-    private var continueButton: some View {
-        Button("DRAFT COACH") {
-            appState.startCoachDraft(slots: slots, era: era, salaryCapMode: salaryCapMode)
-        }
-        .buttonStyle(GoldButtonStyle(fullWidth: true))
-    }
-
-    // MARK: - Logic
-
-    private func spinNext() {
-        isSpinning = true
-        spinPhase = .spinning
-        let combos = Engine.shared.getValidCombos()
-        guard !combos.isEmpty else { isSpinning = false; return }
-        let combo = combos.randomElement()!
-        currentTeam = combo.team
-        currentEraForSpin = combo.era
-        pool = Engine.shared.getPool(team: combo.team, era: combo.era, excludeIds: draftedIds)
-        withAnimation(.easeOut(duration: 0.3)) {
-            spinPhase = .revealed
-        }
-        isSpinning = false
-    }
-
-    private func draftPlayer(_ player: Player) {
-        guard currentSlotIndex < slots.count else { return }
-        slots[currentSlotIndex].player = player
-        showPlayerCard = nil
-        if currentSlotIndex + 1 < slots.count {
-            currentSlotIndex += 1
-            spinNext()
-        } else {
-            draftComplete = true
         }
     }
 }
 
-// MARK: - Player Pool Row
+// MARK: - Court slot cell (port of CourtSlotView)
 
-struct PlayerPoolRow: View {
-    let player: Player
-    let era: String
+struct CourtSlotCell: View {
+    let slot: SlotVM
+    let fit: EngineBridge.FitInfo?   // fit of the selected pool player for this empty slot
     let onTap: () -> Void
-    let onDraft: () -> Void
+
+    private var placedFitColor: Color {
+        if slot.fitPenalty >= 0.25 { return G.red }
+        if slot.fitPenalty >= 0.10 { return G.grey }
+        return G.gold
+    }
+    private var glowColor: Color? {
+        guard let fit else { return nil }
+        if fit.penalty >= 0.25 { return G.red }
+        if fit.penalty >= 0.10 { return Color(hex: "#8B6914") }
+        return G.gold
+    }
 
     var body: some View {
-        HStack(spacing: 12) {
-            PlayerHeadshotView(personId: player.person_id, initial: player.full_name, size: 44)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(player.full_name)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(G.white)
-                    .lineLimit(1)
-                HStack(spacing: 8) {
-                    Text(player.team_abbreviation)
-                        .font(.system(size: 11))
-                        .foregroundStyle(G.grey)
-                    Text(eraDisplayLabel(player.era))
-                        .font(.system(size: 11))
-                        .foregroundStyle(G.grey)
-                    if let pts = player.PTS {
-                        Text(String(format: "%.1f PPG", pts))
-                            .font(.system(size: 11))
-                            .foregroundStyle(G.greyDark)
+        Button(action: onTap) {
+            VStack(spacing: 4) {
+                if let p = slot.player {
+                    PlayerHeadshotView(personId: p.personId, initial: p.fullName, size: 42)
+                    Text(p.fullName.split(separator: " ").last.map(String.init) ?? p.fullName)
+                        .font(.system(size: 9, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.7).foregroundStyle(G.white)
+                    Text("\(Int(p.PTS.rounded()))/\(Int(p.REB.rounded()))/\(Int(p.AST.rounded()))")
+                        .font(.system(size: 9, weight: .bold)).foregroundStyle(G.gold)
+                    if let label = slot.fitLabel, label != "Position Fit" {
+                        Text(slot.fitPenalty >= 0.25 ? "−25%" : "−10%").font(.system(size: 8)).foregroundStyle(placedFitColor)
                     }
+                } else {
+                    Text(fit != nil ? (fit!.penalty == 0 ? "✓" : fit!.penalty >= 0.25 ? "−25%" : "−10%") : " ")
+                        .font(.system(size: 9, weight: .bold)).foregroundStyle(glowColor ?? .clear)
+                        .frame(height: 12)
+                    Image(systemName: "plus").font(.system(size: 14, weight: .semibold)).foregroundStyle(fit != nil ? (glowColor ?? G.goldDim) : G.border).frame(height: 30)
+                    Text(fit != nil ? "PLACE" : " ").font(.system(size: 8, weight: .semibold)).foregroundStyle(glowColor ?? .clear)
                 }
             }
+            .frame(maxWidth: .infinity).frame(minHeight: 96).padding(.vertical, 6)
+            .overlay(alignment: .topLeading) { Text(slot.position).font(Fonts.bebas(13)).foregroundStyle(G.goldDim).padding(4) }
+            .background(slot.player != nil ? AnyShapeStyle(tierBackground(base: slot.player!.base)) : AnyShapeStyle(G.black))
+            .overlay { if let p = slot.player { TierShine(base: p.base) } }
+            .overlay(Rectangle().stroke(slotBorder, lineWidth: 1))
+            .clipped()
+            .shadow(color: (glowColor ?? .clear).opacity(fit != nil && fit!.penalty == 0 ? 0.7 : 0.25), radius: fit != nil ? 8 : 0)
+        }.buttonStyle(.plain)
+    }
 
-            Spacer()
-
-            Button("DRAFT") { onDraft() }
-                .buttonStyle(GoldButtonStyle())
-                .font(.system(size: 11, weight: .semibold))
-                .padding(.vertical, -4)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .contentShape(Rectangle())
-        .onTapGesture { onTap() }
+    private var slotBorder: Color {
+        if let p = slot.player { return tierBorderColor(base: p.base) }
+        return glowColor ?? G.border
     }
 }
 
-// MARK: - Court Slot Row
-
-struct CourtSlotRow: View {
-    let slot: CourtSlot
-    let isActive: Bool
-
+struct PoolRow: View {
+    let player: PlayerVM
+    var selected: Bool = false
     var body: some View {
         HStack(spacing: 12) {
-            Text(slot.position)
-                .font(.system(size: 10, weight: .semibold))
-                .tracking(1)
-                .foregroundStyle(G.grey)
-                .frame(width: 28, alignment: .leading)
-
-            if let player = slot.player {
-                PlayerHeadshotView(personId: player.person_id, initial: player.full_name, size: 36)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(player.full_name)
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(G.white)
-                        .lineLimit(1)
-                    Text(player.team_abbreviation)
-                        .font(.system(size: 11))
-                        .foregroundStyle(G.grey)
+            PlayerHeadshotView(personId: player.personId, initial: player.fullName, size: 44)
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 6) {
+                    Text(player.fullName).font(.system(size: 14, weight: .bold)).lineLimit(1).foregroundStyle(G.white)
+                    if player.greatest75 { Image(systemName: "star.fill").font(.system(size: 8)).foregroundStyle(G.gold) }
                 }
-            } else {
-                Rectangle()
-                    .fill(Color.clear)
-                    .frame(width: 36, height: 28)
-                Text("EMPTY")
-                    .font(.system(size: 12))
-                    .foregroundStyle(G.border)
+                HStack(spacing: 5) { ForEach(player.tags.prefix(3)) { TagChip(tag: $0) } }
             }
-
             Spacer()
-
-            if isActive {
-                Text("DRAFTING")
-                    .font(.system(size: 9, weight: .semibold))
-                    .tracking(2)
-                    .foregroundStyle(G.gold)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 3)
-                    .background(G.gold.opacity(0.1))
-                    .overlay(Rectangle().stroke(G.gold.opacity(0.3), lineWidth: 1))
+            VStack(alignment: .trailing, spacing: 1) {
+                Text(String(format: "%.1f", player.PTS)).font(.system(size: 16, weight: .black, design: .rounded)).foregroundStyle(G.white)
+                Text("PPG").font(.system(size: 8, weight: .semibold)).foregroundStyle(G.grey)
             }
+            Text(player.tier.uppercased()).font(.system(size: 13, weight: .black, design: .rounded)).foregroundStyle(tierColor(player.tier))
+                .frame(width: 26, height: 26).overlay(Rectangle().stroke(tierColor(player.tier).opacity(0.4), lineWidth: 1))
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(isActive ? G.surface.opacity(0.5) : Color.clear)
+        .padding(.horizontal, 12).padding(.vertical, 8)
+        .background(selected ? G.gold.opacity(0.12) : G.surface)
+        .overlay(Rectangle().stroke(selected ? G.gold : G.border, lineWidth: selected ? 1.5 : 1))
     }
 }
 
-// MARK: - Player Card Sheet
-
-struct PlayerCardSheet: View {
-    let player: Player
-    let era: String
-    let onDraft: () -> Void
-    @Environment(\.dismiss) private var dismiss
-
+/// Slot-reel text: flickers while spinning, snaps on land.
+struct SpinReel: View {
+    let text: String
+    let spinning: Bool
+    var color: Color = .white
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 0) {
-                    // Header
-                    HStack(spacing: 16) {
-                        PlayerHeadshotView(personId: player.person_id, initial: player.full_name, size: 72)
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(player.full_name)
-                                .font(Fonts.bebas(28))
-                                .tracking(3)
-                                .foregroundStyle(G.white)
-                            HStack(spacing: 8) {
-                                Text(player.team_abbreviation)
-                                    .font(.system(size: 12, weight: .semibold))
-                                    .foregroundStyle(G.gold)
-                                Text(eraDisplayLabel(player.era))
-                                    .font(.system(size: 12))
-                                    .foregroundStyle(G.grey)
-                            }
-                        }
-                        Spacer()
-                    }
-                    .padding(20)
-                    .background(G.surface)
-
-                    EraBallDivider()
-
-                    // Stats grid
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 1) {
-                        statCell("PTS", value: player.PTS)
-                        statCell("REB", value: player.REB)
-                        statCell("AST", value: player.AST)
-                        statCell("STL", value: player.STL)
-                        statCell("BLK", value: player.BLK)
-                        statCell("TOV", value: player.TOV)
-                    }
-                    .background(G.border)
-                    .padding(.vertical, 1)
-
-                    EraBallDivider()
-
-                    // Tags
-                    if let tags = player.tags, !tags.isEmpty {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 8) {
-                                ForEach(tags, id: \.self) { tag in
-                                    Text(tag)
-                                        .font(.system(size: 10, weight: .semibold))
-                                        .tracking(1.5)
-                                        .foregroundStyle(G.gold)
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 4)
-                                        .background(G.gold.opacity(0.08))
-                                        .overlay(Rectangle().stroke(G.gold.opacity(0.3), lineWidth: 1))
-                                }
-                            }
-                            .padding(.horizontal, 20)
-                        }
-                        .padding(.vertical, 16)
-                        EraBallDivider()
-                    }
-
-                    // Draft button
-                    Button("DRAFT PLAYER") { onDraft(); dismiss() }
-                        .buttonStyle(GoldButtonStyle(fullWidth: true))
-                        .padding(20)
-                }
-            }
-            .background(G.black)
-            .navigationTitle(player.full_name)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("CLOSE") { dismiss() }
-                        .foregroundStyle(G.gold)
-                }
-            }
-        }
-        .preferredColorScheme(.dark)
-    }
-
-    private func statCell(_ label: String, value: Double?) -> some View {
-        VStack(spacing: 4) {
-            Text(value != nil ? String(format: "%.1f", value!) : "--")
-                .font(Fonts.bebas(28))
-                .tracking(2)
-                .foregroundStyle(G.white)
-            Text(label)
-                .font(.system(size: 10, weight: .semibold))
-                .tracking(2)
-                .foregroundStyle(G.grey)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
-        .background(G.surface)
+        Text(text.isEmpty ? "———" : text)
+            .font(Fonts.bebas(40)).foregroundStyle(spinning ? color.opacity(0.45) : color)
+            .contentTransition(.numericText()).animation(.snappy(duration: 0.12), value: text)
+            .blur(radius: spinning ? 1 : 0).lineLimit(1).minimumScaleFactor(0.5)
     }
 }

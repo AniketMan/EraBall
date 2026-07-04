@@ -1,107 +1,42 @@
-// AchievementsView.swift
-// Matches AchievementsModal.tsx exactly.
-
+// AchievementsView.swift — port of app/AchievementsModal.tsx
 import SwiftUI
 
 struct AchievementsView: View {
-    @Environment(AppState.self) private var appState
-    @Environment(GameCenterManager.self) private var gcManager
     @Environment(\.dismiss) private var dismiss
+    @State private var achievements: [AchievementStateVM] = []
+
+    private func rarityColor(_ r: String) -> Color {
+        switch r { case "legendary": return Color(hex: "#C084FC"); case "epic": return G.gold; case "rare": return G.blue; default: return G.grey }
+    }
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 0) {
-                    // Game Center button
-                    if gcManager.isAuthenticated {
-                        Button {
-                            gcManager.showAchievements()
-                        } label: {
-                            HStack {
-                                Image(systemName: "gamecontroller.fill")
-                                    .foregroundStyle(G.gold)
-                                Text("VIEW IN GAME CENTER")
-                                    .font(.system(size: 12, weight: .semibold))
-                                    .tracking(2)
-                                    .foregroundStyle(G.gold)
-                                Spacer()
-                                Image(systemName: "arrow.right")
-                                    .foregroundStyle(G.grey)
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 14)
-                        }
-                        .buttonStyle(.plain)
-                        .background(G.surface)
-                        EraBallDivider()
-                    }
-
-                    // Progress
-                    let unlocked = appState.unlockedAchievements.count
-                    let total = Achievement.all.count
-                    HStack {
-                        Text("\\(unlocked)/\\(total) UNLOCKED")
-                            .font(.system(size: 11, weight: .semibold))
-                            .tracking(2)
-                            .foregroundStyle(G.grey)
-                        Spacer()
-                        GeometryReader { geo in
-                            ZStack(alignment: .leading) {
-                                Rectangle().fill(G.border).frame(height: 4)
-                                Rectangle()
-                                    .fill(G.gold)
-                                    .frame(width: geo.size.width * CGFloat(unlocked) / CGFloat(max(total, 1)), height: 4)
-                            }
-                        }
-                        .frame(width: 120, height: 4)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 16)
-
-                    EraBallDivider()
-
-                    // Achievement list
-                    ForEach(Achievement.all) { ach in
-                        let isUnlocked = appState.unlockedAchievements.contains(ach.id)
-                        HStack(spacing: 12) {
-                            ZStack {
-                                Rectangle()
-                                    .fill(isUnlocked ? Color(hex: ach.rarityColor).opacity(0.1) : G.surface2)
-                                    .frame(width: 44, height: 44)
-                                Image(systemName: isUnlocked ? "trophy.fill" : "lock.fill")
-                                    .foregroundStyle(isUnlocked ? Color(hex: ach.rarityColor) : G.border)
-                                    .font(.system(size: 18))
-                            }
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(ach.title)
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundStyle(isUnlocked ? G.white : G.grey)
-                                Text(ach.description)
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(G.grey)
+                let unlocked = achievements.filter(\.unlocked).count
+                VStack(spacing: 10) {
+                    Text("\(unlocked) / \(achievements.count) UNLOCKED")
+                        .font(.system(size: 11, weight: .semibold)).tracking(2).foregroundStyle(G.gold)
+                        .frame(maxWidth: .infinity).padding(.vertical, 12)
+                    ForEach(achievements) { a in
+                        HStack(spacing: 14) {
+                            Image(systemName: a.unlocked ? "medal.fill" : "lock.fill")
+                                .font(.system(size: 20)).foregroundStyle(a.unlocked ? rarityColor(a.achievement.rarity) : G.border).frame(width: 32)
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(a.achievement.title).font(.system(size: 14, weight: .bold)).foregroundStyle(a.unlocked ? G.white : G.grey)
+                                Text(a.achievement.description).font(.system(size: 12)).foregroundStyle(G.greyDark)
                             }
                             Spacer()
-                            Text(ach.rarity.uppercased())
-                                .font(.system(size: 9, weight: .semibold))
-                                .tracking(1.5)
-                                .foregroundStyle(Color(hex: ach.rarityColor))
+                            Text(a.achievement.rarity.uppercased()).font(.system(size: 8, weight: .bold)).tracking(1)
+                                .foregroundStyle(rarityColor(a.achievement.rarity))
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-                        .opacity(isUnlocked ? 1.0 : 0.5)
-                        EraBallDivider()
+                        .padding(14).background(G.surface).overlay(Rectangle().stroke(G.border, lineWidth: 1)).opacity(a.unlocked ? 1 : 0.55)
                     }
-                }
+                }.padding(16)
             }
-            .background(G.black)
-            .navigationTitle("ACHIEVEMENTS")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("CLOSE") { dismiss() }.foregroundStyle(G.gold)
-                }
-            }
+            .background(G.black).navigationTitle("ACHIEVEMENTS").navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("CLOSE") { dismiss() }.foregroundStyle(G.gold) } }
         }
         .preferredColorScheme(.dark)
+        .task { achievements = EngineBridge.shared.allAchievements() }
     }
 }

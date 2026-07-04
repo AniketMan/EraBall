@@ -172,6 +172,55 @@ struct PurpleButtonStyle: ButtonStyle {
     }
 }
 
+// MARK: - Tier / Tag / Coach-grade palettes (match web)
+
+func tierColor(_ tier: String) -> Color {
+    switch tier {
+    case "s": return Color(hex: "#C084FC")
+    case "a": return G.gold
+    case "b": return G.green
+    case "c": return G.blue
+    default:  return G.grey
+    }
+}
+
+func tagColor(_ tag: PlayerTag) -> Color {
+    switch tag {
+    case .timeless:     return Color(hex: "#C084FC")
+    case .offAnchor:    return G.gold
+    case .defAnchor:    return G.blue
+    case .shootingStar: return G.pink
+    case .glassCleaner: return G.green
+    case .floorGeneral: return Color(hex: "#60A5FA")
+    case .flex:         return G.blue
+    case .champion:     return G.gold
+    case .dynamicDuo:   return G.teal
+    }
+}
+
+/// Coach-draft grade palette (distinct from ResultCard's gradeColor).
+func coachGradeColor(_ g: String) -> Color {
+    switch g {
+    case "S": return Color(hex: "#a78bfa")
+    case "A": return Color(hex: "#4ade80")
+    case "B": return Color(hex: "#86efac")
+    case "C": return G.gold
+    case "D": return Color(hex: "#fb923c")
+    default:  return Color(hex: "#f87171")
+    }
+}
+
+struct TagChip: View {
+    let tag: PlayerTag
+    var body: some View {
+        Text(tag.rawValue.uppercased())
+            .font(.system(size: 8, weight: .bold)).tracking(0.6)
+            .foregroundStyle(tagColor(tag))
+            .padding(.horizontal, 5).padding(.vertical, 2)
+            .overlay(Rectangle().stroke(tagColor(tag).opacity(0.4), lineWidth: 0.5))
+    }
+}
+
 // MARK: - Divider
 struct EraBallDivider: View {
     var body: some View {

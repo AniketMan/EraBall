@@ -4,6 +4,78 @@
 <dict>
 	<key>files</key>
 	<dict>
+		<key>.graphify_analysis.json</key>
+		<data>
+		Od7oZzrA1qCt6p/FBODy6wXiebk=
+		</data>
+		<key>.graphify_labels.json</key>
+		<data>
+		41RkHhvuFRvrl7eCn3h5IzWIal0=
+		</data>
+		<key>.graphify_labels.json.sig</key>
+		<data>
+		zCLi9Zhssx0hL7shUuOxSIAI0wQ=
+		</data>
+		<key>00c40928a445f8a64f9bf76676be170970239ae221fcdd2da1660226570034ba.json</key>
+		<data>
+		qygz9HAKiYu4h3GjS/6xAZxcMBQ=
+		</data>
+		<key>06c891004664416f25190d867fd0db8896563a8f36c635cf1ba12eb78ea14cb1.json</key>
+		<data>
+		7isPiDOgPVqKg1MVsVLE7rf/ipU=
+		</data>
+		<key>0ad4704b23d1652bfdc20f8733f37db7e555474e3fc562d50b9e936ef55c6a8b.json</key>
+		<data>
+		YQsk8OAd7ezZWkai90pDDMATqto=
+		</data>
+		<key>0ca7085277728f90af0c6eb0071896cd858c67e4d455757f33e15e39162beb0a.json</key>
+		<data>
+		qygz9HAKiYu4h3GjS/6xAZxcMBQ=
+		</data>
+		<key>103c582951fa4397c1f954c5fc3ad377f7b766cfbcad39c74437df778ac7ec67.json</key>
+		<data>
+		dWj1EUtscGljJ3ITrNT6lmE1n2I=
+		</data>
+		<key>2d135efd495e05694f77dbdfe1595bea7bbe9a94ff6d285a5015a6f67b15fef1.json</key>
+		<data>
+		6h5yhAeuerX64dbaCNnyBRyvQpY=
+		</data>
+		<key>49779792f42e7527f5eab7e5664c5e67a9664fa714a893f3c3cc41036e8ea38b.json</key>
+		<data>
+		8bSXp/tShlAAd+rx85P+lwKts9Q=
+		</data>
+		<key>54e594ff784c2c9c93234bf48df0be23a78307fec1483f2b664b9b16500a6f43.json</key>
+		<data>
+		/7sqqQPQph9PeSqfyqwCwO+lPa0=
+		</data>
+		<key>7ce44b2e037e6da9e1d0d7933e038031ce449858acfa3120079ff756b3919f35.json</key>
+		<data>
+		6Pq8P0gu6w1UbzSfY1Iyn1IbBjU=
+		</data>
+		<key>804c80554ed8b0a6af1d393f8ba65429fca1bb10c34e0ab40563bacfddb7c75f.json</key>
+		<data>
+		ogQRiiD9jq4wUzY/45AxpnJvEcg=
+		</data>
+		<key>8a95c1868a7fa9a17c0308453c8dc2e948c117fe993f5ff4a1914cdb883a08f8.json</key>
+		<data>
+		QBx0U7dusYYO9h6cLDumWt74ap4=
+		</data>
+		<key>8c5c798e84533b98178ea62ee4f878bc852b3678b25a95b715f2286686d5f33e.json</key>
+		<data>
+		Jif+T3nS4iSFVPSlqsflXzp89lY=
+		</data>
+		<key>9240cb267ac2c2e501a4aa757d23945437f599c70a107e9602c8fd3c3fc1974f.json</key>
+		<data>
+		IzcDWMaJC5XKYmcLvBDgNO5rfN8=
+		</data>
+		<key>94d632450fe33e89687086f9e2e5a828d22958eb973b14ed5457a009d9aaa91c.json</key>
+		<data>
+		jG2zQu+XLXsoZpqGEbUNFPHXYnw=
+		</data>
+		<key>9a31e40a583f7f2660cbb49d08741ba54b6cf7a8d4eb707c63ddc18372675569.json</key>
+		<data>
+		qN4t1EZ1oxP7QsTjtdDgsE3ezCo=
+		</data>
 		<key>Assets.car</key>
 		<data>
 		Tr0kYaaPzYoiMsYZyFCmHT1JgvQ=
@@ -14,7 +86,7 @@
 		</data>
 		<key>EraBall.debug.dylib</key>
 		<data>
-		T7JmUWXyJeE63lppjIaP3TySZhM=
+		QMu9wnH6b+Jz85okt5XbOzf1Qwg=
 		</data>
 		<key>Info.plist</key>
 		<data>
@@ -28,17 +100,187 @@
 		<data>
 		rOz+BVn0Paapdj/FMuQFYfpxH/U=
 		</data>
+		<key>b4f7d0e651a0201e3bb78e7daafab48cc69d79da045ffdb79005fd27d58bf740.json</key>
+		<data>
+		Iwm+DUafAfDFWUaaHmQGvCZLCdc=
+		</data>
 		<key>coaches.csv</key>
 		<data>
 		6mr0Q7hnFh9WE6GYI+NTcIg3teM=
+		</data>
+		<key>e2f27fd2aebaf6dd91dd3478574f481ffe65eb135313542285c233c5a4df4fdf.json</key>
+		<data>
+		WrFRXes9JTBm7RTxXdw5C4XstmY=
+		</data>
+		<key>edeb00465867145fef38650891d2bce4a6e035510c3501991d6174e97a9759ef.json</key>
+		<data>
+		68hlCeSdR0sfuCUzcDa7wrWnmAw=
+		</data>
+		<key>engine.js</key>
+		<data>
+		y24hRlqQm1IMLBw5ao1HeCx/3jg=
+		</data>
+		<key>f47660360e85b50f0276333b527adbe1facd3792919d711a928eece733bee54a.json</key>
+		<data>
+		2AzQYsgHNwxeWD7f8Ppl1pQGb5I=
+		</data>
+		<key>f4a36598d17a906097e652350f305344ab81457c449feb93cfbf31f69b4692d2.json</key>
+		<data>
+		t1DVS/BxqR9G0JZIcrUyctCNoHM=
+		</data>
+		<key>fb80860db107694680c1dede4ecf4ac068a66e0e548d1262ab27e6ab799a749b.json</key>
+		<data>
+		qygz9HAKiYu4h3GjS/6xAZxcMBQ=
+		</data>
+		<key>graph.html</key>
+		<data>
+		Bmt7Ps0h5f1iD01eCKi0k4oD0Ts=
+		</data>
+		<key>graph.json</key>
+		<data>
+		kaHnPaXBaGZhbcptsJvWiOmTuJc=
+		</data>
+		<key>manifest.json</key>
+		<data>
+		qSix5qga3vXwf6dtV6B48iD5NNc=
 		</data>
 		<key>players_with_stats.json</key>
 		<data>
 		tvCgBxbpPFo87mv47tGPyODFpu4=
 		</data>
+		<key>stat-index.json</key>
+		<data>
+		nOtxBWk5nqpay81hMJZK/AmoGHc=
+		</data>
 	</dict>
 	<key>files2</key>
 	<dict>
+		<key>.graphify_analysis.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			SMFrjiC/Tm1fT5Tj8uVMDXW6GmS3sMglveucB3q702w=
+			</data>
+		</dict>
+		<key>.graphify_labels.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			CayqmJ5Ih6UmKJdhO5JnptzzrvQZE51cnzYvS1HcGvY=
+			</data>
+		</dict>
+		<key>.graphify_labels.json.sig</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			DVfEMhU+K0l2LZl6lhc6ne2ZGAA7vsI849UYD9TiWOM=
+			</data>
+		</dict>
+		<key>00c40928a445f8a64f9bf76676be170970239ae221fcdd2da1660226570034ba.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			Q2sHOxosXjoQujFL2oehi3/n3u3xTHm5lYOltEV/nlI=
+			</data>
+		</dict>
+		<key>06c891004664416f25190d867fd0db8896563a8f36c635cf1ba12eb78ea14cb1.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			wwIBQSaYV3T0MVHNMJoT4vpzS0BFIMAdVkLsfTLsrh4=
+			</data>
+		</dict>
+		<key>0ad4704b23d1652bfdc20f8733f37db7e555474e3fc562d50b9e936ef55c6a8b.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			Xczqj2MvL7TiXrcFMrWQy5n719+6gpqgcEArUrm6WOY=
+			</data>
+		</dict>
+		<key>0ca7085277728f90af0c6eb0071896cd858c67e4d455757f33e15e39162beb0a.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			Q2sHOxosXjoQujFL2oehi3/n3u3xTHm5lYOltEV/nlI=
+			</data>
+		</dict>
+		<key>103c582951fa4397c1f954c5fc3ad377f7b766cfbcad39c74437df778ac7ec67.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			zlfAwQuCmgY9SuhZ2mKvpdgZ9DVI4C5K8427z0/4DSQ=
+			</data>
+		</dict>
+		<key>2d135efd495e05694f77dbdfe1595bea7bbe9a94ff6d285a5015a6f67b15fef1.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			ra84YC15kTbf+xB/mz6/eWiSCV/qss+EMmTOEM/jTaU=
+			</data>
+		</dict>
+		<key>49779792f42e7527f5eab7e5664c5e67a9664fa714a893f3c3cc41036e8ea38b.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			ajkHjHwL9TovodhTZvjMTRb3o7YPj2btUd73Ho9qTZI=
+			</data>
+		</dict>
+		<key>54e594ff784c2c9c93234bf48df0be23a78307fec1483f2b664b9b16500a6f43.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			rH9JVmdYGQcd3dn1qun+zclbuf4Z1thDrhFgsH2Bax4=
+			</data>
+		</dict>
+		<key>7ce44b2e037e6da9e1d0d7933e038031ce449858acfa3120079ff756b3919f35.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			QM2zqfqexu4V9BQhdozTaHSDc0sOEC/kjhvX22khSE0=
+			</data>
+		</dict>
+		<key>804c80554ed8b0a6af1d393f8ba65429fca1bb10c34e0ab40563bacfddb7c75f.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			Do66c2192qVvoRk0lem70xy3FaexXDzN/wNziwUdrdg=
+			</data>
+		</dict>
+		<key>8a95c1868a7fa9a17c0308453c8dc2e948c117fe993f5ff4a1914cdb883a08f8.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			wqIIt+ov2hL7sRarbLKu+jpZyxZWxD/34qCHLmRBtIc=
+			</data>
+		</dict>
+		<key>8c5c798e84533b98178ea62ee4f878bc852b3678b25a95b715f2286686d5f33e.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			huMexjrtCW1Spgl0Li4MogrBCD3RMVcQaIokP6E/514=
+			</data>
+		</dict>
+		<key>9240cb267ac2c2e501a4aa757d23945437f599c70a107e9602c8fd3c3fc1974f.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			WBuS9PA55x8oe8ER8ait3woHZ3Shw7SE0O/gbPwu/CA=
+			</data>
+		</dict>
+		<key>94d632450fe33e89687086f9e2e5a828d22958eb973b14ed5457a009d9aaa91c.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			cTjEbmbe5jWg7jx+SwzIwlmZ5RG30nYxanxG6I+o5bY=
+			</data>
+		</dict>
+		<key>9a31e40a583f7f2660cbb49d08741ba54b6cf7a8d4eb707c63ddc18372675569.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			BfmszUL8gYuD0DqoITYcq7EWOKZdK/2jhbmXuFM4O+E=
+			</data>
+		</dict>
 		<key>Assets.car</key>
 		<dict>
 			<key>hash2</key>
@@ -57,7 +299,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			hlSc0M0VQ7yTsPY2iA9SRc+JLmEQ7g/lCPHSolJJcAE=
+			stCjWSUJV0YWtBA5AV/KSg4EFIEm6qFGRIv8mm5LU2A=
 			</data>
 		</dict>
 		<key>__preview.dylib</key>
@@ -67,6 +309,13 @@
 			9LTA4yjM5XwlozIQUMUH23AfYyXqX2Q/o88RonWUovU=
 			</data>
 		</dict>
+		<key>b4f7d0e651a0201e3bb78e7daafab48cc69d79da045ffdb79005fd27d58bf740.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			6iNsLIzL8JyYm1ljbfN9LGIT7S6z4YTyID6vPpW+gDI=
+			</data>
+		</dict>
 		<key>coaches.csv</key>
 		<dict>
 			<key>hash2</key>
@@ -74,11 +323,81 @@
 			hpUDmHbAghzkuars9lfSSV2X8Fk0bwH+a14D5k8/2ao=
 			</data>
 		</dict>
+		<key>e2f27fd2aebaf6dd91dd3478574f481ffe65eb135313542285c233c5a4df4fdf.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			jkFc+XmaOIN7JwI0Q1HDsdUqAxTOKeT8Tdjw88QvRSk=
+			</data>
+		</dict>
+		<key>edeb00465867145fef38650891d2bce4a6e035510c3501991d6174e97a9759ef.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			tjorNxSQmvGBtDtrtrhhMHo7c+5rNWyWBq1QUlNpgmQ=
+			</data>
+		</dict>
+		<key>engine.js</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			y+rWInIo5adBPGQz3on9lBJl+j4IEihgd1a0LwwEsO8=
+			</data>
+		</dict>
+		<key>f47660360e85b50f0276333b527adbe1facd3792919d711a928eece733bee54a.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			/Ox4909z/e1+xatyi0iU7VVtR7yKXvl9mGISGyuyv6A=
+			</data>
+		</dict>
+		<key>f4a36598d17a906097e652350f305344ab81457c449feb93cfbf31f69b4692d2.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			WpRD3gFMlGLaGao5RnPMaBrLQ6Jsc49Kep9o5RsCfqE=
+			</data>
+		</dict>
+		<key>fb80860db107694680c1dede4ecf4ac068a66e0e548d1262ab27e6ab799a749b.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			Q2sHOxosXjoQujFL2oehi3/n3u3xTHm5lYOltEV/nlI=
+			</data>
+		</dict>
+		<key>graph.html</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			4JDIXJhCivJouQ9pFaLTtkyhb1Bjx1lvfrESOh3YohE=
+			</data>
+		</dict>
+		<key>graph.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			wb6lqJ9zzVQd3DMYJK5WmyQHmgMhCyIU0ZNu/icIov4=
+			</data>
+		</dict>
+		<key>manifest.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			ngnX+re/OsrFWpCeoAVQyDOYUT4YSza7Mgcp1WicNUw=
+			</data>
+		</dict>
 		<key>players_with_stats.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			vCH40J/qsNhjnldJDX4I0+qaYWdKg/xIJNdXSuRFW0Q=
+			</data>
+		</dict>
+		<key>stat-index.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			SqRYHazf3+uzSV58c4e7gOY4M6JwJnwtIyGM9pi1nWY=
 			</data>
 		</dict>
 	</dict>

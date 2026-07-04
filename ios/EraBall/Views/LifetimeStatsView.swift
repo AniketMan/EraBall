@@ -1,114 +1,58 @@
-// LifetimeStatsView.swift
-// Matches LifetimeStatsModal.tsx exactly.
-
+// LifetimeStatsView.swift — port of app/LifetimeStatsModal.tsx
 import SwiftUI
 
 struct LifetimeStatsView: View {
-    @Environment(AppState.self) private var appState
     @Environment(\.dismiss) private var dismiss
-    @State private var mode: StatMode = .normal
-
-    enum StatMode: String, CaseIterable {
-        case normal = "Normal"
-        case salaryCap = "Salary Cap"
-    }
-
-    private var stats: StatsData {
-        mode == .normal ? appState.lifetimeStats.normal : appState.lifetimeStats.salaryCap
-    }
-
-    private var winPct: Double {
-        let total = stats.totalWins + stats.totalLosses
-        return total > 0 ? Double(stats.totalWins) / Double(total) : 0
-    }
+    @State private var mode = "normal"
+    @State private var stats: LifetimeStatsVM?
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 0) {
-                    // Mode picker
+                VStack(spacing: 16) {
                     Picker("Mode", selection: $mode) {
-                        ForEach(StatMode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 16)
+                        Text("Normal").tag("normal"); Text("Salary Cap").tag("salary_cap")
+                    }.pickerStyle(.segmented).padding(.horizontal, 16).padding(.top, 12)
 
-                    EraBallDivider()
+                    if let s = stats {
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 2), spacing: 10) {
+                            statBox("DRAFTS", "\(s.draftsCompleted)")
+                            statBox("CHAMPIONSHIPS", "\(s.championshipsTotal)", gold: true)
+                            statBox("TOTAL WINS", "\(s.totalWins)")
+                            statBox("TOTAL LOSSES", "\(s.totalLosses)")
+                            if let b = s.bestRecord { statBox("BEST RECORD", "\(b.wins)-\(b.losses)", sub: eraDisplayLabel(b.era)) }
+                            if let h = s.highestTeamRating { statBox("HIGHEST RATING", "\(Int(h.rating))", sub: eraDisplayLabel(h.era)) }
+                        }.padding(.horizontal, 16)
 
-                    // Summary stats
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 1) {
-                        statBox("GAMES PLAYED", value: "\(stats.totalGames)")
-                        statBox("WIN %", value: String(format: "%.1f%%", winPct * 100))
-                        statBox("TOTAL WINS", value: "\(stats.totalWins)")
-                        statBox("CHAMPIONSHIPS", value: "\(stats.totalChampionships)")
-                    }
-                    .background(G.border)
-                    .padding(.vertical, 1)
-
-                    EraBallDivider()
-
-                    // Wins by era
-                    if !stats.winsByEra.isEmpty {
-                        VStack(spacing: 0) {
-                            Text("WINS BY ERA")
-                                .font(.system(size: 10, weight: .semibold))
-                                .tracking(3)
-                                .foregroundStyle(G.grey)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 12)
-
-                            EraBallDivider()
-
-                            ForEach(["50s","60s","70s","80s","90s","00s","10s","20s"], id: \.self) { era in
-                                let w = stats.winsByEra[era] ?? 0
-                                let l = stats.lossesByEra[era] ?? 0
-                                if w + l > 0 {
-                                    HStack {
-                                        Text(eraDisplayLabel(era))
-                                            .font(.system(size: 13, weight: .semibold))
-                                            .foregroundStyle(G.white)
-                                        Spacer()
-                                        Text("\(w)-\(l)")
-                                            .font(Fonts.bebas(20))
-                                            .tracking(2)
-                                            .foregroundStyle(G.gold)
-                                    }
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 10)
-                                    EraBallDivider()
+                        if !topPlayers(s).isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                SectionHeader(title: "Most Drafted")
+                                ForEach(topPlayers(s), id: \.name) { p in
+                                    HStack { Text(p.name).font(.system(size: 13)).foregroundStyle(G.white); Spacer(); Text("\(p.count)×").font(.system(size: 13, weight: .bold)).foregroundStyle(G.gold) }
+                                        .padding(.horizontal, 14).padding(.vertical, 8).background(G.surface).overlay(Rectangle().stroke(G.border, lineWidth: 1))
                                 }
-                            }
+                            }.padding(.horizontal, 16)
                         }
+                    } else {
+                        Text("No runs recorded yet.").font(.footnote).foregroundStyle(G.grey).padding(.top, 40)
                     }
-                }
+                }.padding(.bottom, 24)
             }
-            .background(G.black)
-            .navigationTitle("MY STATS")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("CLOSE") { dismiss() }.foregroundStyle(G.gold)
-                }
-            }
+            .background(G.black).navigationTitle("LIFETIME STATS").navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("CLOSE") { dismiss() }.foregroundStyle(G.gold) } }
         }
         .preferredColorScheme(.dark)
+        .onChange(of: mode, initial: true) { _, m in stats = EngineBridge.shared.lifetimeStats(mode: m) }
     }
 
-    private func statBox(_ label: String, value: String) -> some View {
-        VStack(spacing: 6) {
-            Text(value)
-                .font(Fonts.bebas(36))
-                .tracking(3)
-                .foregroundStyle(G.gold)
-            Text(label)
-                .font(.system(size: 9, weight: .semibold))
-                .tracking(2)
-                .foregroundStyle(G.grey)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 20)
-        .background(G.surface)
+    private func topPlayers(_ s: LifetimeStatsVM) -> [CountEntryVM] {
+        s.playerDraftCounts.values.sorted { $0.count > $1.count }.prefix(5).map { $0 }
+    }
+    private func statBox(_ label: String, _ value: String, sub: String? = nil, gold: Bool = false) -> some View {
+        VStack(spacing: 4) {
+            Text(value).font(Fonts.bebas(36)).foregroundStyle(gold ? G.gold : G.white)
+            Text(label).font(.system(size: 9, weight: .semibold)).tracking(1.5).foregroundStyle(G.grey)
+            if let sub { Text(sub).font(.system(size: 9)).foregroundStyle(G.greyDark) }
+        }.frame(maxWidth: .infinity).padding(.vertical, 16).background(G.surface).overlay(Rectangle().stroke(G.border, lineWidth: 1))
     }
 }

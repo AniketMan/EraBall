@@ -1,157 +1,69 @@
-// LeaderboardSheet.swift
-// Leaderboard with Game Center friends + global tabs.
-
+// LeaderboardSheet.swift — Game Center leaderboards (global + friends) by era/mode.
 import SwiftUI
 import GameKit
 
 struct LeaderboardSheet: View {
-    @Environment(AppState.self) private var appState
-    @Environment(GameCenterManager.self) private var gcManager
     @Environment(\.dismiss) private var dismiss
+    @Environment(GameCenterManager.self) private var gc
+    @State private var era = "20s"
+    @State private var salaryCap = false
+    @State private var scope: GKLeaderboard.PlayerScope = .global
 
-    @State private var selectedEra = "90s"
-    @State private var salaryCapMode = false
-    @State private var scope: LeaderboardScope = .global
-    @State private var entries: [GKLeaderboard.Entry] = []
-    @State private var isLoading = false
-
-    enum LeaderboardScope: String, CaseIterable {
-        case global = "Global"
-        case friends = "Friends"
+    private var leaderboardID: String {
+        salaryCap ? GameCenterManager.LeaderboardID.salaryCap(era: era) : GameCenterManager.LeaderboardID.normal(era: era)
     }
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Era picker
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(["50s","60s","70s","80s","90s","00s","10s","20s"], id: \.self) { era in
-                            Button(eraDisplayLabel(era)) {
-                                selectedEra = era
-                                Task { await loadEntries() }
-                            }
-                            .font(.system(size: 11, weight: .semibold))
-                            .tracking(1.5)
-                            .foregroundStyle(selectedEra == era ? G.black : G.gold)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(selectedEra == era ? G.gold : Color.clear)
-                            .overlay(Rectangle().stroke(G.gold.opacity(0.4), lineWidth: 1))
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                }
-                .padding(.vertical, 12)
+            VStack(spacing: 12) {
+                Picker("Era", selection: $era) { ForEach(ALL_ERAS, id: \.self) { Text(eraDisplayLabel($0)).tag($0) } }
+                    .pickerStyle(.menu).tint(G.gold)
+                Picker("Mode", selection: $salaryCap) { Text("Normal").tag(false); Text("Salary Cap").tag(true) }
+                    .pickerStyle(.segmented).padding(.horizontal, 16)
+                Picker("Scope", selection: $scope) { Text("Global").tag(GKLeaderboard.PlayerScope.global); Text("Friends").tag(GKLeaderboard.PlayerScope.friendsOnly) }
+                    .pickerStyle(.segmented).padding(.horizontal, 16)
 
-                EraBallDivider()
-
-                // Scope + mode
-                HStack(spacing: 12) {
-                    Picker("Scope", selection: $scope) {
-                        ForEach(LeaderboardScope.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                    }
-                    .pickerStyle(.segmented)
-
-                    Toggle("Cap", isOn: $salaryCapMode)
-                        .toggleStyle(.button)
-                        .tint(G.purple)
-                        .font(.system(size: 11, weight: .semibold))
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-
-                EraBallDivider()
-
-                if !gcManager.isAuthenticated {
-                    VStack(spacing: 12) {
-                        Text("Sign in to Game Center to view leaderboards")
-                            .font(.system(size: 14))
-                            .foregroundStyle(G.grey)
-                            .multilineTextAlignment(.center)
-                        Button("OPEN GAME CENTER") {
-                            gcManager.showLeaderboard(era: selectedEra, salaryCapMode: salaryCapMode)
-                        }
-                        .buttonStyle(GoldButtonStyle())
-                    }
-                    .padding(32)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if isLoading {
-                    ProgressView().tint(G.gold).padding(64).frame(maxWidth: .infinity)
+                if gc.isAuthenticated {
+                    GameCenterLeaderboardView(leaderboardID: leaderboardID, scope: scope)
+                        .id("\(leaderboardID)-\(scope == .global ? "g" : "f")")
                 } else {
-                    ScrollView {
-                        LazyVStack(spacing: 0) {
-                            ForEach(Array(entries.enumerated()), id: \.offset) { idx, entry in
-                                LeaderboardRow(rank: idx + 1, entry: entry)
-                                EraBallDivider()
-                            }
-                            if entries.isEmpty {
-                                Text("No entries yet. Be the first!")
-                                    .font(.system(size: 14))
-                                    .foregroundStyle(G.grey)
-                                    .padding(32)
-                            }
-                        }
+                    VStack(spacing: 12) {
+                        Image(systemName: "person.crop.circle.badge.exclamationmark").font(.system(size: 40)).foregroundStyle(G.grey)
+                        Text("Sign in to Game Center to view leaderboards and compete with friends.")
+                            .font(.system(size: 14)).foregroundStyle(G.grey).multilineTextAlignment(.center).frame(maxWidth: 280)
+                        Text("Your scores are saved and submitted automatically once you sign in.")
+                            .font(.system(size: 11)).foregroundStyle(G.greyDark).multilineTextAlignment(.center).frame(maxWidth: 280)
                     }
+                    .frame(maxHeight: .infinity)
                 }
             }
+            .padding(.top, 12)
             .background(G.black)
-            .navigationTitle("LEADERBOARD")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("LEADERBOARD").navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        gcManager.showLeaderboard(era: selectedEra, salaryCapMode: salaryCapMode)
-                    } label: {
-                        Image(systemName: "gamecontroller.fill")
-                            .foregroundStyle(G.gold)
-                    }
+                    if let alias = gc.playerAlias { Label(alias, systemImage: "person.crop.circle.badge.checkmark").font(.caption2).foregroundStyle(G.greyDark) }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("CLOSE") { dismiss() }.foregroundStyle(G.gold)
-                }
+                ToolbarItem(placement: .topBarTrailing) { Button("CLOSE") { dismiss() }.foregroundStyle(G.gold) }
             }
-            .task { await loadEntries() }
-            .onChange(of: scope) { _, _ in Task { await loadEntries() } }
-            .onChange(of: salaryCapMode) { _, _ in Task { await loadEntries() } }
         }
         .preferredColorScheme(.dark)
     }
-
-    private func loadEntries() async {
-        isLoading = true
-        entries = scope == .global
-            ? await gcManager.loadLeaderboard(era: selectedEra, salaryCapMode: salaryCapMode)
-            : await gcManager.loadFriendsLeaderboard(era: selectedEra, salaryCapMode: salaryCapMode)
-        isLoading = false
-    }
 }
 
-struct LeaderboardRow: View {
-    let rank: Int
-    let entry: GKLeaderboard.Entry
+/// Embeds the native Game Center leaderboard UI for one leaderboard + scope.
+struct GameCenterLeaderboardView: UIViewControllerRepresentable {
+    let leaderboardID: String
+    let scope: GKLeaderboard.PlayerScope
 
-    var body: some View {
-        HStack(spacing: 12) {
-            Text("#\\(rank)")
-                .font(Fonts.bebas(20))
-                .tracking(2)
-                .foregroundStyle(rank <= 3 ? G.gold : G.grey)
-                .frame(width: 36, alignment: .leading)
-
-            Text(entry.player.displayName)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(G.white)
-                .lineLimit(1)
-
-            Spacer()
-
-            Text("\\(entry.score)")
-                .font(Fonts.bebas(22))
-                .tracking(2)
-                .foregroundStyle(G.gold)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+    func makeUIViewController(context: Context) -> GKGameCenterViewController {
+        let vc = GKGameCenterViewController(leaderboardID: leaderboardID, playerScope: scope, timeScope: .allTime)
+        vc.gameCenterDelegate = context.coordinator
+        return vc
+    }
+    func updateUIViewController(_ vc: GKGameCenterViewController, context: Context) {}
+    func makeCoordinator() -> Coordinator { Coordinator() }
+    final class Coordinator: NSObject, GKGameCenterControllerDelegate {
+        func gameCenterViewControllerDidFinish(_ vc: GKGameCenterViewController) {}
     }
 }

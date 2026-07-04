@@ -1,184 +1,106 @@
-// CoachDraftView.swift
-// Matches CoachDraftScreen.tsx exactly.
-
+// CoachDraftView.swift — port of app/features/coach-draft/CoachDraftScreen.tsx
+// v1.5.8 flow: one spin reveals THREE coaches; the player picks one.
 import SwiftUI
 
 struct CoachDraftView: View {
-    let slots: [CourtSlot]
-    let era: String
-    let salaryCapMode: Bool
-
-    @Environment(AppState.self) private var appState
-    @State private var selectedCoach: Coach? = nil
-    @State private var searchText = ""
-
-    private var filteredCoaches: [Coach] {
-        let all = Engine.shared.allCoaches
-        if searchText.isEmpty { return all }
-        return all.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
-    }
+    @Environment(GameSession.self) private var session
 
     var body: some View {
         VStack(spacing: 0) {
-            TopBar(onTitleTap: { appState.restart() }) {
-                Button("BACK") { appState.startDraft(era: era, salaryCapMode: salaryCapMode) }
-                    .buttonStyle(GhostButtonStyle())
-                    .font(.system(size: 11, weight: .semibold))
-                    .tracking(1.5)
+            HStack {
+                Button { session.phase = .draft } label: {
+                    Text("BACK").font(.system(size: 11, weight: .semibold)).tracking(1.5).foregroundStyle(G.grey)
+                        .padding(.horizontal, 12).padding(.vertical, 8).overlay(Rectangle().stroke(G.border, lineWidth: 1))
+                }.buttonStyle(.plain)
+                Spacer()
             }
-
+            .padding(.horizontal, 16).padding(.vertical, 10)
             EraBallDivider()
 
-            // Header
-            VStack(spacing: 8) {
-                Text("DRAFT A COACH")
-                    .font(Fonts.bebas(42))
-                    .tracking(8)
-                    .foregroundStyle(G.white)
-                    .minimumScaleFactor(0.7)
-                    .lineLimit(1)
-                Text("Select a head coach for your team")
-                    .font(.system(size: 14))
-                    .foregroundStyle(G.grey)
-            }
-            .padding(.vertical, 24)
-            .padding(.horizontal, 16)
-
-            EraBallDivider()
-
-            // Search
-            HStack(spacing: 8) {
-                Image(systemName: "magnifyingglass")
-                    .foregroundStyle(G.grey)
-                TextField("Search coaches...", text: $searchText)
-                    .font(.system(size: 14))
-                    .foregroundStyle(G.white)
-                    .tint(G.gold)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            .background(G.surface)
-
-            EraBallDivider()
-
-            // Coach list
             ScrollView {
-                LazyVStack(spacing: 0) {
-                    ForEach(filteredCoaches) { coach in
-                        CoachRow(coach: coach, isSelected: selectedCoach?.id == coach.id) {
-                            selectedCoach = coach
-                        }
-                        EraBallDivider()
+                VStack(spacing: 0) {
+                    VStack(spacing: 8) {
+                        Text("Draft a Coach").font(Fonts.bebas(56)).tracking(2).foregroundStyle(G.white).lineLimit(1).minimumScaleFactor(0.6)
+                        Text("SPIN TO REVEAL 3 COACHES. PICK THE BEST FIT FOR YOUR ROSTER.")
+                            .font(.system(size: 11, weight: .semibold)).tracking(1.5).foregroundStyle(G.grey).multilineTextAlignment(.center)
                     }
-                }
-            }
+                    .padding(.vertical, 28).padding(.horizontal, 16)
 
-            // Bottom action
-            if let coach = selectedCoach {
-                EraBallDivider()
-                VStack(spacing: 12) {
-                    HStack {
-                        Text(coach.name)
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(G.white)
-                        Spacer()
-                        Text("\(coach.champ) RINGS")
-                            .font(.system(size: 11, weight: .semibold))
-                            .tracking(2)
-                            .foregroundStyle(G.gold)
+                    if session.coachChoices.isEmpty && !session.coachSpinning {
+                        Button("SPIN COACH") { session.spinCoach() }
+                            .buttonStyle(GoldButtonStyle(fullWidth: true)).padding(.horizontal, 16).padding(.bottom, 16)
                     }
-                    Button("START SIMULATION") {
-                        appState.startSimulation(slots: slots, coach: coach, era: era, salaryCapMode: salaryCapMode)
+
+                    if session.coachSpinning {
+                        VStack(spacing: 8) {
+                            ForEach(0..<3, id: \.self) { i in
+                                Text(session.coachReel.indices.contains(i) ? session.coachReel[i] : "")
+                                    .font(Fonts.bebas(28)).tracking(1).foregroundStyle(G.greyDark)
+                                    .frame(maxWidth: .infinity).frame(minHeight: 72)
+                                    .background(G.surface).overlay(Rectangle().stroke(G.border, lineWidth: 1))
+                                    .lineLimit(1).minimumScaleFactor(0.5)
+                            }
+                        }.padding(.horizontal, 16)
                     }
-                    .buttonStyle(GoldButtonStyle(fullWidth: true))
+
+                    if !session.coachSpinning && !session.coachChoices.isEmpty {
+                        if session.coachSpinsUsed < session.coachRespinBudget {
+                            Button("RESPIN (\(session.coachRespinBudget - session.coachSpinsUsed) LEFT)") { session.spinCoach() }
+                                .buttonStyle(GhostButtonStyle(fullWidth: true)).padding(.horizontal, 16).padding(.bottom, 12)
+                        }
+                        VStack(spacing: 8) {
+                            ForEach(session.coachChoices) { c in
+                                Button { session.pickCoach(c) } label: { CoachChoiceCard(coach: c) }.buttonStyle(.plain)
+                            }
+                        }.padding(.horizontal, 16)
+                    }
+
+                    Text("★ Hall of Fame inductee").font(.system(size: 11)).foregroundStyle(G.greyDark).padding(.vertical, 16)
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 16)
-                .background(G.surface)
             }
         }
         .background(G.black)
-        .ignoresSafeArea(edges: .bottom)
     }
 }
 
-// MARK: - Coach Row
-
-struct CoachRow: View {
-    let coach: Coach
-    let isSelected: Bool
-    let onTap: () -> Void
-
+struct CoachChoiceCard: View {
+    let coach: CoachVM
     var body: some View {
         HStack(spacing: 12) {
-            // Grade badge
-            VStack(spacing: 2) {
-                gradeBox(coach.overallGrade)
-            }
-            .frame(width: 36)
-
-            VStack(alignment: .leading, spacing: 2) {
+            CoachHeadshotView(name: coach.rawName, size: 52)
+            VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
-                    Text(coach.name)
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(G.white)
-                        .lineLimit(1)
-                    if coach.isHOF == true {
-                        Text("HOF")
-                            .font(.system(size: 9, weight: .bold))
-                            .tracking(1)
-                            .foregroundStyle(G.gold)
-                            .padding(.horizontal, 4)
-                            .padding(.vertical, 2)
-                            .background(G.gold.opacity(0.1))
-                            .overlay(Rectangle().stroke(G.gold.opacity(0.3), lineWidth: 1))
-                    }
+                    Text(coach.name).font(Fonts.bebas(20)).foregroundStyle(G.white).lineLimit(1)
+                    if coach.hof { Image(systemName: "star.fill").font(.system(size: 9)).foregroundStyle(G.gold) }
+                    if coach.offGuru && coach.defGuru { badge("COMPLETE", G.gold, second: G.blue) }
+                    else if coach.offGuru { badge("OFF GURU", G.gold) }
+                    else if coach.defGuru { badge("DEF GURU", G.blue) }
+                    if coach.franchisePair { badge("FRANCHISE PAIR", Color(hex: "#a78bfa")) }
                 }
-                HStack(spacing: 12) {
-                    Text("\(coach.from)–\(coach.to)")
-                        .font(.system(size: 11))
-                        .foregroundStyle(G.grey)
-                    Text(String(format: "%.0f%%", coach.regWLPct * 100))
-                        .font(.system(size: 11))
-                        .foregroundStyle(G.greyDark)
-                    if coach.champ > 0 {
-                        Text("\(coach.champ)x CHAMP")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(G.gold)
-                    }
+                Text("\(coach.from)–\(coach.to) · \(coach.regW)W–\(coach.regL)L" + (coach.champ > 0 ? "   \(coach.champ)× Champ" : (coach.conf > 0 ? "   \(coach.conf) conf" : "")))
+                    .font(.system(size: 11)).foregroundStyle(G.grey).lineLimit(1)
+                HStack(spacing: 10) {
+                    gradePair("OFF", coach.effOffGrade)
+                    gradePair("DEF", coach.effDefGrade)
+                    Text(coach.playoffG > 0 ? "\(Int(coach.playoffWLPct * 100))% Playoffs" : "No Playoffs")
+                        .font(.system(size: 10)).foregroundStyle(G.greyDark)
                 }
             }
-
-            Spacer()
-
-            HStack(spacing: 8) {
-                VStack(spacing: 1) {
-                    Text("OFF").font(.system(size: 8)).foregroundStyle(G.grey)
-                    Text(coach.offGrade).font(.system(size: 12, weight: .bold)).foregroundStyle(gradeColor(coach.offGrade))
-                }
-                VStack(spacing: 1) {
-                    Text("DEF").font(.system(size: 8)).foregroundStyle(G.grey)
-                    Text(coach.defGrade).font(.system(size: 12, weight: .bold)).foregroundStyle(gradeColor(coach.defGrade))
-                }
-            }
+            Spacer(minLength: 4)
+            Text(coach.overallGrade).font(Fonts.bebas(44)).foregroundStyle(coachGradeColor(coach.overallGrade))
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .background(isSelected ? G.gold.opacity(0.06) : Color.clear)
-        .overlay(
-            Rectangle()
-                .stroke(isSelected ? G.gold.opacity(0.3) : Color.clear, lineWidth: 1)
-        )
-        .contentShape(Rectangle())
-        .onTapGesture { onTap() }
+        .padding(12).background(G.surface).overlay(Rectangle().stroke(G.border, lineWidth: 1))
     }
 
-    private func gradeBox(_ grade: String) -> some View {
-        Text(grade)
-            .font(.system(size: 14, weight: .bold))
-            .foregroundStyle(gradeColor(grade))
-            .frame(width: 32, height: 32)
-            .background(gradeColor(grade).opacity(0.1))
-            .overlay(Rectangle().stroke(gradeColor(grade).opacity(0.3), lineWidth: 1))
+    private func gradePair(_ label: String, _ grade: String) -> some View {
+        HStack(spacing: 3) {
+            Text("\(label):").font(.system(size: 10)).foregroundStyle(G.greyDark)
+            Text(grade).font(.system(size: 10, weight: .semibold)).foregroundStyle(coachGradeColor(grade))
+        }
+    }
+    private func badge(_ text: String, _ color: Color, second: Color? = nil) -> some View {
+        Text(text).font(.system(size: 8.5, weight: .bold)).tracking(0.6).foregroundStyle(G.black)
+            .padding(.horizontal, 6).padding(.vertical, 1.5)
+            .background(second != nil ? AnyShapeStyle(LinearGradient(colors: [color, second!], startPoint: .leading, endPoint: .trailing)) : AnyShapeStyle(color))
     }
 }

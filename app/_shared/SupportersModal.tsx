@@ -13,6 +13,15 @@ export const SUPPORTERS = [
   'TheZDSpecial',
   'RM',
   'David',
+  'KV2324',
+  'Oretliun',
+  'EliDunlay',
+  'WhereIsJarrett',
+  'zayyys editzz',
+  'Brennan Gorby',
+  'Zane Luna',
+  'BFXT',
+  'Yung Girt',
 ]
 
 export function SupportersModal({ onClose }: { onClose: () => void }) {

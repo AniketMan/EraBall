@@ -12,6 +12,7 @@ final class GameCenterManager {
 
     var isAuthenticated = false
     var localPlayer: GKLocalPlayer { GKLocalPlayer.local }
+    var playerAlias: String? { isAuthenticated ? GKLocalPlayer.local.alias : nil }
     var showAuthVC = false
     var authVC: UIViewController?
 
