@@ -25,17 +25,22 @@ jobs:
 
       - name: Install xcodegen
         run: |
+          export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
           if ! command -v xcodegen &>/dev/null; then
-            brew install xcodegen
+            /opt/homebrew/bin/brew install xcodegen || /usr/local/bin/brew install xcodegen
           fi
+          echo "xcodegen: $(which xcodegen || echo /opt/homebrew/bin/xcodegen)"
 
       - name: Generate Xcode project
         working-directory: ios
-        run: xcodegen generate
+        run: |
+          export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+          xcodegen generate
 
       - name: Increment build number
         working-directory: ios
         run: |
+          export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
           BUILD=$(date +%Y%m%d%H%M)
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD" EraBall/Resources/Info.plist 2>/dev/null || \
           agvtool new-version -all $BUILD || \
@@ -45,6 +50,7 @@ jobs:
       - name: Archive
         working-directory: ios
         run: |
+          export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
           xcodebuild archive \
             -scheme EraBall \
             -destination "generic/platform=iOS" \
