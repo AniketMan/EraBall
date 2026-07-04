@@ -7,14 +7,14 @@ enum HomeTab: Hashable { case home, leaderboard, lifetime, achievements, setting
 
 struct HomeTabView: View {
     @Environment(GameSession.self) private var session
-    @State private var tab: HomeTab = .home
 
     private func themed(_ v: some View) -> some View {
         v.eraThemed(era: session.themeEra, on: session.themeOn)
     }
 
     var body: some View {
-        TabView(selection: $tab) {
+        @Bindable var session = session
+        return TabView(selection: $session.homeTab) {
             Tab("Eras", systemImage: "basketball.fill", value: .home) {
                 themed(EraSelectView())
             }
@@ -39,6 +39,8 @@ struct HomeTabView: View {
 // MARK: - Settings tab
 
 struct SettingsView: View {
+    var asSheet = false          // true when presented over gameplay — shows a Done button
+    @Environment(\.dismiss) private var dismiss
     @Environment(GameSession.self) private var session
     @Environment(AudioManager.self) private var audio
     @Environment(GameCenterManager.self) private var gc
@@ -109,6 +111,7 @@ struct SettingsView: View {
             }
             .background(G.black)
             .navigationTitle("SETTINGS").navigationBarTitleDisplayMode(.inline)
+            .toolbar { if asSheet { ToolbarItem(placement: .topBarTrailing) { Button("DONE") { dismiss() }.foregroundStyle(G.gold) } } }
         }
         .sheet(isPresented: $showSupporters) { SupportersSheet() }
         .sheet(isPresented: $showHelp) { HowToPlaySheet() }
@@ -131,5 +134,21 @@ struct SettingsView: View {
             Spacer()
             Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold)).foregroundStyle(G.greyDark)
         }
+    }
+}
+
+/// Top-bar gear that opens Settings as a sheet — used on the gameplay screens
+/// (draft/coach/sim) where the tab bar's Settings tab isn't reachable.
+struct SettingsGearButton: View {
+    @State private var show = false
+    var body: some View {
+        Button { show = true } label: {
+            Image(systemName: "gearshape.fill").font(.system(size: 14, weight: .semibold)).foregroundStyle(G.grey)
+                .frame(width: 34, height: 34).contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 0))
+        .overlay(Rectangle().stroke(G.border, lineWidth: 1))
+        .sheet(isPresented: $show) { SettingsView(asSheet: true) }
     }
 }

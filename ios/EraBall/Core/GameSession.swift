@@ -15,6 +15,10 @@ final class GameSession {
     var phase: GamePhase = .loading
     var loadError: String?
 
+    /// Which tab the home hub shows. Held here (not in HomeTabView's local @State) so
+    /// restart/back always returns to the Eras tab instead of the last-used one.
+    var homeTab: HomeTab = .home
+
     // Era selection
     var selectedEra: String?
     var displayEra: String?
@@ -69,6 +73,10 @@ final class GameSession {
     var playoffDone = false
     var finish: FinishResultVM?
     var runRecorded = false
+
+    /// Achievements unlocked by the just-finished run — drives the in-app unlock toast.
+    var newlyUnlocked: [AchievementVM] = []
+    func dismissAchievement(_ id: String) { newlyUnlocked.removeAll { $0.id == id } }
 
     private let engine = EngineBridge.shared
 
@@ -270,14 +278,26 @@ final class GameSession {
         if let score = finish?.score, let era = selectedEra {
             Task { await gc.submitScore(score, era: era, salaryCapMode: capMode) }
         }
-        if let unlocked = finish?.newAchievements {
+        if let unlocked = finish?.newAchievements, !unlocked.isEmpty {
             for a in unlocked { Task { await gc.reportAchievement(id: a.id) } }
+            // In-app toast so unlocks are visible even without a signed-in Game Center
+            // account (mirrors the web's achievement toast).
+            newlyUnlocked = unlocked
         }
     }
 
     func restart() {
         phase = .eraSelect
-        selectedEra = nil; displayEra = nil; pool = []; gameState = nil
-        coach = nil; coachChoices = []; season = nil; playoffs = nil; finish = nil
+        homeTab = .home
+        selectedEra = nil; displayEra = nil; eraSpinning = false
+        pool = []; gameState = nil; awaitingSpin = true; respinUsed = false
+        draftSpinning = false; spinTeamDisplay = ""; spinEraDisplay = ""; noPlayersMessage = false
+        selectedPoolPlayer = nil; selectedFits = [:]; pendingSlotIndex = nil; capViolation = nil
+        eraFilter = Set(ALL_ERAS); eraFilterLocked = false
+        coach = nil; coachChoices = []; coachSpinsUsed = 0; coachSpinning = false; bonusCoachRespin = false
+        teamRating = nil; season = nil; revealedGames = 0; seasonDone = false
+        playoffs = nil; playoffRevealIndex = -1; playoffDone = false; finish = nil; runRecorded = false
+        salaryCapMode = false; sandboxMode = false
+        newlyUnlocked = []
     }
 }

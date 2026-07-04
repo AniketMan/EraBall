@@ -34,6 +34,7 @@ struct PlayerHeadshotView: View {
 struct CoachHeadshotView: View {
     let name: String
     var size: CGFloat = 52
+    @State private var image: UIImage?
 
     private var initials: String {
         let parts = name.replacingOccurrences(of: "*", with: "").split(separator: " ")
@@ -45,9 +46,50 @@ struct CoachHeadshotView: View {
     var body: some View {
         ZStack {
             Circle().fill(G.surface2)
+            if let image {
+                Image(uiImage: image).resizable().scaledToFill()
+                    .frame(width: size, height: size).clipShape(Circle())
+            } else {
+                Text(initials).font(Fonts.bebas(size * 0.42)).foregroundStyle(G.gold)
+            }
             Circle().strokeBorder(G.border, lineWidth: 1)
-            Text(initials).font(Fonts.bebas(size * 0.42)).foregroundStyle(G.gold)
         }
         .frame(width: size, height: size)
+        .task(id: name) { image = await CoachHeadshotLoader.shared.image(for: name) }
+    }
+}
+
+/// Fetches a coach's photo from the Wikipedia REST summary thumbnail — the same source
+/// the web app uses via /api/coach-headshot. Native URLSession, so no CORS proxy needed.
+actor CoachHeadshotLoader {
+    static let shared = CoachHeadshotLoader()
+    private var cache: [String: UIImage] = [:]
+    private var misses: Set<String> = []
+
+    func image(for name: String) async -> UIImage? {
+        if let hit = cache[name] { return hit }
+        if misses.contains(name) { return nil }
+        let clean = name.replacingOccurrences(of: "*", with: "").trimmingCharacters(in: .whitespaces)
+        let title = clean.replacingOccurrences(of: " ", with: "_")
+            .addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? clean
+        guard let summaryURL = URL(string: "https://en.wikipedia.org/api/rest_v1/page/summary/\(title)") else {
+            misses.insert(name); return nil
+        }
+        var req = URLRequest(url: summaryURL)
+        req.setValue("EraBall/1.0 (NBA draft simulator)", forHTTPHeaderField: "User-Agent")
+        do {
+            let (data, _) = try await URLSession.shared.data(for: req)
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let thumb = json["thumbnail"] as? [String: Any],
+                  let src = thumb["source"] as? String, let imgURL = URL(string: src) else {
+                misses.insert(name); return nil
+            }
+            let (imgData, _) = try await URLSession.shared.data(from: imgURL)
+            guard let ui = UIImage(data: imgData) else { misses.insert(name); return nil }
+            cache[name] = ui
+            return ui
+        } catch {
+            misses.insert(name); return nil
+        }
     }
 }

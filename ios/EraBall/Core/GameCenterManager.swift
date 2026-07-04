@@ -149,10 +149,13 @@ final class GameCenterManager {
     /// the requested section (HIG: "Game Center → Accessing Game Center").
 
     func showLeaderboard(era: String, salaryCapMode: Bool) {
-        GKAccessPoint.shared.trigger(state: .leaderboards) {}
+        guard isAuthenticated else { return }
+        let id = salaryCapMode ? LeaderboardID.salaryCap(era: era) : LeaderboardID.normal(era: era)
+        GKAccessPoint.shared.trigger(leaderboardID: id, playerScope: .global, timeScope: .allTime) {}
     }
 
     func showAchievements() {
+        guard isAuthenticated else { return }
         GKAccessPoint.shared.trigger(state: .achievements) {}
     }
 }

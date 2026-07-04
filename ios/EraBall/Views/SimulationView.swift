@@ -10,6 +10,8 @@ struct SimulationView: View {
     @State private var showLeaderboard = false
     @State private var statsCardPlayer: SeasonStatVM?
     @State private var boxScoreGame: PlayoffGameVM?
+    @State private var shareImage: Image?
+    @Environment(\.displayScale) private var displayScale
 
     private var season: SeasonResultVM? { session.season }
     private var wins: Int { session.seasonDone ? (season?.wins ?? 0) : session.winsSoFar }
@@ -58,6 +60,8 @@ struct SimulationView: View {
                 Text("\(eraDisplayLabel(session.selectedEra ?? "").uppercased()) · \(c.name)")
                     .font(.system(size: 11, weight: .semibold)).foregroundStyle(G.white).lineLimit(1)
             }
+            Spacer()
+            SettingsGearButton()
         }
         .padding(.horizontal, 16).padding(.vertical, 10).overlay(alignment: .bottom) { EraBallDivider() }
     }
@@ -276,9 +280,32 @@ struct SimulationView: View {
                     }
                 }.frame(maxWidth: .infinity).padding(.vertical, 16).background(G.surface).overlay(Rectangle().stroke(G.border, lineWidth: 1))
             }
+            if let shareImage {
+                ShareLink(item: shareImage, preview: SharePreview("My EraBall Team", image: shareImage)) {
+                    Label("SHARE RESULT CARD", systemImage: "square.and.arrow.up")
+                        .font(.system(size: 13, weight: .bold)).tracking(1).frame(maxWidth: .infinity)
+                }.buttonStyle(OutlineButtonStyle(fullWidth: true))
+            }
             Button("VIEW LEADERBOARD") { showLeaderboard = true }.buttonStyle(OutlineButtonStyle(fullWidth: true))
             Button("PLAY AGAIN") { session.restart() }.buttonStyle(GoldButtonStyle(fullWidth: true))
         }
+        .task(id: session.finish?.score) { renderShareCard(po) }
+    }
+
+    @MainActor private func renderShareCard(_ po: PlayoffResultVM) {
+        let card = ResultShareCard(
+            era: eraDisplayLabel(session.selectedEra ?? "20s"),
+            coach: session.coach?.name.replacingOccurrences(of: "*", with: "") ?? "",
+            wins: wins, losses: losses,
+            verdict: verdict(wins),
+            rating: session.teamRating?.displayRating,
+            champion: po.champion,
+            finalsMVP: po.champion ? po.finalsMVP?.name : nil,
+            score: session.finish?.score
+        )
+        let renderer = ImageRenderer(content: card)
+        renderer.scale = displayScale
+        if let ui = renderer.uiImage { shareImage = Image(uiImage: ui) }
     }
 
     // MARK: helpers
@@ -503,5 +530,64 @@ struct BoxScoreSheet: View {
             .background(G.black).navigationTitle("Box Score").navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("CLOSE") { dismiss() }.foregroundStyle(G.gold) } }
         }.preferredColorScheme(.dark)
+    }
+}
+
+// MARK: - Shareable result card (rendered to an image via ImageRenderer -> ShareLink)
+
+struct ResultShareCard: View {
+    let era: String
+    let coach: String
+    let wins: Int
+    let losses: Int
+    let verdict: String
+    let rating: Int?
+    let champion: Bool
+    let finalsMVP: String?
+    let score: Int?
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Text("ERA BALL").font(Fonts.bebas(30)).tracking(8).foregroundStyle(G.gold)
+                .padding(.top, 28)
+            Text("\(era.uppercased()) · \(coach.uppercased())")
+                .font(.system(size: 12, weight: .semibold)).tracking(3).foregroundStyle(G.grey)
+                .padding(.top, 6)
+
+            Text("\(wins)–\(losses)").font(Fonts.bebas(120))
+                .foregroundStyle(wins > losses ? G.gold : G.white)
+                .padding(.top, 18)
+            Text(verdict).font(.system(size: 14, weight: .bold)).tracking(3).foregroundStyle(G.gold)
+
+            if champion {
+                Text("🏆 NBA CHAMPIONS").font(Fonts.bebas(34)).tracking(3).foregroundStyle(G.gold).padding(.top, 22)
+                if let mvp = finalsMVP {
+                    Text("FINALS MVP · \(mvp.uppercased())").font(.system(size: 12, weight: .bold)).tracking(1).foregroundStyle(G.grey).padding(.top, 2)
+                }
+            }
+
+            HStack(spacing: 40) {
+                if let rating {
+                    stat("TEAM RATING", "\(rating)")
+                }
+                if let score {
+                    stat("LEADERBOARD", "\(score)")
+                }
+            }
+            .padding(.top, 28)
+
+            Text("eraball.com").font(.system(size: 12, weight: .semibold)).tracking(2).foregroundStyle(G.greyDark)
+                .padding(.top, 26).padding(.bottom, 28)
+        }
+        .frame(width: 540)
+        .background(G.black)
+        .overlay(Rectangle().stroke(G.gold.opacity(0.5), lineWidth: 2))
+    }
+
+    private func stat(_ label: String, _ value: String) -> some View {
+        VStack(spacing: 2) {
+            Text(value).font(Fonts.bebas(40)).foregroundStyle(G.gold)
+            Text(label).font(.system(size: 10, weight: .semibold)).tracking(2).foregroundStyle(G.grey)
+        }
     }
 }

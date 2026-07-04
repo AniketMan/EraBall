@@ -40,6 +40,7 @@ struct RootView: View {
             }
         }
         .animation(.smooth(duration: 0.35), value: session.phase)
+        .overlay(alignment: .top) { AchievementToastStack() }
         // Present the Game Center sign-in sheet when the system provides it.
         .sheet(isPresented: Binding(get: { gameCenter.showAuthVC && gameCenter.authVC != nil },
                                     set: { if !$0 { gameCenter.showAuthVC = false } })) {
@@ -81,6 +82,51 @@ struct CourtBackground: View {
             G.black.ignoresSafeArea()
             if showStars { Starfield() }
         }
+    }
+}
+
+/// In-app "ACHIEVEMENT UNLOCKED" toasts (port of the web toast). Shows every newly
+/// unlocked achievement regardless of Game Center state; each auto-dismisses after 5s
+/// or on tapping the ✕. The Game Center completion banner (showsCompletionBanner) still
+/// fires independently when the player is signed in.
+struct AchievementToastStack: View {
+    @Environment(GameSession.self) private var session
+
+    var body: some View {
+        VStack(spacing: 8) {
+            ForEach(session.newlyUnlocked) { a in
+                AchievementToast(achievement: a) { session.dismissAchievement(a.id) }
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+        .padding(.horizontal, 16).padding(.top, 8)
+        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: session.newlyUnlocked)
+    }
+}
+
+private struct AchievementToast: View {
+    let achievement: AchievementVM
+    let onDismiss: () -> Void
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "medal.fill").font(.system(size: 22)).foregroundStyle(G.gold)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("ACHIEVEMENT UNLOCKED").font(.system(size: 9, weight: .semibold)).tracking(2.5).foregroundStyle(G.gold)
+                Text(achievement.title).font(Fonts.bebas(20)).tracking(1).foregroundStyle(G.white)
+                Text(achievement.description).font(.system(size: 11)).foregroundStyle(G.grey).fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 4)
+            Button(action: onDismiss) {
+                Image(systemName: "xmark").font(.system(size: 11, weight: .bold)).foregroundStyle(G.greyDark)
+            }.buttonStyle(.plain)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(hex: "#0d0d0d"))
+        .overlay(Rectangle().stroke(G.gold, lineWidth: 1))
+        .shadow(color: G.gold.opacity(0.2), radius: 16, y: 4)
+        .task { try? await Task.sleep(for: .seconds(5)); onDismiss() }
     }
 }
 

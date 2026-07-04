@@ -332,12 +332,26 @@ final class EngineBridge {
         context = ctx
         ctx.exceptionHandler = { _, exc in print("[Engine JS] \(exc?.toString() ?? "?")") }
 
-        // localStorage backed by UserDefaults so lifetimeStats/achievements persist.
+        // Persistence for lifetimeStats/achievements/prefs. Backed by iCloud key-value
+        // store so progress follows the player across devices (HIG "Designing for games":
+        // let players pick up their game on any device), with UserDefaults as the always-
+        // available local fallback. Data here is small key/value JSON — the size class
+        // UserDefaults/KVS are designed for.
         let defaults = UserDefaults.standard
+        let cloud = NSUbiquitousKeyValueStore.default
+        cloud.synchronize()
         let prefix = "eraball_js_"
-        let get: @convention(block) (String) -> Any = { defaults.string(forKey: prefix + $0) ?? NSNull() }
-        let set: @convention(block) (String, String) -> Void = { defaults.set($1, forKey: prefix + $0) }
-        let remove: @convention(block) (String) -> Void = { defaults.removeObject(forKey: prefix + $0) }
+        let get: @convention(block) (String) -> Any = {
+            cloud.string(forKey: prefix + $0) ?? defaults.string(forKey: prefix + $0) ?? NSNull()
+        }
+        let set: @convention(block) (String, String) -> Void = {
+            defaults.set($1, forKey: prefix + $0)
+            cloud.set($1, forKey: prefix + $0)
+        }
+        let remove: @convention(block) (String) -> Void = {
+            defaults.removeObject(forKey: prefix + $0)
+            cloud.removeObject(forKey: prefix + $0)
+        }
         let storage = JSValue(newObjectIn: ctx)!
         storage.setObject(get, forKeyedSubscript: "getItem" as NSString)
         storage.setObject(set, forKeyedSubscript: "setItem" as NSString)

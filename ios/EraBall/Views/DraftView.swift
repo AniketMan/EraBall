@@ -99,6 +99,7 @@ struct DraftView: View {
             }
             Spacer()
             HStack(spacing: 8) {
+                SettingsGearButton()
                 Button { showTagLegend = true } label: {
                     Image(systemName: "info.circle").font(.system(size: 15, weight: .semibold)).foregroundStyle(G.gold)
                         .frame(width: 34, height: 34).contentShape(.rect)
@@ -238,12 +239,25 @@ struct DraftView: View {
                 }
                 Spacer()
             }
-            LazyVStack(spacing: 6) {
-                ForEach(displayPool) { p in
-                    Button { session.selectPoolPlayer(session.selectedPoolPlayer?.personId == p.personId ? nil : p) } label: {
-                        PoolRow(player: p, selected: session.selectedPoolPlayer?.personId == p.personId)
-                    }.buttonStyle(.plain)
+            // Contained, self-scrolling roster box (web parity) — the header/chips above
+            // stay pinned; only this list scrolls, so the court stays in view.
+            ScrollView(.vertical, showsIndicators: true) {
+                LazyVStack(spacing: 6) {
+                    ForEach(displayPool) { p in
+                        Button { session.selectPoolPlayer(session.selectedPoolPlayer?.personId == p.personId ? nil : p) } label: {
+                            PoolRow(player: p, selected: session.selectedPoolPlayer?.personId == p.personId)
+                        }.buttonStyle(.plain)
+                    }
                 }
+                .padding(8)
+            }
+            .frame(height: 360)
+            .background(G.surface.opacity(0.5))
+            .overlay(Rectangle().stroke(G.border, lineWidth: 1))
+            .overlay(alignment: .bottom) {
+                // Soft scroll-edge fade so rows dissolve under the box's bottom border.
+                LinearGradient(colors: [.clear, G.black.opacity(0.6)], startPoint: .top, endPoint: .bottom)
+                    .frame(height: 24).allowsHitTesting(false)
             }
         }
     }

@@ -19,6 +19,7 @@ struct CoachDraftView: View {
                         .padding(.horizontal, 12).padding(.vertical, 8).overlay(Rectangle().stroke(G.border, lineWidth: 1))
                 }.buttonStyle(.plain)
                 Spacer()
+                SettingsGearButton()
             }
             .padding(.horizontal, 16).padding(.vertical, 10)
             EraBallDivider()
