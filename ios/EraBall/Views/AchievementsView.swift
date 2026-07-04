@@ -2,6 +2,7 @@
 import SwiftUI
 
 struct AchievementsView: View {
+    var embedded = false
     @Environment(\.dismiss) private var dismiss
     @State private var achievements: [AchievementStateVM] = []
 
@@ -34,7 +35,7 @@ struct AchievementsView: View {
                 }.padding(16)
             }
             .background(G.black).navigationTitle("ACHIEVEMENTS").navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("CLOSE") { dismiss() }.foregroundStyle(G.gold) } }
+            .toolbar { if !embedded { ToolbarItem(placement: .topBarTrailing) { Button("CLOSE") { dismiss() }.foregroundStyle(G.gold) } } }
         }
         .preferredColorScheme(.dark)
         .task { achievements = EngineBridge.shared.allAchievements() }

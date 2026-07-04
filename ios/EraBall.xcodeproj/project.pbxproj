@@ -26,6 +26,7 @@
 		AE94C06C8C7E1285954F0E98 /* AudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36623DE6CEA5A9C9E978EC4A /* AudioManager.swift */; };
 		B90EFA91359E7C83733FD5CE /* EraBallApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAF15A1BB932F1B193742618 /* EraBallApp.swift */; };
 		BC40F8C9BBCEAAAE686698E8 /* PlayerHeadshotView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88C549C6C9117CEBD5D87F15 /* PlayerHeadshotView.swift */; };
+		BF8C0E2BE83FFF79CAEAA5C3 /* HomeTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE27275DD50F2646D31804CA /* HomeTabView.swift */; };
 		C1E9128E3AC81CC371B2A727 /* Modals.swift in Sources */ = {isa = PBXBuildFile; fileRef = 641C9F5A4A6622B7502BEB79 /* Modals.swift */; };
 		C2B9DE458C27964639603DDD /* BleedImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E9C1B3EC9D990CD8A817BD /* BleedImage.swift */; };
 		C2BFDDDAA171227BB171B5E5 /* EraSelectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53A437C43B315BA6D65251BA /* EraSelectView.swift */; };
@@ -60,6 +61,7 @@
 		BB17672857799DD3D6E81539 /* engine.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = engine.js; sourceTree = "<group>"; };
 		BD3B49C5C3F802E3ED448B70 /* DraftView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DraftView.swift; sourceTree = "<group>"; };
 		CB643FD9B4EB4CE4EBD4AAC9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		CE27275DD50F2646D31804CA /* HomeTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeTabView.swift; sourceTree = "<group>"; };
 		D4054E36467CB81E82B3CF3D /* PlayerCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerCardView.swift; sourceTree = "<group>"; };
 		FAF15A1BB932F1B193742618 /* EraBallApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EraBallApp.swift; sourceTree = "<group>"; };
 		FBFBFAC9E5065C3FC97D6D07 /* AchievementsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementsView.swift; sourceTree = "<group>"; };
@@ -132,6 +134,7 @@
 				1C2607734CE4D675C60A8B4A /* CoachDraftView.swift */,
 				BD3B49C5C3F802E3ED448B70 /* DraftView.swift */,
 				53A437C43B315BA6D65251BA /* EraSelectView.swift */,
+				CE27275DD50F2646D31804CA /* HomeTabView.swift */,
 				50D91547CABCB48FB821B7B1 /* LeaderboardSheet.swift */,
 				B074BF89C7E543D5DE837A7C /* LifetimeStatsView.swift */,
 				641C9F5A4A6622B7502BEB79 /* Modals.swift */,
@@ -230,6 +233,7 @@
 				303BBC0BA272B44521DD9A23 /* EraTheme.swift in Sources */,
 				57E14B383F83A596EFBA559B /* GameCenterManager.swift in Sources */,
 				82609B43AA5E60FC84195DEF /* GameSession.swift in Sources */,
+				BF8C0E2BE83FFF79CAEAA5C3 /* HomeTabView.swift in Sources */,
 				CC65C05E4B737A0291AFAA40 /* LeaderboardSheet.swift in Sources */,
 				2DBFF0A4C4CB2DA0B68AECEA /* LifetimeStatsView.swift in Sources */,
 				C1E9128E3AC81CC371B2A727 /* Modals.swift in Sources */,
@@ -300,9 +304,11 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -368,9 +374,11 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -389,6 +397,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.eraball.app;
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -407,7 +416,8 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.eraball.app;
-				SDKROOT = iphoneos;
+				SDKROOT = iphonesimulator;
+				SUPPORTED_PLATFORMS = iphonesimulator;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;

@@ -2,6 +2,7 @@
 import SwiftUI
 
 struct LifetimeStatsView: View {
+    var embedded = false
     @Environment(\.dismiss) private var dismiss
     @State private var mode = "normal"
     @State private var stats: LifetimeStatsVM?
@@ -63,7 +64,7 @@ struct LifetimeStatsView: View {
                 }.padding(.bottom, 24)
             }
             .background(G.black).navigationTitle("LIFETIME STATS").navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("CLOSE") { dismiss() }.foregroundStyle(G.gold) } }
+            .toolbar { if !embedded { ToolbarItem(placement: .topBarTrailing) { Button("CLOSE") { dismiss() }.foregroundStyle(G.gold) } } }
         }
         .preferredColorScheme(.dark)
         .onChange(of: mode, initial: true) { _, m in stats = EngineBridge.shared.lifetimeStats(mode: m) }

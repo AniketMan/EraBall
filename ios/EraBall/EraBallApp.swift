@@ -33,13 +33,12 @@ struct RootView: View {
             G.black.ignoresSafeArea()
             switch session.phase {
             case .loading:     LoadingView()
-            case .eraSelect:   EraSelectView()
-            case .draft:       DraftView()
-            case .coachDraft:  CoachDraftView()
-            case .simulation:  SimulationView()
+            case .eraSelect:   HomeTabView()   // themes its own tab CONTENT, never the glass tab bar
+            case .draft:       DraftView().eraThemed(era: session.themeEra, on: session.themeOn)
+            case .coachDraft:  CoachDraftView().eraThemed(era: session.themeEra, on: session.themeOn)
+            case .simulation:  SimulationView().eraThemed(era: session.themeEra, on: session.themeOn)
             }
         }
-        .eraThemed(era: session.themeEra, on: session.themeOn)
         .animation(.smooth(duration: 0.35), value: session.phase)
         // Present the Game Center sign-in sheet when the system provides it.
         .sheet(isPresented: Binding(get: { gameCenter.showAuthVC && gameCenter.authVC != nil },

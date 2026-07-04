@@ -87,7 +87,8 @@ struct DraftView: View {
 
     private var topBar: some View {
         HStack {
-            Button { session.restart() } label: { Image(systemName: "chevron.left").font(.system(size: 15, weight: .semibold)).foregroundStyle(G.grey).frame(width: 34, height: 34).overlay(Rectangle().stroke(G.border, lineWidth: 1)) }.buttonStyle(.plain)
+            Button { session.restart() } label: { Image(systemName: "chevron.left").font(.system(size: 15, weight: .semibold)).foregroundStyle(G.grey).frame(width: 34, height: 34) }
+                .buttonStyle(.plain).glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
             Spacer()
             VStack(spacing: 2) {
                 Text(session.salaryCapMode ? "SALARY CAP DRAFT" : "PLAYER DRAFT")
@@ -99,8 +100,9 @@ struct DraftView: View {
             HStack(spacing: 8) {
                 Button { showTagLegend = true } label: {
                     Image(systemName: "info.circle").font(.system(size: 15, weight: .semibold)).foregroundStyle(G.gold)
-                        .frame(width: 34, height: 34).overlay(Rectangle().stroke(G.gold.opacity(0.5), lineWidth: 1)).contentShape(.rect)
-                }.buttonStyle(.plain)
+                        .frame(width: 34, height: 34).contentShape(.rect)
+                }
+                .buttonStyle(.plain).glassEffect(.regular.interactive().tint(G.gold.opacity(0.14)), in: .rect(cornerRadius: 8))
                 Text("\(state?.filledCount ?? 0)/9").font(.system(size: 13, weight: .bold, design: .monospaced)).foregroundStyle(G.grey).frame(width: 34)
             }
         }

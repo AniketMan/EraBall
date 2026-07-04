@@ -15,32 +15,71 @@ struct SupportersSheet: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 8) {
                     Text("These supporters are keeping EraBall alive!")
                         .font(.system(size: 11)).foregroundStyle(G.grey).padding(.bottom, 4)
-                    ForEach(SUPPORTERS, id: \.self) { name in
-                        HStack(spacing: 10) {
-                            Text("★").font(.system(size: 12)).foregroundStyle(G.gold)
-                            Text(name).font(.system(size: 14, weight: .medium)).foregroundStyle(G.white)
-                            Spacer()
+                    GlassEffectContainer(spacing: 8) {
+                        VStack(spacing: 8) {
+                            ForEach(SUPPORTERS, id: \.self) { name in
+                                HStack(spacing: 10) {
+                                    Text("★").font(.system(size: 14)).foregroundStyle(G.gold)
+                                    Text(name).font(.system(size: 13, weight: .medium)).tracking(0.4).foregroundStyle(G.white)
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 12).padding(.vertical, 10)
+                                .overlay(SupporterSheen().clipShape(RoundedRectangle(cornerRadius: 10)))
+                                .glassEffect(.regular.tint(G.gold.opacity(0.06)), in: .rect(cornerRadius: 10))
+                            }
                         }
-                        .padding(.horizontal, 12).padding(.vertical, 10)
-                        .background(G.surface).overlay(Rectangle().stroke(G.border, lineWidth: 1))
                     }
                     Button {
                         openURL(URL(string: "https://ko-fi.com/eshanb")!)
                     } label: {
-                        Text("Support on Ko-fi · donate to be here")
-                            .font(.system(size: 11)).tracking(0.5).foregroundStyle(G.goldDim)
-                            .frame(maxWidth: .infinity).padding(.vertical, 10)
-                            .overlay(Rectangle().stroke(G.border, lineWidth: 1))
+                        HStack(spacing: 4) {
+                            Text("Support on Ko-fi").foregroundStyle(G.goldDim)
+                            Text("· donate to be here").foregroundStyle(G.greyDark)
+                        }
+                        .font(.system(size: 11)).tracking(0.5)
+                        .frame(maxWidth: .infinity).padding(.vertical, 11)
+                        .glassEffect(.regular.interactive(), in: .capsule)
                     }
-                    .buttonStyle(.plain).padding(.top, 6)
+                    .buttonStyle(.plain).padding(.top, 8)
                 }.padding(24)
             }
             .background(G.black).navigationTitle("THANK YOU!").navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("CLOSE") { dismiss() }.foregroundStyle(G.gold) } }
         }.preferredColorScheme(.dark)
+    }
+}
+
+/// Gold sheen beam sweeping across a supporter card (port of globals.css .card-sheen-beam).
+struct SupporterSheen: View {
+    var body: some View {
+        GeometryReader { geo in
+            TimelineView(.animation) { tl in
+                let t = tl.date.timeIntervalSinceReferenceDate
+                let period = 4.5
+                let p = t.truncatingRemainder(dividingBy: period) / period
+                let W = geo.size.width, H = geo.size.height
+                let beamW = W * 0.35
+                let txFrac: CGFloat = p < 0.4 ? -1.5 + 5.0 * CGFloat(p / 0.4) : 3.5
+                let opacity: CGFloat = p < 0.08 ? CGFloat(p / 0.08)
+                    : p < 0.4 ? 1 - CGFloat((p - 0.08) / 0.32) : 0
+                Rectangle()
+                    .fill(LinearGradient(stops: [
+                        .init(color: .white.opacity(0), location: 0),
+                        .init(color: G.gold.opacity(0.28), location: 0.5),
+                        .init(color: .white.opacity(0), location: 1),
+                    ], startPoint: .leading, endPoint: .trailing))
+                    .frame(width: beamW, height: H * 1.5)
+                    .transformEffect(CGAffineTransform(a: 1, b: 0, c: tan(-15 * .pi / 180), d: 1, tx: 0, ty: 0))
+                    .offset(x: txFrac * beamW)
+                    .frame(width: W, height: H, alignment: .leading)
+                    .opacity(Double(opacity))
+                    .clipped()
+            }
+        }
+        .allowsHitTesting(false)
     }
 }
 

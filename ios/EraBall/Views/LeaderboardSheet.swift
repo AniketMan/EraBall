@@ -3,6 +3,7 @@ import SwiftUI
 import GameKit
 
 struct LeaderboardSheet: View {
+    var embedded = false
     @Environment(\.dismiss) private var dismiss
     @Environment(GameCenterManager.self) private var gc
     @State private var era = "20s"
@@ -44,7 +45,7 @@ struct LeaderboardSheet: View {
                 ToolbarItem(placement: .topBarLeading) {
                     if let alias = gc.playerAlias { Label(alias, systemImage: "person.crop.circle.badge.checkmark").font(.caption2).foregroundStyle(G.greyDark) }
                 }
-                ToolbarItem(placement: .topBarTrailing) { Button("CLOSE") { dismiss() }.foregroundStyle(G.gold) }
+                if !embedded { ToolbarItem(placement: .topBarTrailing) { Button("CLOSE") { dismiss() }.foregroundStyle(G.gold) } }
             }
         }
         .preferredColorScheme(.dark)
