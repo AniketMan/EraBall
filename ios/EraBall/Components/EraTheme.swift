@@ -11,6 +11,22 @@ import CoreImage.CIFilterBuiltins
 
 private let CRT_ERAS: Set<String> = ["50s", "60s", "70s", "80s", "90s"]
 
+/// Per-era grain strength. Highest at the 50s and ramping down through the decades as
+/// footage/broadcast gets cleaner (Yedlin: amplitude also stays luminance-dependent via
+/// the `.overlay` blend). Nil = no grain (20s = pristine).
+private func grainAmount(_ era: String) -> Double? {
+    switch era {
+    case "50s": return 0.55
+    case "60s": return 0.42
+    case "70s": return 0.32
+    case "80s": return 0.22
+    case "90s": return 0.15
+    case "00s": return 0.11
+    case "10s": return 0.07
+    default:    return nil
+    }
+}
+
 // MARK: - Public modifier
 
 extension View {
@@ -27,40 +43,12 @@ private struct EraThemeModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .modifier(EraColorGrade(era: (on ? era : nil)))
-            .modifier(FilmGrainEffect(era: (on ? era : nil)))   // luminance-dependent grain on the graded content
+            // Grain rides in the overlay stack (a non-interactive sibling), NOT as a
+            // layerEffect wrapping the content — a layerEffect rasterizes the tree and
+            // kills the Liquid Glass interactive button animations. As a blended overlay
+            // it stays luminance-dependent (via `.overlay` blend) AND preserves all
+            // press/press-glow/spring animations underneath.
             .overlay { EraThemeOverlay(era: (on ? era : nil)).ignoresSafeArea() }
-    }
-}
-
-// MARK: - Film grain (Yedlin luminance-dependent model, GPU shader)
-
-private struct FilmGrainEffect: ViewModifier {
-    let era: String?
-
-    // Per-era grain strength (was the old overlay opacity; here it's the shader amplitude).
-    private var amount: Float? {
-        switch era {
-        case "50s": return 0.19
-        case "60s", "70s", "80s", "90s": return 0.09
-        case "00s": return 0.15
-        case "10s": return 0.10
-        default: return nil
-        }
-    }
-
-    func body(content: Content) -> some View {
-        if let amount {
-            // ~24fps film cadence (not 120Hz ProMotion) to keep the animated redraw cheap.
-            TimelineView(.animation(minimumInterval: 1.0 / 24.0)) { tl in
-                let t = Float(tl.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1000))
-                content.layerEffect(
-                    ShaderLibrary.filmGrain(.float(t), .float(amount)),
-                    maxSampleOffset: .zero
-                )
-            }
-        } else {
-            content
-        }
     }
 }
 
@@ -68,14 +56,29 @@ private struct FilmGrainEffect: ViewModifier {
 
 private struct EraColorGrade: ViewModifier {
     let era: String?
+
+    // A STABLE modifier chain (always the same four filters, only the VALUES change per
+    // era) so switching eras doesn't re-wrap the content and destroy its view identity —
+    // that identity churn is what made the era description "pop" instead of animate.
+    // Values are the web `eraFilter`; no-op defaults (1/1/1/0) elsewhere.
+    private var grayscale: Double { era == "50s" ? 1 : 0 }
+    private var saturation: Double {
+        switch era { case "60s": return 0.82; case "70s": return 0.88; case "10s": return 1.15; default: return 1 }
+    }
+    private var contrast: Double {
+        switch era { case "70s": return 0.94; case "10s": return 1.06; default: return 1 }
+    }
+    private var brightness: Double {
+        switch era { case "70s": return -0.03; case "10s": return 0.02; default: return 0 }
+    }
+
     func body(content: Content) -> some View {
-        switch era {
-        case "50s": AnyView(content.grayscale(1.0))
-        case "60s": AnyView(content.saturation(0.82))
-        case "70s": AnyView(content.saturation(0.88).contrast(0.94).brightness(-0.03))
-        case "10s": AnyView(content.saturation(1.15).contrast(1.06).brightness(0.02))
-        default:    AnyView(content)
-        }
+        content
+            .saturation(saturation)
+            .contrast(contrast)
+            .brightness(brightness)
+            .grayscale(grayscale)
+            .animation(.easeInOut(duration: 0.35), value: era)
     }
 }
 
@@ -85,8 +88,6 @@ private struct EraThemeOverlay: View {
     let era: String?
     var body: some View {
         if let era {
-            // Grain is applied as a luminance-dependent GPU layerEffect on the content
-            // (see FilmGrainEffect), not as a blended overlay here.
             ZStack {
                 if CRT_ERAS.contains(era) {
                     Scanlines()
@@ -103,6 +104,8 @@ private struct EraThemeOverlay: View {
                 if era == "10s" {
                     Color(red: 1.0, green: 200/255, blue: 90/255).opacity(0.03)
                 }
+                // Grain last so it sits over the other overlays; ramped by era.
+                if let amount = grainAmount(era) { GrainOverlay(opacity: amount) }
             }
             .allowsHitTesting(false)
         }
@@ -157,4 +160,40 @@ private struct ScanBar: View {
     }
 }
 
+// Animated film grain as a non-interactive blended overlay (preserves button/glass
+// animations underneath, unlike a layerEffect). Monochrome, Gaussian-ish noise centered
+// on mid-gray, composited with `.overlay` blend so the effect is luminance-dependent
+// (peaks in midtones, fades in deep shadows/highlights) per the Yedlin grain model.
+// A small pool of pre-generated tiles is cycled ~11fps for the reseed.
+private struct GrainOverlay: View {
+    let opacity: Double
+    @State private var frames: [Image] = []
+    @State private var idx = 0
+    private let timer = Timer.publish(every: 0.09, on: .main, in: .common).autoconnect()
+
+    var body: some View {
+        Group {
+            if !frames.isEmpty { frames[idx].resizable().interpolation(.none) }
+        }
+        .opacity(opacity)
+        // `.screen` (not `.overlay`) so the grain is actually visible over the near-black
+        // UI — a deliberate stylistic choice over strict film-science (which would fade
+        // grain to nothing in the deep shadows that dominate this dark theme).
+        .blendMode(.screen)
+        .onAppear { if frames.isEmpty { frames = (0..<8).map { _ in Self.makeNoise() } } }
+        .onReceive(timer) { _ in if frames.count > 1 { idx = (idx + 1) % frames.count } }
+    }
+
+    private static let ciContext = CIContext(options: nil)
+    private static func makeNoise() -> Image {
+        // Monochrome noise pushed to high contrast so it's mostly black (leaves the UI
+        // untouched under `.screen`) with crisp bright specks that actually read as grain.
+        let mono = (CIFilter.randomGenerator().outputImage ?? CIImage.empty())
+            .applyingFilter("CIPhotoEffectMono")
+            .applyingFilter("CIColorControls", parameters: [kCIInputContrastKey: 3.0, kCIInputBrightnessKey: -0.15])
+        // Small crop scaled up by SwiftUI (~2.4x) → coarser, more visible grain, not 1px fizz.
+        let crop = CGRect(x: CGFloat.random(in: 0...600), y: CGFloat.random(in: 0...600), width: 170, height: 360)
+        guard let cg = ciContext.createCGImage(mono, from: crop) else { return Image(uiImage: UIImage()) }
+        return Image(decorative: cg, scale: 1)
+    }
 }
