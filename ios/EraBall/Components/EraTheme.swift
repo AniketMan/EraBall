@@ -27,7 +27,40 @@ private struct EraThemeModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .modifier(EraColorGrade(era: (on ? era : nil)))
+            .modifier(FilmGrainEffect(era: (on ? era : nil)))   // luminance-dependent grain on the graded content
             .overlay { EraThemeOverlay(era: (on ? era : nil)).ignoresSafeArea() }
+    }
+}
+
+// MARK: - Film grain (Yedlin luminance-dependent model, GPU shader)
+
+private struct FilmGrainEffect: ViewModifier {
+    let era: String?
+
+    // Per-era grain strength (was the old overlay opacity; here it's the shader amplitude).
+    private var amount: Float? {
+        switch era {
+        case "50s": return 0.19
+        case "60s", "70s", "80s", "90s": return 0.09
+        case "00s": return 0.15
+        case "10s": return 0.10
+        default: return nil
+        }
+    }
+
+    func body(content: Content) -> some View {
+        if let amount {
+            // ~24fps film cadence (not 120Hz ProMotion) to keep the animated redraw cheap.
+            TimelineView(.animation(minimumInterval: 1.0 / 24.0)) { tl in
+                let t = Float(tl.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1000))
+                content.layerEffect(
+                    ShaderLibrary.filmGrain(.float(t), .float(amount)),
+                    maxSampleOffset: .zero
+                )
+            }
+        } else {
+            content
+        }
     }
 }
 
@@ -52,23 +85,22 @@ private struct EraThemeOverlay: View {
     let era: String?
     var body: some View {
         if let era {
+            // Grain is applied as a luminance-dependent GPU layerEffect on the content
+            // (see FilmGrainEffect), not as a blended overlay here.
             ZStack {
                 if CRT_ERAS.contains(era) {
                     Scanlines()
                     Vignette()
                     if era == "50s" || era == "60s" { ScanBar() }
-                    GrainOverlay(opacity: era == "50s" ? 0.19 : 0.09)
                 }
                 if era == "60s" {
                     Color(red: 1.0, green: 220/255, blue: 80/255).opacity(0.05)
                 }
                 if era == "00s" {
-                    GrainOverlay(opacity: 0.15)
                     Color(red: 1.0, green: 175/255, blue: 70/255).opacity(0.06)
                     Vignette()
                 }
                 if era == "10s" {
-                    GrainOverlay(opacity: 0.10)
                     Color(red: 1.0, green: 200/255, blue: 90/255).opacity(0.03)
                 }
             }
@@ -125,34 +157,4 @@ private struct ScanBar: View {
     }
 }
 
-// Animated film/VHS grain — a small pool of pre-generated noise tiles cycled ~11fps,
-// screen-blended, approximating the web feTurbulence reseed.
-private struct GrainOverlay: View {
-    let opacity: Double
-    @State private var frames: [Image] = []
-    @State private var idx = 0
-    private let timer = Timer.publish(every: 0.09, on: .main, in: .common).autoconnect()
-
-    var body: some View {
-        Group {
-            if !frames.isEmpty {
-                frames[idx].resizable().interpolation(.none)
-            }
-        }
-        .opacity(opacity)
-        .blendMode(.screen)
-        .onAppear { if frames.isEmpty { frames = (0..<8).map { _ in Self.makeNoise() } } }
-        .onReceive(timer) { _ in if frames.count > 1 { idx = (idx + 1) % frames.count } }
-    }
-
-    private static let ciContext = CIContext(options: nil)
-    private static func makeNoise() -> Image {
-        let noise = CIFilter.randomGenerator().outputImage ?? CIImage.empty()
-        let mono = noise.applyingFilter("CIPhotoEffectMono")
-        let crop = CGRect(x: CGFloat.random(in: 0...512), y: CGFloat.random(in: 0...512), width: 320, height: 640)
-        guard let cg = ciContext.createCGImage(mono, from: crop) else {
-            return Image(uiImage: UIImage())
-        }
-        return Image(decorative: cg, scale: 1)
-    }
 }
