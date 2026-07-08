@@ -182,7 +182,7 @@
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					66D5E58D339E9C7BB2F6D8D3 = {
-						DevelopmentTeam = QAHSS958N6;
+						DevelopmentTeam = 5BF427L96N;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -394,7 +394,7 @@
 				CODE_SIGN_ENTITLEMENTS = EraBall/EraBall.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = QAHSS958N6;
+				DEVELOPMENT_TEAM = 5BF427L96N;
 				INFOPLIST_FILE = EraBall/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -416,7 +416,7 @@
 				CODE_SIGN_ENTITLEMENTS = EraBall/EraBall.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = QAHSS958N6;
+				DEVELOPMENT_TEAM = 5BF427L96N;
 				INFOPLIST_FILE = EraBall/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
