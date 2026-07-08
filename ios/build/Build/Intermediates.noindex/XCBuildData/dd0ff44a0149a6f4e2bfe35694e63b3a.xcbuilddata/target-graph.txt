@@ -1,2 +1,0 @@
-Target dependency graph (1 target)
-Target 'EraBall' in project 'EraBall' (no dependencies)

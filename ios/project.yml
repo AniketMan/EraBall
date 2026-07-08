@@ -75,3 +75,20 @@ targets:
         Release:
           SDKROOT: iphoneos
           SUPPORTED_PLATFORMS: iphoneos iphonesimulator
+
+schemes:
+  EraBall:
+    build:
+      targets:
+        EraBall: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+      revealArchiveInOrganizer: true
